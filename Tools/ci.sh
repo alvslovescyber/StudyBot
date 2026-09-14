@@ -36,6 +36,10 @@ xcrun swift-format lint --strict --recursive Packages
 
 if command -v swiftlint >/dev/null 2>&1; then
     echo "▸ swiftlint"
+    # Without Xcode, SwiftLint needs to be told where SourceKit lives.
+    if [[ "$SWIFT_BIN" == *".xctoolchain/"* ]]; then
+        export TOOLCHAIN_DIR="${SWIFT_BIN%/usr/bin/swift}"
+    fi
     swiftlint --strict --quiet
 else
     echo "▸ swiftlint not installed locally; skipping (CI runs it)"

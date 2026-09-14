@@ -95,7 +95,7 @@ struct UKCalendarTests {
     func codable() throws {
         let day = LocalDay(year: 2026, month: 10, day: 15)
         let data = try JSONEncoder().encode([day])
-        #expect(String(decoding: data, as: UTF8.self) == #"["2026-10-15"]"#)
+        #expect(try #require(String(data: data, encoding: .utf8)) == #"["2026-10-15"]"#)
         #expect(try JSONDecoder().decode([LocalDay].self, from: data) == [day])
         #expect(throws: DecodingError.self) {
             try JSONDecoder().decode(LocalDay.self, from: Data(#""15/10/2026""#.utf8))

@@ -36,48 +36,54 @@ public enum ICSParser {
 
     /// Parses text into its root `VCALENDAR` component.
     public static func parse(_ text: String) throws(Error) -> ICSComponent {
+        var state = ParseState()
+        for (index, line) in unfold(text).enumerated() where !line.isEmpty {
+            let property = try parseLine(line, number: index + 1)
+            try state.consume(property)
+        }
+        if let open = state.stack.last {
+            throw .unterminatedComponent(open.name)
+        }
+        guard let root = state.root else {
+            throw .noCalendar
+        }
+        return root
+    }
+
+    /// The open-component stack while parsing, and the finished root once `END:VCALENDAR` is seen.
+    private struct ParseState {
         var stack: [ICSComponent] = []
         var root: ICSComponent?
 
-        for (index, line) in unfold(text).enumerated() {
-            if line.isEmpty { continue }
-            let property = try parseLine(line, number: index + 1)
-
+        mutating func consume(_ property: ICSProperty) throws(Error) {
             switch property.name {
             case "BEGIN":
                 stack.append(ICSComponent(name: property.value.uppercased()))
             case "END":
-                guard let finished = stack.popLast() else {
-                    throw .mismatchedEnd(expected: "", found: property.value.uppercased())
-                }
-                let ended = property.value.uppercased()
-                guard finished.name == ended else {
-                    throw .mismatchedEnd(expected: finished.name, found: ended)
-                }
-                if var parent = stack.popLast() {
-                    parent.children.append(finished)
-                    stack.append(parent)
-                } else if finished.name == "VCALENDAR", root == nil {
-                    root = finished
-                }
+                try end(property.value.uppercased())
             default:
-                guard var current = stack.popLast() else {
-                    // A property outside any component is ignored rather than fatal; some
-                    // files carry stray lines before BEGIN:VCALENDAR.
-                    continue
-                }
+                // A property outside any component is ignored rather than fatal; some files
+                // carry stray lines before BEGIN:VCALENDAR.
+                guard var current = stack.popLast() else { return }
                 current.properties.append(property)
                 stack.append(current)
             }
         }
 
-        if let open = stack.last {
-            throw .unterminatedComponent(open.name)
+        private mutating func end(_ name: String) throws(Error) {
+            guard let finished = stack.popLast() else {
+                throw .mismatchedEnd(expected: "", found: name)
+            }
+            guard finished.name == name else {
+                throw .mismatchedEnd(expected: finished.name, found: name)
+            }
+            if var parent = stack.popLast() {
+                parent.children.append(finished)
+                stack.append(parent)
+            } else if finished.name == "VCALENDAR", root == nil {
+                root = finished
+            }
         }
-        guard let root else {
-            throw .noCalendar
-        }
-        return root
     }
 
     /// Splits text into logical lines, joining folded continuation lines (RFC 5545 §3.1):

@@ -112,12 +112,35 @@ public struct TermCalendar: Sendable {
         var end: LocalDay { events.map { LocalDay($0.endDate) }.max() ?? start }
     }
 
+    /// A run that has been placed in the programme as year `year`, term `number`.
+    private struct PlacedRun {
+        var year: Int
+        var number: Int
+        var run: Run
+    }
+
     static func deriveTerms(from allEvents: [ProgrammeEvent], now: Date) -> [DerivedTerm] {
         let live = allEvents.filter { !$0.isCancelled }.sorted {
             ($0.startDate, $0.endDate) < ($1.startDate, $1.endDate)
         }
+        let runs = moduleRuns(in: live)
+        guard !runs.isEmpty else { return [] }
+        let bankHolidays = live.filter { $0.kind == .bankHoliday }.map { LocalDay($0.startDate) }
+        let placed = place(runs, bankHolidays: bankHolidays)
+        let extenders = live.filter { [.assignment, .gateway, .epa].contains($0.kind) }
 
-        // 1. Runs of module-bearing events sharing one module set.
+        return placed.enumerated().map { index, entry in
+            let nextStart = index + 1 < placed.count ? placed[index + 1].run.start : nil
+            let end = extendedEnd(of: entry.run, with: extenders, before: nextStart)
+            let term = Term(
+                sync: SyncMetadata.new(id: Term.stableID(year: entry.year, number: entry.number), at: now),
+                year: entry.year, number: entry.number, startDate: entry.run.start.date, endDate: end.date)
+            return DerivedTerm(term: term, moduleCodes: entry.run.codes)
+        }
+    }
+
+    /// 1. Runs of module-bearing events sharing one module set, in date order.
+    private static func moduleRuns(in live: [ProgrammeEvent]) -> [Run] {
         var runs: [Run] = []
         for event in live where event.kind.isModuleBearingKind && !event.moduleCodes.isEmpty {
             let codes = Set(event.moduleCodes)
@@ -128,16 +151,16 @@ public struct TermCalendar: Sendable {
                 runs.append(Run(codes: codes, events: [event]))
             }
         }
-        guard !runs.isEmpty else { return [] }
+        return runs
+    }
 
-        // 2. Group by programme year and split a short year at Easter.
+    /// 2. Group runs by programme year, split a short year at Easter, and number the terms.
+    private static func place(_ runs: [Run], bankHolidays: [LocalDay]) -> [PlacedRun] {
         var byYear: [Int: [Run]] = [:]
         for run in runs {
             byYear[year(of: run), default: []].append(run)
         }
-        let bankHolidays = live.filter { $0.kind == .bankHoliday }.map { LocalDay($0.startDate) }
-
-        var ordered: [(year: Int, number: Int, run: Run)] = []
+        var placed: [PlacedRun] = []
         for year in byYear.keys.sorted() {
             var yearRuns = byYear[year] ?? []
             if yearRuns.count < 3, let last = yearRuns.last,
@@ -147,29 +170,27 @@ public struct TermCalendar: Sendable {
                 yearRuns.append(tail)
             }
             for (index, run) in yearRuns.enumerated() {
-                ordered.append((year, index + 1, run))
+                placed.append(PlacedRun(year: year, number: index + 1, run: run))
             }
         }
+        return placed
+    }
 
-        // 3. Extend each term's end to cover deadlines and assessments before the next term.
-        let extenders = live.filter { [.assignment, .gateway, .epa].contains($0.kind) }
-        var result: [DerivedTerm] = []
-        for (index, entry) in ordered.enumerated() {
-            let start = entry.run.start
-            var end = entry.run.end
-            let nextStart = index + 1 < ordered.count ? ordered[index + 1].run.start : nil
-            for event in extenders {
-                let eventStart = LocalDay(event.startDate)
-                guard eventStart > end else { continue }
-                if let nextStart, eventStart >= nextStart { continue }
-                end = max(end, LocalDay(event.endDate))
-            }
-            let term = Term(
-                sync: SyncMetadata.new(id: Term.stableID(year: entry.year, number: entry.number), at: now),
-                year: entry.year, number: entry.number, startDate: start.date, endDate: end.date)
-            result.append(DerivedTerm(term: term, moduleCodes: entry.run.codes))
+    /// 3. A term ends at its last module-bearing event, or at the last submission, Gateway or
+    /// EPA event that falls after it and before the next term starts.
+    private static func extendedEnd(
+        of run: Run, with extenders: [ProgrammeEvent], before nextStart: LocalDay?
+    )
+        -> LocalDay
+    {
+        var end = run.end
+        for event in extenders {
+            let eventStart = LocalDay(event.startDate)
+            guard eventStart > end else { continue }
+            if let nextStart, eventStart >= nextStart { continue }
+            end = max(end, LocalDay(event.endDate))
         }
-        return result
+        return end
     }
 
     /// The programme year a run belongs to: the most common year digit among its module codes.

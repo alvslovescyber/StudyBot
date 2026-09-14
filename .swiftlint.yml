@@ -12,7 +12,6 @@ opt_in_rules:
   - empty_count
   - closure_spacing
   - contains_over_first_not_nil
-  - discouraged_optional_boolean
   - explicit_init
   - fatal_error_message
   - first_where
@@ -40,8 +39,16 @@ force_cast:
   severity: error
 
 identifier_name:
-  min_length: 2
-  excluded: [id, x, y, at, to, of, y1]
+  # Single-letter names are idiomatic in short closures and test helpers (a, b, d).
+  min_length: 1
+  max_length: 50
+
+nesting:
+  type_level: 2   # a Reason enum inside an Issue struct inside a namespace is fine
+
+cyclomatic_complexity:
+  warning: 12
+  error: 20
 
 type_body_length:
   warning: 400

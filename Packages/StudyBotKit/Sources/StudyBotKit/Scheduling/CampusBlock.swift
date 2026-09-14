@@ -30,6 +30,14 @@ public struct CampusBlock: Hashable, Sendable {
         day >= start && day <= end
     }
 
+    /// A block being assembled from adjacent events.
+    private struct Run {
+        var start: LocalDay
+        var end: LocalDay
+        var ids: [UUID]
+        var induction: Bool
+    }
+
     /// Merges adjacent campus-day events (induction and on-campus) into numbered blocks.
     /// Cancelled events are ignored. Two events are adjacent when one starts the day after
     /// the other ends.
@@ -39,7 +47,7 @@ public struct CampusBlock: Hashable, Sendable {
             .filter { !$0.isCancelled && $0.kind.isCampusDay }
             .sorted { $0.startDate < $1.startDate }
 
-        var runs: [(start: LocalDay, end: LocalDay, ids: [UUID], induction: Bool)] = []
+        var runs: [Run] = []
         for event in campus {
             let start = LocalDay(event.startDate)
             let end = LocalDay(event.endDate)
@@ -49,7 +57,7 @@ public struct CampusBlock: Hashable, Sendable {
                 last.induction = last.induction || event.kind == .induction
                 runs[runs.count - 1] = last
             } else {
-                runs.append((start, end, [event.id], event.kind == .induction))
+                runs.append(Run(start: start, end: end, ids: [event.id], induction: event.kind == .induction))
             }
         }
         return runs.enumerated().map { index, run in
