@@ -30,6 +30,51 @@ Tools/seed/       ICS → programme-calendar.json                  (later milest
 
 Tests live inside each package under `Tests/`, which is where `swift test` looks.
 
+## What milestone one built
+
+Foundation only, no UI. Everything below is pure Swift with tests alongside.
+
+**StudyBotCore** (shared with the server, Foundation only)
+
+- The §4 models as value types, with the eight sync fields in one `SyncMetadata` struct.
+  Relationships are ids, because a value type cannot hold a two-way object graph; SwiftData
+  classes wrap these in the next milestone.
+- Every §4 supporting enum in the spec's order, pinned by tests.
+- The §3.5 sync envelope DTOs. `fields` is a partial map of `JSONValue`, so a field this
+  build has never heard of is round-tripped rather than dropped.
+- `UKCalendar` and `LocalDay`: en-GB, Europe/London, Monday-first, and all day arithmetic by
+  calendar day so a BST change can never move a block by a day.
+- `StableID`: deterministic UUIDs for records both Macs derive independently (events from
+  the ICS UID, modules from their code, terms from year and number).
+- Validation rules shared by client and server.
+
+**StudyBotKit** (client logic, no UI)
+
+- `ICSParser`: RFC 5545 tokenizer with line unfolding, CRLF/LF, quoted parameters, TEXT escapes.
+- `ICSProgrammeCalendarReader`: VEVENTs → `ProgrammeEvent`s. All-day `DTEND` is exclusive
+  and is pulled back a day. The real file yields 156 events and matches
+  `programme-calendar.json` on every date and kind.
+- `ProgrammeCalendarImporter`: idempotent merge on `sourceUID`. Changed dates update in
+  place, removed events are cancelled rather than deleted so attached notes survive.
+- `ModuleSeeder` and `AssignmentStubs`: the 26 modules and 30 backlog assignments the
+  calendar implies, ready for the store to persist on first launch.
+- `WorkingDays`: excludes weekends, bank holidays, closures and campus days, all read from
+  the calendar. Never hardcoded.
+- `TermCalendar`: the nine terms, eight campus blocks, week of term and days to the next
+  block. The term rule is documented on the type; do not simplify it to a gap-based rule.
+- `RelativeDate`: the one place dates become words.
+
+### How terms are derived
+
+The calendar has no term markers, so terms are runs of module-bearing events that share one
+module set. That gives eight boundaries and puts term 3 of years 1 and 2 at the April reading
+week, which is where the file puts the term-3 modules. Year 3's Synoptic Project spans terms
+2 and 3, so its set changes only once; a year with fewer than three runs is split at the first
+teaching session after the Easter bank holidays (18 April 2029). Submissions, Gateway and the
+EPA window extend a term's end; bank holidays, closures and the summer reading weeks do not,
+so real gaps exist between terms. Open question 13 in the spec is to confirm the year-3 split
+with Exeter.
+
 ## Requirements
 
 - macOS 15 or later.
