@@ -75,6 +75,12 @@ EPA window extend a term's end; bank holidays, closures and the summer reading w
 so real gaps exist between terms. Open question 13 in the spec is to confirm the year-3 split
 with Exeter.
 
+**Do not replace this with a gap-based rule.** It looks simpler and it is wrong: year 3's final
+term contains a 35-day gap with no sessions, between the workshop on 18 April 2029 and the
+next on 23 May 2029, and a "long gap means new term" rule would cut that term in two. The
+module-set rule survives it because both sides of the gap carry the same modules.
+`TermCalendarTests` pins all nine boundaries, so the test suite will say so too.
+
 ## Requirements
 
 - macOS 15 or later.
