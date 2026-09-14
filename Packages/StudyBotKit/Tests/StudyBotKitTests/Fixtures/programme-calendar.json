@@ -1,0 +1,1718 @@
+[
+ {
+  "start": "2026-09-22",
+  "end": "2026-09-22",
+  "kind": "induction",
+  "title": "Induction",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-09-23",
+  "end": "2026-09-24",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-09-28",
+  "end": "2026-09-28",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-10-05",
+  "end": "2026-10-05",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-10-12",
+  "end": "2026-10-12",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-10-15",
+  "end": "2026-10-15",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-10-19",
+  "end": "2026-10-19",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-10-26",
+  "end": "2026-10-26",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-11-02",
+  "end": "2026-11-02",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-11-09",
+  "end": "2026-11-09",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-11-16",
+  "end": "2026-11-16",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-11-23",
+  "end": "2026-11-23",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-11-30",
+  "end": "2026-11-30",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-12-03",
+  "end": "2026-12-03",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-12-07",
+  "end": "2026-12-07",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1018DA Programming",
+   "COM1014DA Discrete Mathematics for Computer Science",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2026-12-17",
+  "end": "2026-12-17",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2026-12-21",
+  "end": "2026-12-24",
+  "kind": "closure",
+  "title": "University closure - no teaching",
+  "modules": []
+ },
+ {
+  "start": "2026-12-25",
+  "end": "2026-12-25",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2026-12-28",
+  "end": "2026-12-28",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2026-12-29",
+  "end": "2026-12-31",
+  "kind": "closure",
+  "title": "University closure - no teaching",
+  "modules": []
+ },
+ {
+  "start": "2027-01-01",
+  "end": "2027-01-01",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2027-01-04",
+  "end": "2027-01-06",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-01-11",
+  "end": "2027-01-11",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-01-18",
+  "end": "2027-01-18",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-01-25",
+  "end": "2027-01-25",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-02-01",
+  "end": "2027-02-01",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-02-08",
+  "end": "2027-02-08",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-02-15",
+  "end": "2027-02-15",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-02-22",
+  "end": "2027-02-22",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-03-01",
+  "end": "2027-03-01",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-03-08",
+  "end": "2027-03-08",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-03-15",
+  "end": "2027-03-15",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-03-18",
+  "end": "2027-03-18",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-03-22",
+  "end": "2027-03-22",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1013DA Object-Oriented Programming",
+   "COM1016DA Computational Mathematics",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-03-26",
+  "end": "2027-03-26",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2027-03-29",
+  "end": "2027-03-29",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2027-04-01",
+  "end": "2027-04-01",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2027-04-19",
+  "end": "2027-04-23",
+  "kind": "reading week",
+  "title": "Reading Week",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-04-26",
+  "end": "2027-04-26",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-05-03",
+  "end": "2027-05-03",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2027-05-04",
+  "end": "2027-05-06",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-05-10",
+  "end": "2027-05-10",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-05-17",
+  "end": "2027-05-17",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-05-24",
+  "end": "2027-05-24",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-05-31",
+  "end": "2027-05-31",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2027-06-01",
+  "end": "2027-06-01",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-06-07",
+  "end": "2027-06-07",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-06-14",
+  "end": "2027-06-14",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-06-21",
+  "end": "2027-06-21",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-06-28",
+  "end": "2027-06-28",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-07-01",
+  "end": "2027-07-01",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-07-05",
+  "end": "2027-07-05",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-07-08",
+  "end": "2027-07-08",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM1015DA Computers and the Internet",
+   "COM1019DA Social and Professional Issues",
+   "COM1017DA Professional Development 1"
+  ]
+ },
+ {
+  "start": "2027-07-13",
+  "end": "2027-07-13",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2027-07-15",
+  "end": "2027-07-15",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2027-07-20",
+  "end": "2027-07-20",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2027-08-16",
+  "end": "2027-09-17",
+  "kind": "reading week",
+  "title": "Reading Week",
+  "modules": []
+ },
+ {
+  "start": "2027-08-30",
+  "end": "2027-08-30",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2027-09-21",
+  "end": "2027-09-22",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-09-28",
+  "end": "2027-09-28",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-10-05",
+  "end": "2027-10-05",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-10-12",
+  "end": "2027-10-12",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-10-19",
+  "end": "2027-10-19",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-10-26",
+  "end": "2027-10-26",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-11-02",
+  "end": "2027-11-02",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-11-09",
+  "end": "2027-11-09",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-11-16",
+  "end": "2027-11-16",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-11-23",
+  "end": "2027-11-23",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-11-30",
+  "end": "2027-11-30",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-12-02",
+  "end": "2027-12-02",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-12-07",
+  "end": "2027-12-07",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-12-09",
+  "end": "2027-12-09",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2022DA Database Theory and Design",
+   "COM2023DA Network and Computer Security",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2027-12-16",
+  "end": "2027-12-16",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2027-12-27",
+  "end": "2027-12-28",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2028-01-03",
+  "end": "2028-01-03",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2028-01-11",
+  "end": "2028-01-13",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-01-18",
+  "end": "2028-01-18",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-01-25",
+  "end": "2028-01-25",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-02-01",
+  "end": "2028-02-01",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-02-08",
+  "end": "2028-02-08",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-02-14",
+  "end": "2028-02-14",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2028-02-15",
+  "end": "2028-02-15",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-02-17",
+  "end": "2028-02-17",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2028-02-22",
+  "end": "2028-02-22",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-02-29",
+  "end": "2028-02-29",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-03-07",
+  "end": "2028-03-07",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-03-14",
+  "end": "2028-03-14",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-03-21",
+  "end": "2028-03-21",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-03-23",
+  "end": "2028-03-23",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-03-28",
+  "end": "2028-03-28",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-03-30",
+  "end": "2028-03-30",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2024DA Software Development",
+   "COM2027DA Artificial Intelligence and Applications",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-04-06",
+  "end": "2028-04-06",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2028-04-17",
+  "end": "2028-04-21",
+  "kind": "reading week",
+  "title": "Reading Week",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-04-25",
+  "end": "2028-04-25",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-05-01",
+  "end": "2028-05-01",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2028-05-03",
+  "end": "2028-05-05",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-05-09",
+  "end": "2028-05-09",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-05-16",
+  "end": "2028-05-16",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-05-23",
+  "end": "2028-05-23",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-05-29",
+  "end": "2028-05-29",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2028-05-30",
+  "end": "2028-05-30",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-06-06",
+  "end": "2028-06-06",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-06-13",
+  "end": "2028-06-13",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-06-20",
+  "end": "2028-06-20",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-06-22",
+  "end": "2028-06-22",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-06-27",
+  "end": "2028-06-27",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-06-29",
+  "end": "2028-06-29",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-07-04",
+  "end": "2028-07-04",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-07-06",
+  "end": "2028-07-06",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "COM2025DA Web Development",
+   "COM2026DA Team Project",
+   "COM2028DA Professional Development 2"
+  ]
+ },
+ {
+  "start": "2028-07-13",
+  "end": "2028-07-13",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2028-08-14",
+  "end": "2028-09-15",
+  "kind": "reading week",
+  "title": "Reading Week",
+  "modules": []
+ },
+ {
+  "start": "2028-08-28",
+  "end": "2028-08-28",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2028-09-18",
+  "end": "2028-09-20",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-09-27",
+  "end": "2028-09-27",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-10-04",
+  "end": "2028-10-04",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-10-11",
+  "end": "2028-10-11",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-10-18",
+  "end": "2028-10-18",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-10-25",
+  "end": "2028-10-25",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-10-26",
+  "end": "2028-10-26",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-11-01",
+  "end": "2028-11-01",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-11-08",
+  "end": "2028-11-08",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-11-15",
+  "end": "2028-11-15",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-11-22",
+  "end": "2028-11-22",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-11-29",
+  "end": "2028-11-29",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-11-30",
+  "end": "2028-11-30",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-12-06",
+  "end": "2028-12-06",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-12-07",
+  "end": "2028-12-07",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "Specialism 1 module (out of",
+   "COM3105DA,",
+   "COM3107DA,",
+   "COM3109DA,",
+   "COM3111DA and",
+   "COM3113DA)",
+   "COM3103DA Professional Development 3"
+  ]
+ },
+ {
+  "start": "2028-12-14",
+  "end": "2028-12-14",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2028-12-25",
+  "end": "2028-12-26",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2029-01-01",
+  "end": "2029-01-01",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2029-01-01",
+  "end": "2029-01-05",
+  "kind": "reading week",
+  "title": "Reading Week",
+  "modules": []
+ },
+ {
+  "start": "2029-01-08",
+  "end": "2029-01-10",
+  "kind": "on-campus",
+  "title": "On-campus (face-to-face) lectures/workshops/exams",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-01-17",
+  "end": "2029-01-17",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-01-24",
+  "end": "2029-01-24",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-01-31",
+  "end": "2029-01-31",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-02-07",
+  "end": "2029-02-07",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-02-14",
+  "end": "2029-02-14",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-02-15",
+  "end": "2029-02-15",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-02-21",
+  "end": "2029-02-21",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-02-28",
+  "end": "2029-02-28",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-03-07",
+  "end": "2029-03-07",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-03-14",
+  "end": "2029-03-14",
+  "kind": "online",
+  "title": "Online lectures",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-03-21",
+  "end": "2029-03-21",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-03-22",
+  "end": "2029-03-22",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-03-28",
+  "end": "2029-03-28",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-03-29",
+  "end": "2029-03-29",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-03-30",
+  "end": "2029-03-30",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2029-04-02",
+  "end": "2029-04-02",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2029-04-05",
+  "end": "2029-04-05",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-04-18",
+  "end": "2029-04-18",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-05-07",
+  "end": "2029-05-07",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2029-05-23",
+  "end": "2029-05-23",
+  "kind": "online",
+  "title": "Online workshops",
+  "modules": [
+   "Specialism 2 module (out of",
+   "COM3106DA,",
+   "COM3108DA,",
+   "COM3110DA,",
+   "COM3112DA and",
+   "COM3114DA)",
+   "COM3103DA Professional Development 3",
+   "COM3104DA Synoptic Project"
+  ]
+ },
+ {
+  "start": "2029-05-28",
+  "end": "2029-05-28",
+  "kind": "bank holiday",
+  "title": "Bank Holiday",
+  "modules": []
+ },
+ {
+  "start": "2029-06-14",
+  "end": "2029-06-14",
+  "kind": "gateway",
+  "title": "Gateway",
+  "modules": []
+ },
+ {
+  "start": "2029-06-28",
+  "end": "2029-06-28",
+  "kind": "assignment",
+  "title": "Assignment submission - MANDATORY (via ELE2)",
+  "modules": []
+ },
+ {
+  "start": "2029-07-16",
+  "end": "2029-07-27",
+  "kind": "epa",
+  "title": "Planned End Point Assessment (EPA) window",
+  "modules": [
+   "Planned EPA assessment window"
+  ]
+ }
+]

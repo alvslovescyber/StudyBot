@@ -33,27 +33,32 @@ Tests live inside each package under `Tests/`, which is where `swift test` looks
 ## Requirements
 
 - macOS 15 or later.
-- Swift 6.x. The Xcode Command Line Tools are enough for the packages
-  (`xcode-select --install`). The Mac app and the SwiftData store need full Xcode.
+- Swift 6.x with a toolchain that can run tests. That is either full Xcode, or the
+  Command Line Tools **plus** a swift.org toolchain from <https://www.swift.org/install/macos/>.
+  Apple's Command Line Tools alone build the packages but cannot load the Swift Testing
+  framework at test time. The Mac app and the SwiftData store (later milestones) need full Xcode.
 - Optional locally, required in CI: `brew install swiftlint`. `swift-format` ships with
   the toolchain and is run as `xcrun swift-format`.
 
 ## Build and test
 
-Each package is built and tested from its own directory.
+Run everything the way CI does. The script picks a working `swift` for you: Xcode's if
+Xcode is selected, otherwise the swift.org toolchain in `~/Library/Developer/Toolchains`.
+
+```bash
+./Tools/ci.sh
+```
+
+To run one package by hand with full Xcode installed:
 
 ```bash
 cd Packages/StudyBotCore && swift test
 ```
 
-```bash
-cd Packages/StudyBotKit && swift test
-```
-
-Or run everything the way CI does:
+With the Command Line Tools only, call the swift.org toolchain directly:
 
 ```bash
-./Tools/ci.sh
+cd Packages/StudyBotKit && ~/Library/Developer/Toolchains/swift-latest.xctoolchain/usr/bin/swift test
 ```
 
 ## Formatting and lint

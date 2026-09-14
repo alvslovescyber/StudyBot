@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    name: Build and test packages
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select the newest Xcode on the runner
+        run: |
+          latest="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          echo "Using $latest"
+          sudo xcode-select -s "$latest"
+
+      - name: Toolchain
+        run: |
+          swift --version
+          xcrun swift-format --version
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Cache SwiftPM build
+        uses: actions/cache@v4
+        with:
+          path: |
+            Packages/StudyBotCore/.build
+            Packages/StudyBotKit/.build
+          key: spm-${{ runner.os }}-${{ hashFiles('Packages/**/Package.swift') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Format check (blocking)
+        run: xcrun swift-format lint --strict --recursive Packages
+
+      - name: SwiftLint (blocking)
+        run: swiftlint --strict
+
+      - name: Build and test StudyBotCore
+        working-directory: Packages/StudyBotCore
+        run: swift test
+
+      - name: Build and test StudyBotKit
+        working-directory: Packages/StudyBotKit
+        run: swift test
