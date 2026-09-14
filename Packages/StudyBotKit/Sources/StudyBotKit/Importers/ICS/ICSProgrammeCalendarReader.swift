@@ -32,6 +32,11 @@ public enum ICSProgrammeCalendarReader {
     public struct Reading: Sendable {
         public var events: [ProgrammeEvent]
         public var issues: [Issue]
+        /// Module names by code, as written in the descriptions ("COM1018DA Programming").
+        /// Codes that only ever appear bare, such as the year-3 specialism options, are absent.
+        public var moduleNames: [String: String]
+        /// Codes offered as a specialism choice ("Specialism 1 module (out of COM3105DA, …)").
+        public var specialismOptionCodes: Set<String>
     }
 
     /// Reads every `VEVENT` in `data`, stamping each event as imported at `now`.
@@ -44,16 +49,21 @@ public enum ICSProgrammeCalendarReader {
     public static func read(_ calendar: ICSComponent, importedAt now: Date) -> Reading {
         var events: [ProgrammeEvent] = []
         var issues: [Issue] = []
+        var names: [String: String] = [:]
+        var options = Set<String>()
         for component in calendar.events {
             switch event(from: component, importedAt: now) {
             case .success(let event): events.append(event)
             case .failure(let issue): issues.append(issue)
             }
+            let description = component.property("DESCRIPTION")?.textValue ?? ""
+            names.merge(moduleNames(in: description)) { existing, _ in existing }
+            options.formUnion(specialismOptionCodes(in: description))
         }
         events.sort {
             ($0.startDate, $0.kind.rawValue, $0.sourceUID) < ($1.startDate, $1.kind.rawValue, $1.sourceUID)
         }
-        return Reading(events: events, issues: issues)
+        return Reading(events: events, issues: issues, moduleNames: names, specialismOptionCodes: options)
     }
 
     static func event(from component: ICSComponent, importedAt now: Date) -> Result<ProgrammeEvent, Issue> {
@@ -164,6 +174,16 @@ public enum ICSProgrammeCalendarReader {
         return codes
     }
 
+    /// Codes listed inside a "Specialism N module (out of … )" phrase: the year-3 options the
+    /// user chooses between (§4 Module.isSpecialismOption).
+    static func specialismOptionCodes(in description: String) -> Set<String> {
+        var codes = Set<String>()
+        for match in description.matches(of: /[Ss]pecialism[^()]*\(out of([^)]*)\)/) {
+            codes.formUnion(moduleCodes(in: String(match.output.1)))
+        }
+        return codes
+    }
+
     /// "Modules in this block: COM1018DA Programming / COM1014DA Discrete …" → the module
     /// names keyed by code, for seeding `Module` records. Only modules with a name after the
     /// code are returned; bare codes inside the year-3 specialism list are not.
@@ -174,6 +194,9 @@ public enum ICSProgrammeCalendarReader {
         if let end = section.range(of: "\n\n") {
             section = String(section[..<end.lowerBound])
         }
+        // Drop the "(out of COM3105DA, COM3107DA and COM3113DA)" option lists: the codes in them
+        // have no names, and splitting them on "/" would otherwise read "and" as a name.
+        section = section.replacing(/\(out of[^)]*\)/, with: "")
         for part in section.split(separator: "/") {
             let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
             guard let match = trimmed.firstMatch(of: /^(COM\d{4}DA)\s+(.+)$/) else { continue }

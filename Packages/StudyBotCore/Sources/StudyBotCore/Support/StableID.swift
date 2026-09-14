@@ -51,5 +51,6 @@ extension StableID {
         public static let module = "studybot.module"
         public static let term = "studybot.term"
         public static let settings = "studybot.settings"
+        public static let assignmentStub = "studybot.assignmentStub"
     }
 }
