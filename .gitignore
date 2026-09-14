@@ -1,0 +1,45 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+!Packages/**/Package.resolved
+
+# Xcode
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Secrets — the real env file lives outside the repo (spec §3.10b)
+.env
+.env.*
+!.env.example
+
+# Server runtime artefacts
+Server/.build/
+Server/db/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Test and coverage output
+*.xcresult
+*.profraw
+*.profdata
+coverage/
