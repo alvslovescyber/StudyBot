@@ -54,5 +54,6 @@ struct RelativeDateTests {
     func longDay() {
         #expect(RelativeDate.longDay(day(9, 14)) == "Monday 14 September")
         #expect(RelativeDate.longDay(day(9, 23)) == "Wednesday 23 September")
+        #expect(RelativeDate.fullDate(day(10, 15)) == "15 October 2026")
     }
 }

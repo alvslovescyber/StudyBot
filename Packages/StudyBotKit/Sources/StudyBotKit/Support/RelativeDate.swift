@@ -51,9 +51,16 @@ public enum RelativeDate {
         longDayFormatter.string(from: date)
     }
 
+    /// "15 October 2026": the unabbreviated form, always with the year, for text that is
+    /// stored rather than displayed relative to now (the calendar-created assignment titles).
+    public static func fullDate(_ date: Date) -> String {
+        fullDateFormatter.string(from: date)
+    }
+
     private static let shortFormatter = makeFormatter("d MMM")
     private static let shortWithYearFormatter = makeFormatter("d MMM yyyy")
     private static let longDayFormatter = makeFormatter("EEEE d MMMM")
+    private static let fullDateFormatter = makeFormatter("d MMMM yyyy")
 
     private static func makeFormatter(_ pattern: String) -> DateFormatter {
         let formatter = DateFormatter()
