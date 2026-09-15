@@ -56,6 +56,20 @@ struct ModelTests {
         #expect(!stub.isCalendarStub)
     }
 
+    @Test("Module.shortCode gives initials or a four-letter stem, never empty")
+    func moduleShortCode() {
+        func module(_ name: String, code: String = "COM1018DA") -> Module {
+            Module(sync: .new(at: now), name: name, code: code, colour: .indigo, year: 1, termNumber: 1)
+        }
+        #expect(module("Programming").shortCode == "PROG")
+        #expect(module("Discrete Mathematics for Computer Science").shortCode == "DMCS")
+        #expect(module("Object-Oriented Programming").shortCode == "OOP")
+        #expect(module("Professional Development 1").shortCode == "PD")
+        #expect(module("Computers and the Internet").shortCode == "CI")
+        #expect(module("COM3105DA", code: "COM3105DA").shortCode == "COM3", "a bare code stub stays short")
+        #expect(module("", code: "COM3105DA").shortCode == "3105DA")
+    }
+
     @Test("Module.year(fromCode:) reads the year digit and rejects malformed codes")
     func moduleYearFromCode() {
         #expect(Module.year(fromCode: "COM1018DA") == 1)

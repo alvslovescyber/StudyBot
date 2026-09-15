@@ -55,6 +55,20 @@ public struct Module: Syncable {
         self.isArchived = isArchived
     }
 
+    /// A short label for chips and columns (§6.2 "module chip"): the initials of the name's
+    /// significant words, or the first four letters of a one-word name. "Discrete Mathematics
+    /// for Computer Science" → "DMCS", "Programming" → "PROG". Derived, so a rename updates it.
+    public var shortCode: String {
+        let stopWords: Set<String> = ["for", "and", "of", "the", "to", "in", "a", "an"]
+        let words = name.split(whereSeparator: { $0 == " " || $0 == "-" }).map(String.init)
+            .filter { !stopWords.contains($0.lowercased()) && $0.first?.isLetter == true }
+        if words.count == 1, let only = words.first {
+            return String(only.prefix(4)).uppercased()
+        }
+        let initials = words.compactMap { $0.first }.map { String($0).uppercased() }.joined()
+        return initials.isEmpty ? String(code.suffix(6)) : String(initials.prefix(4))
+    }
+
     /// The id of the one term this module sits in, derived from `year` and `termNumber`.
     /// Nil for year-spanning modules.
     public var termID: UUID? {
