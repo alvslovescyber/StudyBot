@@ -38,11 +38,12 @@ jobs:
             Packages/StudyBotCore/.build
             Packages/StudyBotKit/.build
             Packages/StudyBotUI/.build
-          key: spm-${{ runner.os }}-${{ hashFiles('Packages/**/Package.swift') }}
+            Server/.build
+          key: spm-${{ runner.os }}-${{ hashFiles('Packages/**/Package.swift', 'Server/Package.swift', 'Server/Package.resolved') }}
           restore-keys: spm-${{ runner.os }}-
 
       - name: Format check (blocking)
-        run: xcrun swift-format lint --strict --recursive Packages
+        run: xcrun swift-format lint --strict --recursive Packages Apps Server/Sources Server/Tests
 
       - name: SwiftLint (blocking)
         run: swiftlint --strict
@@ -57,6 +58,10 @@ jobs:
 
       - name: Build and test StudyBotUI
         working-directory: Packages/StudyBotUI
+        run: swift test
+
+      - name: Build and test the server
+        working-directory: Server
         run: swift test
 
       - name: Generate the Xcode project

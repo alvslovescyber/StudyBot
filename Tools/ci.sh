@@ -32,7 +32,7 @@ SWIFT_BIN="$(pick_swift)"
 echo "▸ using: $("$SWIFT_BIN" -version 2>&1 | head -1)"
 
 echo "▸ swift-format lint"
-xcrun swift-format lint --strict --recursive Packages
+xcrun swift-format lint --strict --recursive Packages Apps Server/Sources Server/Tests
 
 if command -v swiftlint >/dev/null 2>&1; then
     echo "▸ swiftlint"
@@ -45,7 +45,7 @@ else
     echo "▸ swiftlint not installed locally; skipping (CI runs it)"
 fi
 
-for pkg in Packages/StudyBotCore Packages/StudyBotKit Packages/StudyBotUI; do
+for pkg in Packages/StudyBotCore Packages/StudyBotKit Packages/StudyBotUI Server; do
     echo "▸ swift build  ($pkg)"
     (cd "$pkg" && "$SWIFT_BIN" build --quiet)
     echo "▸ swift test   ($pkg)"

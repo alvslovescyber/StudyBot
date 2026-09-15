@@ -2,6 +2,7 @@
 included:
   - Packages
   - Apps
+  - Server
 excluded:
   - "**/.build"
   - "**/Package.swift"
