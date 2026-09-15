@@ -7,16 +7,26 @@ import SwiftUI
 /// when a row is open.
 struct AssignmentsScreen: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.sbScale) private var scale
 
     var body: some View {
         HStack(spacing: 0) {
             if let store = model.assignments {
-                AssignmentsList(store: store)
-                    .frame(minWidth: 420, maxWidth: .infinity)
+                // At accessibility sizes a 13-inch window has no room for three columns: the
+                // panel takes the content pane and ⎋ returns to the list (§9 "a row that grows
+                // is not a failure"; a clipped one is).
+                let panelReplacesList = scale.isAccessibility && model.selectedAssignment != nil
+                if !panelReplacesList {
+                    AssignmentsList(store: store)
+                        .frame(minWidth: 420, maxWidth: .infinity)
+                }
                 if let assignment = model.selectedAssignment {
-                    SBColor.border.frame(width: 1)
+                    if !panelReplacesList {
+                        SBColor.border.frame(width: 1)
+                    }
                     AssignmentDetailView(assignment: assignment, store: store)
-                        .frame(width: 440)
+                        .frame(width: panelReplacesList ? nil : (440 * min(scale.factor, 1.4)).rounded())
+                        .frame(maxWidth: panelReplacesList ? .infinity : nil)
                         .transition(.move(edge: .trailing))
                 }
             }
@@ -29,6 +39,7 @@ struct AssignmentsScreen: View {
 /// The grouped list with the scope control and the hidden-count footer.
 private struct AssignmentsList: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.sbScale) private var scale
     @Bindable var store: AssignmentStore
     @State private var collapsed: Set<AssignmentStatus> = []
     @State private var pendingDelete: Assignment?
@@ -53,7 +64,7 @@ private struct AssignmentsList: View {
 
             if let error = store.lastError {
                 Text(error)
-                    .font(.system(size: 12))
+                    .sbFont(12)
                     .foregroundStyle(SBColor.danger)
                     .padding(.vertical, 8)
                     .padding(.horizontal, SBSpacing.rowHorizontal)
@@ -136,7 +147,7 @@ private struct AssignmentsList: View {
             Text("All").tag(AssignmentListScope.all)
         }
         .pickerStyle(.menu)
-        .controlSize(.small)
+        .controlSize(scale.isAccessibility ? .large : .small)
         .labelsHidden()
         .fixedSize()
         .accessibilityLabel("Scope")
@@ -150,30 +161,45 @@ private struct AssignmentsList: View {
             }
         }
         .pickerStyle(.menu)
-        .controlSize(.small)
+        .controlSize(scale.isAccessibility ? .large : .small)
         .labelsHidden()
-        .frame(width: 132)
+        .fixedSize()
         .accessibilityLabel("Module")
     }
 
     // MARK: Rows
 
+    /// One line at ordinary sizes; at accessibility sizes the title takes a line of its own
+    /// and the columns drop beneath it, so the row grows rather than truncating (§9).
     private func row(_ assignment: Assignment) -> some View {
         ListRow(isSelected: model.selectedAssignmentID == assignment.id) {
             model.open(assignment)
         } content: {
             StatusIcon(assignment.status)
-            Text(assignment.title)
-                .sbType(SBType.row)
-                .italic(assignment.isCalendarStub)
-                .foregroundStyle(assignment.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
-                .lineLimit(1)
-                .truncationMode(.tail)
+            if scale.isAccessibility {
+                VStack(alignment: .leading, spacing: scale(4)) {
+                    rowTitle(assignment).lineLimit(2)
+                    HStack(spacing: scale(11)) {
+                        if let module = store.module(for: assignment) {
+                            ModuleChip(module)
+                        }
+                        if assignment.priority != .none {
+                            PriorityBars(assignment.priority)
+                        }
+                        DueDateLabel(assignment.dueDate, now: model.now())
+                        trailingColumn(assignment)
+                        Spacer(minLength: 0)
+                    }
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            ModuleChip(store.module(for: assignment)).frame(width: 58, alignment: .leading)
-            PriorityBars(assignment.priority)
-            DueDateLabel(assignment.dueDate, now: model.now()).frame(width: 96, alignment: .trailing)
-            trailingColumn(assignment).frame(width: 56, alignment: .trailing)
+            } else {
+                rowTitle(assignment).lineLimit(1)
+                ModuleChip(store.module(for: assignment)).frame(width: 58, alignment: .leading)
+                PriorityBars(assignment.priority)
+                DueDateLabel(assignment.dueDate, now: model.now()).frame(
+                    width: scale(96), alignment: .trailing)
+                trailingColumn(assignment).frame(width: scale(56), alignment: .trailing)
+            }
         }
         .contextMenu {
             Button("Edit") {
@@ -185,6 +211,15 @@ private struct AssignmentsList: View {
                 pendingDelete = assignment
             }
         }
+    }
+
+    private func rowTitle(_ assignment: Assignment) -> some View {
+        Text(assignment.title)
+            .italic(assignment.isCalendarStub)
+            .sbType(SBType.row)
+            .foregroundStyle(assignment.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
+            .truncationMode(.tail)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Progress while drafting, the grade once graded, otherwise nothing.
@@ -216,7 +251,7 @@ private struct AssignmentsList: View {
                 Text("Show all")
                     .foregroundStyle(SBColor.accent)
             }
-            .font(.system(size: 12))
+            .sbFont(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 12)
             .padding(.horizontal, SBSpacing.rowHorizontal)

@@ -9,6 +9,7 @@ import SwiftUI
 /// stub shows as one.
 struct TodayView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.sbScale) private var scale
 
     var body: some View {
         // A ScrollView: §6.1 puts the term strip below the fold and §16 needs the largest
@@ -28,7 +29,7 @@ struct TodayView: View {
             // The only sync UI outside Settings (§3.4): one quiet line, and only when it matters.
             if let notice = model.sync?.todayNotice {
                 Text(notice)
-                    .font(.system(size: 12))
+                    .sbFont(12)
                     .foregroundStyle(SBColor.textTertiary)
                     .padding(.top, 6)
             }
@@ -40,7 +41,7 @@ struct TodayView: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("Next deadline")
-                    .font(.system(size: 12, weight: .semibold))
+                    .sbFont(12, weight: .semibold)
                     .foregroundStyle(SBColor.textSecondary)
                 nextDeadlineCard
             }
@@ -51,7 +52,7 @@ struct TodayView: View {
                     .padding(.top, 36)
             }
         }
-        .frame(maxWidth: 656, alignment: .leading)
+        .frame(maxWidth: scale(656), alignment: .leading)
         .padding(.top, 28)
         .padding(.horizontal, SBSpacing.detailOuter)
         .padding(.bottom, 60)
@@ -87,10 +88,10 @@ struct TodayView: View {
     private func blockBannerView(_ banner: Banner) -> some View {
         HStack {
             Text(banner.title)
-                .font(.system(size: 13, weight: .medium))
+                .sbFont(13, weight: .medium)
             Spacer()
             Text("\(banner.dates) →")
-                .font(.system(size: 12))
+                .sbFont(12)
         }
         .foregroundStyle(SBColor.accent)
         .padding(.vertical, 12)
@@ -115,11 +116,11 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(strip.title)
-                    .font(.system(size: 12, weight: .semibold))
+                    .sbFont(12, weight: .semibold)
                     .foregroundStyle(SBColor.textSecondary)
                 Spacer()
                 Text(strip.caption)
-                    .font(.system(size: 12))
+                    .sbFont(12)
                     .foregroundStyle(SBColor.textTertiary)
             }
             TermStripView(strip)
@@ -183,14 +184,14 @@ struct TodayView: View {
                     StatusIcon(assignment.status, size: 15).padding(.top, 2)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(assignment.title)
-                            .font(.system(size: 14, weight: .medium))
                             .italic(assignment.isCalendarStub)
+                            .sbFont(14, weight: .medium)
                             .foregroundStyle(
                                 isOverdue(assignment)
                                     ? SBColor.danger
                                     : assignment.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
                         Text(detailLine(for: assignment, module: store.module(for: assignment)))
-                            .font(.system(size: 12))
+                            .sbFont(12)
                             .foregroundStyle(isOverdue(assignment) ? SBColor.danger : SBColor.textSecondary)
                     }
                     Spacer(minLength: 0)

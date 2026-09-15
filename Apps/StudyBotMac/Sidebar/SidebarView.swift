@@ -36,7 +36,7 @@ struct SidebarView: View {
             AppMark(size: 18)
             if !model.sidebarCollapsed {
                 Text("StudyBot")
-                    .font(.system(size: 13, weight: .semibold))
+                    .sbFont(13, weight: .semibold)
                     .foregroundStyle(SBColor.textPrimary)
                     .lineLimit(1)
                     .transition(.opacity)
@@ -45,7 +45,7 @@ struct SidebarView: View {
                     withAnimation(SBMotion.segment) { model.sidebarCollapsed = true }
                 } label: {
                     Image(systemName: "sidebar.left")
-                        .font(.system(size: 13, weight: .medium))
+                        .sbFont(13, weight: .medium)
                         .foregroundStyle(SBColor.textTertiary)
                 }
                 .buttonStyle(.plain)
@@ -70,23 +70,26 @@ private struct SidebarRow: View {
     let action: () -> Void
 
     @State private var isHovering = false
+    @Environment(\.sbScale) private var scale
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
+            HStack(spacing: scale(10)) {
                 Image(systemName: item.symbol)
-                    .font(.system(size: 15, weight: .medium))
-                    .frame(width: 20)
+                    .sbFont(15, weight: .medium)
+                    .frame(width: scale(20))
                 if !isCollapsed {
+                    // Two lines at accessibility sizes rather than an ellipsis (§9).
                     Text(item.title)
-                        .font(.system(size: 13, weight: isSelected ? .medium : .regular))
-                        .lineLimit(1)
+                        .sbFont(13, weight: isSelected ? .medium : .regular)
+                        .lineLimit(scale.isAccessibility ? 2 : 1)
                         .truncationMode(.tail)
+                        .multilineTextAlignment(.leading)
                 }
             }
             .foregroundStyle(isSelected ? SBColor.accent : SBColor.textSecondary)
-            .padding(.horizontal, 8)
-            .frame(height: SBSpacing.sidebarRowHeight)
+            .padding(.horizontal, scale(8))
+            .frame(minHeight: scale(SBSpacing.sidebarRowHeight))
             .frame(maxWidth: .infinity, alignment: isCollapsed ? .center : .leading)
             .background(
                 RoundedRectangle(cornerRadius: SBRadius.control, style: .continuous)

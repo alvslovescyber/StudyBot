@@ -14,6 +14,7 @@ struct AssignmentDetailView: View {
 
     @State private var draftText: String = ""
     @State private var draftSaveTask: Task<Void, Never>?
+    @Environment(\.sbScale) private var scale
 
     private var editor: AssignmentEditor { model.editor }
     private var isEditing: Bool { editor.isEditing && editor.draft?.id == assignment.id }
@@ -76,9 +77,9 @@ struct AssignmentDetailView: View {
                 model.escape()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .medium))
+                    .sbFont(12, weight: .medium)
                     .foregroundStyle(SBColor.textTertiary)
-                    .frame(width: 20, height: 20)
+                    .frame(width: scale(20), height: scale(20))
             }
             .buttonStyle(.plain)
             .help(isEditing ? "Cancel (⎋)" : "Close (⎋)")
@@ -93,8 +94,9 @@ struct AssignmentDetailView: View {
     @ViewBuilder
     private var titleBlock: some View {
         if isEditing {
-            TextField("Title", text: field(\.title, default: ""))
-                .font(.system(size: 17, weight: .semibold))
+            TextField("Title", text: field(\.title, default: ""), axis: .vertical)
+                .lineLimit(1...3)
+                .sbFont(17, weight: .semibold)
                 .sbInput()
             Picker("Module", selection: field(\.moduleID, default: nil)) {
                 Text("No module").tag(UUID?.none)
@@ -103,16 +105,15 @@ struct AssignmentDetailView: View {
                 }
             }
             .pickerStyle(.menu)
-            .controlSize(.small)
+            .controlSize(controlSize)
             .padding(.top, 8)
         } else {
             Text(shown.title)
-                .font(.system(size: 17, weight: .semibold))
-                .tracking(-0.17)
                 .italic(shown.isCalendarStub)
+                .sbFont(17, weight: .semibold)
                 .foregroundStyle(shown.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
             Text(moduleLine)
-                .font(.system(size: 12))
+                .sbFont(12)
                 .foregroundStyle(SBColor.textSecondary)
                 .padding(.top, 4)
         }
@@ -138,30 +139,35 @@ struct AssignmentDetailView: View {
                             Label(StatusIcon.label(for: status), systemImage: "circle").tag(status)
                         }
                     }
-                    .pickerStyle(.menu).controlSize(.small).fixedSize()
+                    .pickerStyle(.menu).controlSize(controlSize).fixedSize()
                     Picker("Priority", selection: field(\.priority, default: .none)) {
                         ForEach(Priority.allCases, id: \.self) { priority in
                             Text(priority.rawValue.capitalized).tag(priority)
                         }
                     }
-                    .pickerStyle(.menu).controlSize(.small).fixedSize()
+                    .pickerStyle(.menu).controlSize(controlSize).fixedSize()
                     DatePicker(
                         "Due", selection: dueDateBinding, displayedComponents: .date
                     )
-                    .datePickerStyle(.field).controlSize(.small).labelsHidden().fixedSize()
+                    .datePickerStyle(.field).controlSize(controlSize).labelsHidden().fixedSize()
                     .environment(\.calendar, UKCalendar.calendar)
                     .environment(\.timeZone, UKCalendar.timeZone)
                     .environment(\.locale, UKCalendar.locale)
                 }
                 HStack(spacing: 8) {
                     TextField("Word limit", value: field(\.wordLimit, default: nil), format: .number)
-                        .sbInput().frame(width: 110)
+                        .sbInput().frame(width: scale(110))
                     TextField("Weighting %", value: field(\.weighting, default: nil), format: .number)
-                        .sbInput().frame(width: 110)
+                        .sbInput().frame(width: scale(110))
                 }
             }
         } else {
-            HStack(spacing: 8) {
+            // A row of chips, or a column at accessibility sizes so none truncates (§9).
+            let layout =
+                scale.isAccessibility
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: scale(8)))
+                : AnyLayout(HStackLayout(spacing: 8))
+            layout {
                 Chip(StatusIcon.label(for: shown.status)) { StatusIcon(shown.status, size: 12) }
                 if shown.priority != .none {
                     Chip(shown.priority.rawValue.capitalized) { PriorityBars(shown.priority) }
@@ -194,7 +200,7 @@ struct AssignmentDetailView: View {
                     .frame(minHeight: 76)
                     .sbInput()
             } else {
-                Text(brief).font(.system(size: 13)).foregroundStyle(SBColor.textSecondary).lineSpacing(4)
+                Text(brief).sbFont(13).foregroundStyle(SBColor.textSecondary).lineSpacing(4)
             }
         } else {
             briefDropZone
@@ -203,7 +209,7 @@ struct AssignmentDetailView: View {
 
     private var briefDropZone: some View {
         Text(briefDropCopy)
-            .font(.system(size: 12.5))
+            .sbFont(12.5)
             .foregroundStyle(SBColor.textTertiary)
             .lineSpacing(4)
             .padding(14)
@@ -228,10 +234,10 @@ struct AssignmentDetailView: View {
                 .sbInput()
                 .placeholder("Paste the real marking criteria here", when: shown.rubricText?.isEmpty ?? true)
         } else if let rubric = shown.rubricText, !rubric.isEmpty {
-            Text(rubric).font(.system(size: 12)).foregroundStyle(SBColor.textSecondary).lineSpacing(5)
+            Text(rubric).sbFont(12).foregroundStyle(SBColor.textSecondary).lineSpacing(5)
         } else {
             Text("No rubric yet. Press Edit and paste the marking criteria.")
-                .font(.system(size: 12.5))
+                .sbFont(12.5)
                 .foregroundStyle(SBColor.textTertiary)
         }
     }
@@ -245,8 +251,8 @@ struct AssignmentDetailView: View {
     /// Always editable: a writing surface, not a form field (§6.2). Saves a second after typing stops.
     private var draft: some View {
         TextEditor(text: $draftText)
-            .font(.system(size: 17, design: .serif))
-            .lineSpacing(SBType.longFormLineSpacing)
+            .sbFont(17, design: .serif)
+            .lineSpacing(scale(SBType.longFormLineSpacing))
             .frame(minHeight: 96)
             .sbInput()
             .placeholder("Start writing. The word count updates as you go.", when: draftText.isEmpty)
@@ -267,7 +273,7 @@ struct AssignmentDetailView: View {
     private var gradeAndFeedback: some View {
         if isEditing {
             TextField("Grade", value: field(\.grade, default: nil), format: .number)
-                .sbInput().frame(width: 90)
+                .sbInput().frame(width: scale(90))
             TextEditor(text: optionalText(field(\.feedback, default: nil)))
                 .frame(minHeight: 60)
                 .sbInput()
@@ -277,10 +283,10 @@ struct AssignmentDetailView: View {
             if let grade = shown.grade {
                 GradeBadge(grade, bands: store.settings.gradeBands)
             } else {
-                Text("Not graded").font(.system(size: 12.5)).foregroundStyle(SBColor.textTertiary)
+                Text("Not graded").sbFont(12.5).foregroundStyle(SBColor.textTertiary)
             }
             if let feedback = shown.feedback, !feedback.isEmpty {
-                Text(feedback).font(.system(size: 12)).foregroundStyle(SBColor.textSecondary).padding(.top, 6)
+                Text(feedback).sbFont(12).foregroundStyle(SBColor.textSecondary).padding(.top, 6)
             }
         }
     }
@@ -300,10 +306,13 @@ struct AssignmentDetailView: View {
                     ? "Needs the rubric first. Press Edit and paste the marking criteria."
                     : "AI actions arrive with the sync milestone."
             )
-            .font(.system(size: 11.5))
+            .sbFont(11.5)
             .foregroundStyle(SBColor.textTertiary)
         }
     }
+
+    /// System controls follow the text size in the one step they offer.
+    private var controlSize: ControlSize { scale.isAccessibility ? .large : .small }
 
     // MARK: Bindings into the editing copy
 
@@ -339,10 +348,10 @@ private struct Field<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(label).font(.system(size: 12, weight: .semibold)).foregroundStyle(SBColor.textSecondary)
+                Text(label).sbFont(12, weight: .semibold).foregroundStyle(SBColor.textSecondary)
                 Spacer()
                 if let hint {
-                    Text(hint).font(.system(size: 11)).foregroundStyle(SBColor.textTertiary)
+                    Text(hint).sbFont(11).foregroundStyle(SBColor.textTertiary)
                 }
             }
             content()
@@ -355,13 +364,23 @@ extension View {
     /// Placeholder copy over an empty text area (§9: empty states direct). `TextEditor` has no
     /// prompt of its own, so this draws one in `textTertiary` that ignores the cursor.
     fileprivate func placeholder(_ text: String, when isEmpty: Bool) -> some View {
-        overlay(alignment: .topLeading) {
+        modifier(PlaceholderModifier(text: text, isEmpty: isEmpty))
+    }
+}
+
+private struct PlaceholderModifier: ViewModifier {
+    let text: String
+    let isEmpty: Bool
+    @Environment(\.sbScale) private var scale
+
+    func body(content: Content) -> some View {
+        content.overlay(alignment: .topLeading) {
             if isEmpty {
                 Text(text)
-                    .font(.system(size: 13))
+                    .sbFont(13)
                     .foregroundStyle(SBColor.textTertiary)
-                    .padding(.vertical, 9)
-                    .padding(.horizontal, 16)
+                    .padding(.vertical, scale(9))
+                    .padding(.horizontal, scale(16))
                     .allowsHitTesting(false)
             }
         }

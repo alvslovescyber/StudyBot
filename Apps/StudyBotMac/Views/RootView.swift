@@ -72,24 +72,37 @@ private struct ComingLaterView: View {
 }
 
 /// The header every screen shares: 15pt semibold title, controls on the right, hairline below.
+/// When the controls do not fit beside the title (large text in a small window) they drop to a
+/// second line rather than clipping (§9).
 struct ScreenHeader<Trailing: View>: View {
     let title: String
     @ViewBuilder let trailing: () -> Trailing
+    @Environment(\.sbScale) private var scale
 
     var body: some View {
-        HStack(spacing: 8) {
-            Text(title)
-                .sbType(SBType.section)
-                .fontWeight(.semibold)
-                .foregroundStyle(SBColor.textPrimary)
-                .lineLimit(1)
-                .fixedSize()
-            Spacer(minLength: SBSpacing.x2)
-            trailing()
-                .fixedSize(horizontal: false, vertical: true)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: scale(8)) {
+                titleText
+                Spacer(minLength: SBSpacing.x2)
+                trailing().fixedSize(horizontal: false, vertical: true)
+            }
+            VStack(alignment: .leading, spacing: scale(10)) {
+                titleText
+                trailing().fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, SBSpacing.rowHorizontal)
+        .padding(.vertical, scale(14))
+        .padding(.horizontal, scale(SBSpacing.rowHorizontal))
         .overlay(alignment: .bottom) { SBColor.border.frame(height: 1) }
+    }
+
+    private var titleText: some View {
+        Text(title)
+            .fontWeight(.semibold)
+            .sbType(SBType.section)
+            .foregroundStyle(SBColor.textPrimary)
+            .lineLimit(1)
+            .fixedSize()
     }
 }

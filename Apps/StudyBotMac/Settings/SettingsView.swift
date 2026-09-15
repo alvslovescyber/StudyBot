@@ -44,7 +44,7 @@ private struct SyncSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Sync")
-                .font(.system(size: 12, weight: .semibold))
+                .sbFont(12, weight: .semibold)
                 .foregroundStyle(SBColor.textSecondary)
             if sync.isPaired {
                 paired
@@ -60,7 +60,7 @@ private struct SyncSection: View {
                 .sbType(SBType.body)
                 .foregroundStyle(SBColor.textPrimary)
             Text("On the server, run studybotctl pair and type the six words here. Nothing else is needed.")
-                .font(.system(size: 12))
+                .sbFont(12)
                 .foregroundStyle(SBColor.textSecondary)
 
             LabelledField("Server address") {
@@ -74,7 +74,7 @@ private struct SyncSection: View {
             }
             if let error = sync.pairingError {
                 Text(error)
-                    .font(.system(size: 12))
+                    .sbFont(12)
                     .foregroundStyle(SBColor.danger)
             }
             Btn.primary(sync.isPairing ? "Pairing…" : "Pair this Mac", icon: "link") {
@@ -92,7 +92,7 @@ private struct SyncSection: View {
             .sbType(SBType.body)
             .foregroundStyle(SBColor.textPrimary)
             Text(sync.statusLine)
-                .font(.system(size: 12))
+                .sbFont(12)
                 .foregroundStyle(sync.state.lastError == nil ? SBColor.textSecondary : SBColor.danger)
             HStack(spacing: 8) {
                 Btn.secondary(sync.isSyncing ? "Syncing…" : "Sync now", size: .small) {
@@ -104,7 +104,7 @@ private struct SyncSection: View {
                 }
             }
             Text("Unpairing forgets the server and the token on this Mac only. Nothing is deleted anywhere.")
-                .font(.system(size: 11.5))
+                .sbFont(11.5)
                 .foregroundStyle(SBColor.textTertiary)
         }
     }
@@ -121,7 +121,7 @@ private struct LabelledField<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label).font(.system(size: 12)).foregroundStyle(SBColor.textSecondary)
+            Text(label).sbFont(12).foregroundStyle(SBColor.textSecondary)
             content()
         }
     }

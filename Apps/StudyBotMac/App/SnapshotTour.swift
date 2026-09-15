@@ -90,7 +90,10 @@
                 // The Settings scene has no programmatic opener the tour can reach, so show the
                 // same view in a plain window for the capture.
                 let settings = NSWindow(
-                    contentViewController: NSHostingController(rootView: SettingsView().environment(model)))
+                    contentViewController: NSHostingController(
+                        rootView: SettingsView().environment(model)
+                            .dynamicTypeSize(
+                                textSize ?? DynamicTypeSize.xSmall...DynamicTypeSize.accessibility5)))
                 settings.title = "Settings"
                 settings.setContentSize(NSSize(width: 620, height: 480))
                 settings.center()

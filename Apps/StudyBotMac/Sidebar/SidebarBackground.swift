@@ -24,10 +24,11 @@ struct SidebarBackground: NSViewRepresentable {
 struct SidebarChrome<Content: View>: View {
     let isCollapsed: Bool
     @ViewBuilder let content: () -> Content
+    @Environment(\.sbScale) private var scale
 
     var body: some View {
         content()
-            .frame(width: isCollapsed ? SBSpacing.sidebarRailWidth : SBSpacing.sidebarWidth)
+            .frame(width: isCollapsed ? SBSpacing.sidebarRailWidth : SBSpacing.sidebarWidth(at: scale))
             .frame(maxHeight: .infinity)
             .background {
                 if SidebarChrome.isSnapshotting {
