@@ -4,8 +4,9 @@ import StudyBotUI
 import SwiftUI
 
 /// Today (§6.1), the parts that exist with real data on day one: the date, the block banner
-/// when a block is within 14 days, and the next deadline. The plan, off-the-job and the term
-/// strip arrive with their milestones. Nothing here is a mockup: an untitled stub shows as one.
+/// when a block is within 14 days, the next deadline, and below the fold the term strip. The
+/// plan and off-the-job arrive with their milestones. Nothing here is a mockup: an untitled
+/// stub shows as one.
 struct TodayView: View {
     @Environment(AppModel.self) private var model
 
@@ -44,6 +45,11 @@ struct TodayView: View {
                 nextDeadlineCard
             }
             .padding(.top, 26)
+
+            if let strip = termStrip {
+                termStripSection(strip)
+                    .padding(.top, 36)
+            }
         }
         .frame(maxWidth: 656, alignment: .leading)
         .padding(.top, 28)
@@ -94,6 +100,30 @@ struct TodayView: View {
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous).strokeBorder(SBColor.border)
         )
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
+    }
+
+    // MARK: Term strip (§9 "Signature details")
+
+    private var termStrip: TermStrip? {
+        guard let calendar = model.termCalendar else { return nil }
+        let dueDates = model.assignments?.assignments.compactMap(\.dueDate) ?? []
+        return TermStrip(
+            calendar: calendar, events: model.events, submissionDates: dueDates, today: LocalDay(model.now()))
+    }
+
+    private func termStripSection(_ strip: TermStrip) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(strip.title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(SBColor.textSecondary)
+                Spacer()
+                Text(strip.caption)
+                    .font(.system(size: 12))
+                    .foregroundStyle(SBColor.textTertiary)
+            }
+            TermStripView(strip)
+        }
     }
 
     // MARK: Next deadline
