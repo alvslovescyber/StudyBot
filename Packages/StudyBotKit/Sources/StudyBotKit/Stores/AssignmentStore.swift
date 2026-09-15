@@ -29,6 +29,10 @@ public final class AssignmentStore {
     /// Which module the list is filtered to. Nil is "All modules".
     public var moduleFilter: UUID?
 
+    /// Called after every successful local write, so the sync engine can run once the edits
+    /// settle (§3.4 "after any local write settles for 10 seconds").
+    public var didWrite: (@MainActor () -> Void)?
+
     private let store: any RecordStore
     private let deviceID: String
     private let now: @Sendable () -> Date
@@ -68,7 +72,10 @@ public final class AssignmentStore {
             settings.assignmentListScope = newValue
             settings.sync.markEdited(at: now(), by: deviceID)
             let snapshot = settings
-            Task { try? await store.saveAll([snapshot]) }
+            Task {
+                try? await store.saveAll([snapshot])
+                didWrite?()
+            }
         }
     }
 
@@ -177,6 +184,7 @@ public final class AssignmentStore {
             try record.validate()
             try await store.saveAll([record])
             await load()
+            didWrite?()
         } catch let error as ValidationError {
             lastError = error.issues.map(\.message).joined(separator: ". ")
         } catch {
@@ -192,6 +200,7 @@ public final class AssignmentStore {
         do {
             try await store.saveAll([assignment])
             await load()
+            didWrite?()
             return assignment
         } catch {
             lastError = "Couldn't create the assignment: \(error.localizedDescription)"
@@ -206,6 +215,7 @@ public final class AssignmentStore {
         do {
             try await store.saveAll([record])
             await load()
+            didWrite?()
         } catch {
             lastError = "Couldn't delete: \(error.localizedDescription)"
         }

@@ -66,6 +66,11 @@ public enum RelativeDate {
         return "\(absolute(start, relativeTo: now)) – \(absolute(end, relativeTo: now))"
     }
 
+    /// "19:44", for a sync time in Settings. 24-hour, as en-GB is.
+    public static func time(_ date: Date) -> String {
+        timeFormatter.string(from: date)
+    }
+
     /// "15 October 2026": the unabbreviated form, always with the year, for text that is
     /// stored rather than displayed relative to now (the calendar-created assignment titles).
     public static func fullDate(_ date: Date) -> String {
@@ -92,6 +97,7 @@ public enum RelativeDate {
     private static let shortWithYearFormatter = makeFormatter("d MMM yyyy")
     private static let longDayFormatter = makeFormatter("EEEE d MMMM")
     private static let fullDateFormatter = makeFormatter("d MMMM yyyy")
+    private static let timeFormatter = makeFormatter("HH:mm")
 
     private static func makeFormatter(_ pattern: String) -> DateFormatter {
         let formatter = DateFormatter()
