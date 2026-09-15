@@ -23,6 +23,10 @@ public struct SyncRecord: Codable, Hashable, Sendable {
     public var version: Int?
     /// Server sequence number. Absent on push, present on records the server returns.
     public var seq: Int?
+    /// The device that wrote this version. Absent on push (the request carries it once);
+    /// present on records the server returns, so a client can run the same tie-break the
+    /// server ran when a pulled change meets a local edit it has not pushed yet (§4).
+    public var deviceID: String?
 
     public init(
         type: String,
@@ -32,7 +36,8 @@ public struct SyncRecord: Codable, Hashable, Sendable {
         deletedAt: Date? = nil,
         fields: [String: JSONValue],
         version: Int? = nil,
-        seq: Int? = nil
+        seq: Int? = nil,
+        deviceID: String? = nil
     ) {
         self.type = type
         self.id = id
@@ -42,6 +47,7 @@ public struct SyncRecord: Codable, Hashable, Sendable {
         self.fields = fields
         self.version = version
         self.seq = seq
+        self.deviceID = deviceID
     }
 
     /// Whether this record is a tombstone.

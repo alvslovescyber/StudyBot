@@ -7,6 +7,10 @@ public enum SyncSchema {
     /// The schema version this build speaks.
     public static let current = 1
 
+    /// The header a client sends its schema version in on requests that have no body
+    /// (`GET /v1/sync`). `POST /v1/sync` carries it in the body as well.
+    public static let header = "X-StudyBot-Schema"
+
     /// The oldest schema version a server on `current` still accepts.
     public static var oldestAccepted: Int { max(1, current - 1) }
 
