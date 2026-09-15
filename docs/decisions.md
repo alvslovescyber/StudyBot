@@ -166,3 +166,54 @@ toolchain and needs no Xcode.
 
 **Why:** the server's Sunday digest and week arithmetic need exactly the same en-GB,
 Europe/London, Monday-first calendar. Core is the only place both sides can see.
+
+## 2026-09-15 · Persisted rows are "sync columns + index columns + body blob"
+
+**Spec said (§4, revised):** Kit wraps the Core structs in `@Model` classes; "SwiftData
+relationships there are bidirectional with explicit inverses."
+
+**Decision:** each `@Model` row holds the eight sync fields as real columns, a handful of
+type-specific index columns (module id, due date, status, and so on), the whole Core value as
+a JSON `body`, and an `unknownFields` blob. Relationships stay as id columns; there are no
+SwiftData relationship properties or inverses.
+
+**Why:** the body is the record and the columns are derived from it on every write, so the
+struct-to-model conversion is one encode and one decode, and adding a field to a Core struct
+needs no SwiftData migration at all. Relationship graphs would need object lookups at
+conversion time and inverse maintenance with no consumer yet, and the sync envelope speaks in
+ids anyway. Cascading deletion (§16 "Deletion means deletion") will be explicit code in the
+stores, where it can be tested, rather than implicit SwiftData behaviour. Revisit if a query
+ever genuinely needs a join; so far every planned query is served by the index columns.
+
+## 2026-09-15 · The store's public API mentions only Core types
+
+**Brief said:** "if a `@Model` type appears in a signature in Core or leaks toward the UI
+packages, that's the bug."
+
+**Decision:** the model classes are `internal` to StudyBotKit. `Database` is generic over a
+public marker protocol `Persistable` and looks up the backing model in an internal registry.
+The compiler, not a convention, stops a view from reaching a `@Model`.
+
+## 2026-09-15 · Unknown fields live beside the value, not inside it
+
+**Decision:** `StoredRecord<T>` pairs a Core value with `unknownFields: [String: JSONValue]`.
+Saving a bare value keeps whatever unknown fields the row already had; only saving a
+`StoredRecord` replaces them. `RecordFields` splits wire fields into known and unknown and
+merges them back.
+
+**Why:** putting an unknown-fields map on every Core struct would leak a wire concern into the
+models and their equality. Keeping it at the storage boundary means the loss scenario in
+§3.10a (newer Mac writes, stale Mac reads and writes back) is a store round trip, and that is
+what `UnknownFieldPreservationTests` exercises, on disk and across a reopen.
+
+## 2026-09-15 · Wire dates carry milliseconds when they have them
+
+**Spec said:** §3.5's example uses second-precision ISO 8601 (`"2026-10-02T19:44:10Z"`).
+
+**Decision:** `SyncCoding` writes whole-second dates exactly as the spec shows and writes
+`.250Z`-style milliseconds only when a date has a fractional part. Decoding accepts both.
+
+**Why:** `updatedAt` decides last-write-wins. Two edits inside the same second on two Macs
+would tie under second precision, and a store round trip through the wire format would
+silently change a timestamp. The store itself uses seconds-since-1970 doubles for the same
+reason.

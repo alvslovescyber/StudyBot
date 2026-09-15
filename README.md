@@ -64,6 +64,29 @@ Foundation only, no UI. Everything below is pure Swift with tests alongside.
   block. The term rule is documented on the type; do not simplify it to a gap-based rule.
 - `RelativeDate`: the one place dates become words.
 
+## What milestone two built
+
+Persistence only, still no UI.
+
+- **`Database`**, one `@ModelActor` that owns the `ModelContainer`. Its public API speaks
+  only Core types plus `StoredRecord`; the `@Model` classes are internal to StudyBotKit and
+  cannot appear in a signature elsewhere. Every mutating call saves before it returns.
+- **Sixteen `@Model` classes** under `Database/Models`, one per Core type. Each row holds the
+  eight sync fields as columns, a few type-specific index columns, the whole value as a JSON
+  body, and an `unknownFields` blob. See `docs/decisions.md` for why.
+- **Unknown-field preservation through storage.** `StoredRecord` carries fields from a newer
+  build beside the value. Saving a bare value keeps them. `UnknownFieldPreservationTests`
+  proves the §3.10a loss scenario does not happen: newer build writes, stale build reads,
+  edits and writes back, fields intact, including across closing and reopening the file.
+- **A versioned schema and migration plan** (`StudyBotSchemaV1`, `StudyBotMigrationPlan`).
+  One version today; `MigrationTests` writes a store with V1 directly and opens it through
+  the plan. When V2 arrives, add a stage and a V1→V2 test.
+- **`ProgrammeStore`** protocol with two implementations, `Database` and
+  `InMemoryProgrammeStore`, and **`ProgrammeCalendarService`** on top: first launch imports
+  156 events, 9 terms, 26 modules and 30 backlog stubs; a second run changes nothing; a
+  moved deadline reschedules a stub unless the user edited the date by hand; a removed event
+  is cancelled and notes attached to it still resolve.
+
 ### How terms are derived
 
 The calendar has no term markers, so terms are runs of module-bearing events that share one
