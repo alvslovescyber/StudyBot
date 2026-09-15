@@ -142,6 +142,10 @@ Sync and the server, before any AI (§13). Two Macs can now diverge offline and 
   30 days (and a `NoteRevision` for session notes) with the server's archive id, so a replaced
   page of notes is recoverable from the Mac that wrote it and from the server.
 - **Schema V2** adds the two local tables with a lightweight migration from V1.
+- **The term strip** on Today (§9 "Signature details"): the current term as one line, campus
+  blocks as accent marks, Monday sessions as ticks, submissions as hollow amber rings, today
+  as a rule, with the spoken summary §16 asks for. `TermStrip` in Kit decides, `TermStripView`
+  in UI draws.
 - **Settings → Sync** pairs a Mac with a six-word code, shows the status in plain words, and
   can sync now or unpair. Today shows one quiet line only after an hour of failed syncs.
 - **Tests**: `SyncMergeTests` (Core), `SyncEngineTests` and `SyncStoreTests` (Kit, two

@@ -390,3 +390,14 @@ picker rather than clipping New.
 
 **Why:** seen in the 1080×600 capture. Every day-one stub has no module, so the filter is the
 least useful control to lose.
+
+## 2026-09-15 · The term strip has no tap yet
+
+**Spec said (§6.1, §9):** "no interaction beyond tapping a marker to jump to it."
+
+**Decision:** the strip ships drawn, with the VoiceOver summary, and without the tap. It
+arrives when there are screens to jump to (a session's notes, a block in Block mode).
+
+**Why:** today a tap on a submission could only open the Assignments list, which the deadline
+card above it already does. Deadline density shading is also left for later, per §9's "worth
+building" list.
