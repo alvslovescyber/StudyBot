@@ -32,11 +32,12 @@ public struct StatusIcon: View {
                 context.stroke(ring, with: .color(colour), lineWidth: stroke)
             case .drafting, .review:
                 context.stroke(ring, with: .color(colour), lineWidth: stroke)
-                let fraction: CGFloat = status == .drafting ? 0.5 : 0.75
+                let fraction: Double = status == .drafting ? 0.5 : 0.75
+                let endDegrees: Double = -90 + 360 * fraction
                 var arc = Path()
                 arc.addArc(
                     center: centre, radius: radius / 2, startAngle: .degrees(-90),
-                    endAngle: .degrees(-90 + 360 * fraction), clockwise: false)
+                    endAngle: .degrees(endDegrees), clockwise: false)
                 context.stroke(arc, with: .color(colour), lineWidth: radius)
             case .submitted, .graded:
                 context.stroke(ring, with: .color(colour), lineWidth: stroke)
