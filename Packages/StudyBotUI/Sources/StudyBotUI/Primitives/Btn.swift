@@ -45,12 +45,14 @@ public struct Btn: View {
         self.action = action
     }
 
+    @Environment(\.sbScale) private var scale
+
     public var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: scale(6)) {
                 if case .primary(let icon) = variant {
                     Image(systemName: icon)
-                        .font(.system(size: size == .small ? 12 : 13, weight: .medium))
+                        .sbFont(size == .small ? 12 : 13, weight: .medium)
                 }
                 Text(title)
             }
@@ -70,15 +72,16 @@ struct BtnStyle: ButtonStyle {
     let size: Btn.Size
 
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.sbScale) private var scale
     @State private var isHovering = false
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
         configuration.label
-            .font(.system(size: size == .small ? 12 : 13, weight: isPrimary ? .medium : .medium))
+            .sbFont(size == .small ? 12 : 13, weight: isPrimary ? .medium : .medium)
             .foregroundStyle(foreground)
-            .padding(.vertical, size == .small ? 4 : 6)
-            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, scale(size == .small ? 4 : 6))
+            .padding(.horizontal, scale(horizontalPadding))
             .background(background(pressed: pressed))
             .overlay(border)
             .overlay(innerHighlight(pressed: pressed))

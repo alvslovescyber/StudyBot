@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// A list row (spec §9 "List rows"): 38pt tall, horizontal padding 20, a 1px `border` rule
-/// beneath, never a gap or a card. Hover fills `rowHover` instantly, with no transition,
+/// A list row (spec §9 "List rows"): 38pt tall at the default text size, horizontal padding
+/// 20, a 1px `border` rule beneath, never a gap or a card. The height scales with text and is
+/// a minimum: at accessibility sizes a row may grow to two lines rather than clip (§9). Hover fills `rowHover` instantly, with no transition,
 /// because transitions on hover feel laggy at list speed. Selected fills `accentSoft`.
 public struct ListRow<Content: View>: View {
     private let isSelected: Bool
@@ -9,6 +10,7 @@ public struct ListRow<Content: View>: View {
     private let content: Content
 
     @State private var isHovering = false
+    @Environment(\.sbScale) private var scale
 
     public init(isSelected: Bool = false, action: @escaping () -> Void, @ViewBuilder content: () -> Content) {
         self.isSelected = isSelected
@@ -18,11 +20,12 @@ public struct ListRow<Content: View>: View {
 
     public var body: some View {
         Button(action: action) {
-            HStack(spacing: 11) {
+            HStack(spacing: scale(11)) {
                 content
             }
-            .padding(.horizontal, SBSpacing.rowHorizontal)
-            .frame(height: SBSpacing.rowHeight)
+            .padding(.horizontal, scale(SBSpacing.rowHorizontal))
+            .padding(.vertical, scale(4))
+            .frame(minHeight: scale(SBSpacing.rowHeight))
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(fill)
             .overlay(alignment: .bottom) {

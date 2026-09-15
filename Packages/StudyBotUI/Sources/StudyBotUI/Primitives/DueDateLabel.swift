@@ -15,7 +15,7 @@ public struct DueDateLabel: View {
 
     public var body: some View {
         Text(text)
-            .font(.system(size: 12))
+            .sbFont(12)
             .foregroundStyle(
                 isOverdue ? SBColor.danger : dueDate == nil ? SBColor.textTertiary : SBColor.textSecondary
             )

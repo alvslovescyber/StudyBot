@@ -4,15 +4,16 @@ import SwiftUI
 /// On focus the border becomes `accent` and nothing else changes: no glow, no ring, no lift.
 public struct SBInputStyle: ViewModifier {
     @FocusState private var isFocused: Bool
+    @Environment(\.sbScale) private var scale
 
     public func body(content: Content) -> some View {
         content
             .textFieldStyle(.plain)
             .scrollContentBackground(.hidden)
-            .font(.system(size: 13))
+            .sbFont(13)
             .foregroundStyle(SBColor.textPrimary)
-            .padding(.vertical, 9)
-            .padding(.horizontal, 11)
+            .padding(.vertical, scale(9))
+            .padding(.horizontal, scale(11))
             .background(SBColor.canvas)
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.control, style: .continuous)

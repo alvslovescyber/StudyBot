@@ -29,6 +29,14 @@ public enum SBSpacing {
     /// Sidebar widths: 228pt expanded, 56pt as an icon rail.
     public static let sidebarWidth: CGFloat = 228
     public static let sidebarRailWidth: CGFloat = 56
+
+    /// The expanded sidebar at a text scale. It grows with text so the longest one-word label
+    /// ("Assignments") still fits at the largest size, but no further than this, so the
+    /// sidebar does not eat the content pane on a 13-inch screen. Longer labels wrap at a
+    /// space. The rail never scales (§9).
+    public static func sidebarWidth(at scale: SBScale) -> CGFloat {
+        (sidebarWidth * min(scale.factor, 1.8)).rounded()
+    }
 }
 
 public enum SBRadius {

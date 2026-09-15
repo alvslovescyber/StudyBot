@@ -2,9 +2,11 @@ import StudyBotCore
 import SwiftUI
 
 /// A module chip (spec §9 "Chips"): a 6px dot plus the short code in the module's colour,
-/// 11pt weight 500. Module identity is one of the few places colour carries meaning.
+/// 11pt weight 500. Module identity is one of the few places colour carries meaning. The text
+/// scales with Dynamic Type; the dot is a graphic element and stays 6pt (§9).
 public struct ModuleChip: View {
     private let module: Module?
+    @Environment(\.sbScale) private var scale
 
     public init(_ module: Module?) {
         self.module = module
@@ -12,12 +14,12 @@ public struct ModuleChip: View {
 
     public var body: some View {
         if let module {
-            HStack(spacing: 5) {
+            HStack(spacing: scale(5)) {
                 Circle()
                     .fill(SBColor.module(module.colour))
                     .frame(width: 6, height: 6)
                 Text(module.shortCode)
-                    .font(.system(size: 11, weight: .medium))
+                    .sbFont(11, weight: .medium)
                     .foregroundStyle(SBColor.module(module.colour))
                     .lineLimit(1)
             }

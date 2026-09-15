@@ -7,6 +7,7 @@ public struct Chip<Leading: View>: View {
     private let text: String
     private let isEditable: Bool
     private let leading: Leading
+    @Environment(\.sbScale) private var scale
 
     public init(_ text: String, isEditable: Bool = false, @ViewBuilder leading: () -> Leading) {
         self.text = text
@@ -15,20 +16,20 @@ public struct Chip<Leading: View>: View {
     }
 
     public var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: scale(6)) {
             leading
             Text(text)
-                .font(.system(size: 12))
+                .sbFont(12)
                 .lineLimit(1)
             if isEditable {
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 9, weight: .medium))
+                    .sbFont(9, weight: .medium)
                     .foregroundStyle(SBColor.textTertiary)
             }
         }
         .foregroundStyle(isEditable ? SBColor.textPrimary : SBColor.textSecondary)
-        .padding(.vertical, 4)
-        .padding(.horizontal, 9)
+        .padding(.vertical, scale(4))
+        .padding(.horizontal, scale(9))
         .background(isEditable ? SBColor.surface : .clear)
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.control, style: .continuous)
@@ -47,6 +48,7 @@ extension Chip where Leading == EmptyView {
 /// A tag: full pill radius, 1px border, 11pt.
 public struct Tag: View {
     private let text: String
+    @Environment(\.sbScale) private var scale
 
     public init(_ text: String) {
         self.text = text
@@ -54,10 +56,10 @@ public struct Tag: View {
 
     public var body: some View {
         Text(text)
-            .font(.system(size: 11))
+            .sbFont(11)
             .foregroundStyle(SBColor.textSecondary)
-            .padding(.vertical, 2)
-            .padding(.horizontal, 8)
+            .padding(.vertical, scale(2))
+            .padding(.horizontal, scale(8))
             .background(SBColor.canvas)
             .overlay(Capsule().strokeBorder(SBColor.border, lineWidth: 1))
             .clipShape(Capsule())

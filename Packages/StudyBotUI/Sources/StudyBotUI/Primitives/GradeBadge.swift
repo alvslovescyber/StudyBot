@@ -14,7 +14,7 @@ public struct GradeBadge: View {
 
     public var body: some View {
         Text(formatted)
-            .font(.system(size: 12, weight: .semibold))
+            .sbFont(12, weight: .semibold)
             .monospacedDigit()
             .foregroundStyle(colour)
             .accessibilityLabel("Grade \(formatted)\(bandLabel.map { ", \($0)" } ?? "")")

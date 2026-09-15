@@ -84,6 +84,27 @@ struct TokenTests {
         #expect(SBType.longFormMeasure == 68 && SBType.liveNotesMeasure == 66)
     }
 
+    @Test("the type scale follows the Dynamic Type size and graphic elements do not")
+    func dynamicTypeScale() {
+        #expect(SBType.scale(for: .large) == 1)
+        #expect(SBScale(.large)(13) == 13)
+        let ordered: [DynamicTypeSize] = [
+            .xSmall, .small, .medium, .large, .xLarge, .xxLarge, .xxxLarge, .accessibility1, .accessibility2,
+            .accessibility3, .accessibility4, .accessibility5,
+        ]
+        let factors = ordered.map(SBType.scale(for:))
+        #expect(factors == factors.sorted(), "monotonic")
+        #expect(SBType.scale(for: .accessibility5) > 3, "the largest size triples text")
+        #expect(SBScale(.accessibility5)(13) == 40.5, "half-point rounding")
+        #expect(SBScale(.accessibility1).isAccessibility && !SBScale(.xxxLarge).isAccessibility)
+        #expect(SBType.body.font(at: SBScale(.accessibility5)) != SBType.body.font)
+        // Sidebar grows with text but no further than half again; the rail never moves.
+        #expect(SBSpacing.sidebarWidth(at: SBScale(.large)) == 228)
+        #expect(SBSpacing.sidebarWidth(at: SBScale(.accessibility5)) == 410)
+        #expect(SBSpacing.sidebarRailWidth == 56)
+        #expect(PriorityBars.width == 18 && TermStripView.height == 28)
+    }
+
     @Test("spacing, radius and layout constants")
     func spacing() {
         #expect(

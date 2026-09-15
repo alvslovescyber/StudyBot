@@ -4,10 +4,12 @@ import SwiftUI
 /// The six status icons (spec §9 "Status icons"): drawn, not from a font. A 14pt circle with a
 /// 1.5pt stroke: dashed for backlog, solid outline for todo, half-filled arc for drafting,
 /// three-quarter arc for review, tick for submitted and graded. Every status also has a label
-/// wherever it appears; colour never carries the meaning alone.
+/// wherever it appears; colour never carries the meaning alone. `size` is a base value: the
+/// icon sits beside text and scales with it, while its 1.5pt stroke does not.
 public struct StatusIcon: View {
     private let status: AssignmentStatus
     private let size: CGFloat
+    @Environment(\.sbScale) private var scale
 
     public init(_ status: AssignmentStatus, size: CGFloat = 14) {
         self.status = status
@@ -51,7 +53,7 @@ public struct StatusIcon: View {
                     style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: scale(size), height: scale(size))
         .accessibilityLabel(StatusIcon.label(for: status))
     }
 
