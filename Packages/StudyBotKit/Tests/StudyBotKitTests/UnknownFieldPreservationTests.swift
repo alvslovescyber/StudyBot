@@ -118,3 +118,72 @@ struct UnknownFieldPreservationTests {
         #expect(stored.unknownFields["mentorName"] == "Dr Patel")
     }
 }
+
+/// §3.5: `fields` is a partial. Applying one must merge into the stored body, never replace it.
+@Suite("Partial field updates merge, they do not replace")
+struct PartialFieldUpdateTests {
+    // Captured once: the sample mints fresh subtask ids on every access.
+    private let stored = StoredRecord(
+        SampleRecords.assignment, unknownFields: ["mentorName": "Dr Patel", "revisionPlan": ["x": 1]])
+
+    @Test("a field absent from the partial is left alone, known and unknown alike")
+    func absentFieldsUntouched() throws {
+        let merged = try RecordFields.applying(["status": "review"], to: stored)
+        #expect(merged.value.status == .review)
+        #expect(merged.value.title == stored.value.title)
+        #expect(merged.value.rubricText == stored.value.rubricText)
+        #expect(merged.value.wordLimit == 2500)
+        #expect(merged.value.subtasks == stored.value.subtasks)
+        #expect(merged.value.sync == stored.value.sync)
+        #expect(merged.unknownFields == stored.unknownFields)
+    }
+
+    @Test("a null in the partial clears a known optional; absence does not")
+    func nullClearsAbsenceKeeps() throws {
+        let cleared = try RecordFields.applying(["rubricText": .null], to: stored)
+        #expect(cleared.value.rubricText == nil)
+        #expect(cleared.value.briefText == stored.value.briefText)
+        let untouched = try RecordFields.applying(["title": "Renamed"], to: stored)
+        #expect(untouched.value.rubricText == stored.value.rubricText)
+    }
+
+    @Test("a partial can set a known optional that was nil, and the value is not mistaken for unknown")
+    func setsNilOptional() throws {
+        #expect(stored.value.grade == nil)
+        let merged = try RecordFields.applying(["grade": 74, "feedback": "Strong"], to: stored)
+        #expect(merged.value.grade == 74)
+        #expect(merged.value.feedback == "Strong")
+        #expect(merged.unknownFields["grade"] == nil)
+        #expect(merged.unknownFields.count == 2)
+    }
+
+    @Test("unknown fields in a partial are added, updated or removed without touching the others")
+    func unknownFieldsMerge() throws {
+        let merged = try RecordFields.applying(
+            ["mentorName": "Dr Rao", "cohortTag": "2026A", "revisionPlan": .null], to: stored)
+        #expect(merged.unknownFields == ["mentorName": "Dr Rao", "cohortTag": "2026A"])
+        #expect(merged.value == stored.value)
+    }
+
+    @Test("an empty partial is a no-op")
+    func emptyPartial() throws {
+        let merged = try RecordFields.applying([:], to: stored)
+        #expect(merged == stored)
+    }
+
+    @Test("the merged record round-trips through the store and back to the wire intact")
+    func throughTheStore() async throws {
+        let db = try Database.inMemory()
+        try await db.save(stored)
+        let current = try #require(try await db.fetch(Assignment.self, id: stored.id))
+        let merged = try RecordFields.applying(["status": "submitted", "cohortTag": "2026A"], to: current)
+        try await db.save(merged)
+        let reloaded = try #require(try await db.fetch(Assignment.self, id: stored.id))
+        let wire = try RecordFields.fields(of: reloaded)
+        #expect(wire["status"] == "submitted")
+        #expect(wire["title"] == .string(stored.value.title))
+        #expect(wire["mentorName"] == "Dr Patel")
+        #expect(wire["cohortTag"] == "2026A")
+        #expect(wire["revisionPlan"] == ["x": 1])
+    }
+}
