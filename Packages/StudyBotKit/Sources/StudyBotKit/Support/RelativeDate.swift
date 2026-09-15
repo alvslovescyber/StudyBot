@@ -51,6 +51,21 @@ public enum RelativeDate {
         longDayFormatter.string(from: date)
     }
 
+    /// A range of days: "22–24 Sept" within one month, "30 Sept – 2 Oct" across months, the
+    /// year added only when it differs from `now`'s. A single day is just that day.
+    public static func dayRange(_ start: Date, _ end: Date, relativeTo now: Date) -> String {
+        let calendar = UKCalendar.calendar
+        if UKCalendar.isSameDay(start, end) {
+            return absolute(start, relativeTo: now)
+        }
+        let sameMonth = calendar.isDate(start, equalTo: end, toGranularity: .month)
+        if sameMonth {
+            let day = calendar.component(.day, from: start)
+            return "\(day)–\(absolute(end, relativeTo: now))"
+        }
+        return "\(absolute(start, relativeTo: now)) – \(absolute(end, relativeTo: now))"
+    }
+
     /// "15 October 2026": the unabbreviated form, always with the year, for text that is
     /// stored rather than displayed relative to now (the calendar-created assignment titles).
     public static func fullDate(_ date: Date) -> String {

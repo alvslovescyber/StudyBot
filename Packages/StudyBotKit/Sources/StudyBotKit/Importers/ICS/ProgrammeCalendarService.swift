@@ -35,9 +35,9 @@ public struct ProgrammeCalendarService: Sendable {
         }
     }
 
-    private let store: any ProgrammeStore
+    private let store: any RecordStore
 
-    public init(store: any ProgrammeStore) {
+    public init(store: any RecordStore) {
         self.store = store
     }
 

@@ -2,19 +2,19 @@ import Foundation
 import StudyBotCore
 
 /// What the programme calendar import needs from a store. `Database` is the real one;
-/// `InMemoryProgrammeStore` is for tests and previews. The importer itself never knows which.
-public protocol ProgrammeStore: Sendable {
+/// `InMemoryRecordStore` is for tests and previews. The importer itself never knows which.
+public protocol RecordStore: Sendable {
     func programmeEvents(includeCancelled: Bool) async throws -> [ProgrammeEvent]
     func saveProgrammeEvents(_ events: [ProgrammeEvent]) async throws
     func fetchAll<T: Persistable>(_ type: T.Type, includeDeleted: Bool) async throws -> [StoredRecord<T>]
     func saveAll<T: Persistable>(_ values: [T]) async throws
 }
 
-extension Database: ProgrammeStore {}
+extension Database: RecordStore {}
 
-/// A `ProgrammeStore` held in dictionaries. Keeps unknown fields the same way the real store
+/// A `RecordStore` held in dictionaries. Keeps unknown fields the same way the real store
 /// does, so tests of the import path can run without SwiftData.
-public actor InMemoryProgrammeStore: ProgrammeStore {
+public actor InMemoryRecordStore: RecordStore {
     private var events: [String: ProgrammeEvent] = [:]
     private var records: [ObjectIdentifier: [UUID: any Sendable]] = [:]
 

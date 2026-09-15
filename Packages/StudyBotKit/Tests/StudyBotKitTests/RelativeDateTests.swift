@@ -50,6 +50,15 @@ struct RelativeDateTests {
         #expect(RelativeDate.string(for: day(9, 22), relativeTo: lateEvening) == "in 8 days")
     }
 
+    @Test("day ranges collapse within a month and spell both ends across months")
+    func dayRanges() {
+        // October onwards: September's abbreviation varies between ICU versions ("Sep"/"Sept").
+        #expect(RelativeDate.dayRange(day(10, 22), day(10, 24), relativeTo: now) == "22–24 Oct")
+        #expect(RelativeDate.dayRange(day(10, 30), day(11, 2), relativeTo: now) == "30 Oct – 2 Nov")
+        #expect(RelativeDate.dayRange(day(10, 22), day(10, 22), relativeTo: now) == "22 Oct")
+        #expect(RelativeDate.dayRange(day(1, 4, 2027), day(1, 6, 2027), relativeTo: now) == "4–6 Jan 2027")
+    }
+
     @Test("the Today header is the long British form")
     func longDay() {
         #expect(RelativeDate.longDay(day(9, 14)) == "Monday 14 September")

@@ -33,7 +33,7 @@ struct ProgrammeCalendarServiceTests {
         return Data(trimmed.utf8)
     }
 
-    private func assertFirstRun(_ summary: ProgrammeCalendarService.Summary, store: any ProgrammeStore)
+    private func assertFirstRun(_ summary: ProgrammeCalendarService.Summary, store: any RecordStore)
         async throws
     {
         #expect(summary.issues.isEmpty)
@@ -53,7 +53,7 @@ struct ProgrammeCalendarServiceTests {
 
     @Test("first launch against the in-memory store: 156 events, 9 terms, 26 modules, 30 stubs")
     func firstRunInMemory() async throws {
-        let store = InMemoryProgrammeStore()
+        let store = InMemoryRecordStore()
         let summary = try await ProgrammeCalendarService(store: store).importBundledCalendar(now: now)
         try await assertFirstRun(summary, store: store)
     }
@@ -85,7 +85,7 @@ struct ProgrammeCalendarServiceTests {
 
     @Test("a moved deadline reschedules the stub, unless the user has edited the date by hand")
     func movedDeadline() async throws {
-        let store = InMemoryProgrammeStore()
+        let store = InMemoryRecordStore()
         let service = ProgrammeCalendarService(store: store)
         _ = try await service.importBundledCalendar(now: now)
 
@@ -120,7 +120,7 @@ struct ProgrammeCalendarServiceTests {
 
     @Test("a removed session is cancelled, and a note attached to it still resolves")
     func removedSession() async throws {
-        let store = InMemoryProgrammeStore()
+        let store = InMemoryRecordStore()
         let service = ProgrammeCalendarService(store: store)
         _ = try await service.importBundledCalendar(now: now)
 
@@ -147,7 +147,7 @@ struct ProgrammeCalendarServiceTests {
 
     @Test("a user's module edits survive a re-import")
     func moduleEditsSurvive() async throws {
-        let store = InMemoryProgrammeStore()
+        let store = InMemoryRecordStore()
         let service = ProgrammeCalendarService(store: store)
         _ = try await service.importBundledCalendar(now: now)
         var programming = try #require(

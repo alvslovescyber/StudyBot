@@ -108,7 +108,7 @@ struct UnknownFieldPreservationTests {
     @Test("the in-memory store keeps unknown fields the same way")
     func inMemoryStoreMatches() async throws {
         let (fields, sync) = try fieldsFromNewerBuild()
-        let store = InMemoryProgrammeStore()
+        let store = InMemoryRecordStore()
         await store.save(try RecordFields.record(Assignment.self, fields: fields, sync: sync))
         var value = try #require(await store.fetch(Assignment.self, id: sync.id)).value
         value.title = "edited"
