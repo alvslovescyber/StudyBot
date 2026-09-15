@@ -86,7 +86,7 @@ struct ScreenHeader<Trailing: View>: View {
                 .fixedSize()
             Spacer(minLength: SBSpacing.x2)
             trailing()
-                .fixedSize()
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 14)
         .padding(.horizontal, SBSpacing.rowHorizontal)

@@ -36,10 +36,18 @@ private struct AssignmentsList: View {
     var body: some View {
         VStack(spacing: 0) {
             ScreenHeader(title: "Assignments") {
-                scopePicker
-                modulePicker
-                Btn.primary("New", icon: "plus", size: .small) {
-                    Task { await model.createAssignment() }
+                // At the minimum window width with the panel open there is no room for every
+                // control; the module filter goes first, since every day-one stub has no module.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) {
+                        scopePicker
+                        modulePicker
+                        newButton
+                    }
+                    HStack(spacing: 8) {
+                        scopePicker
+                        newButton
+                    }
                 }
             }
 
@@ -115,6 +123,12 @@ private struct AssignmentsList: View {
 
     // MARK: Header controls
 
+    private var newButton: some View {
+        Btn.primary("New", icon: "plus", size: .small) {
+            Task { await model.createAssignment() }
+        }
+    }
+
     private var scopePicker: some View {
         Picker("Scope", selection: $store.scope) {
             Text("Current term").tag(AssignmentListScope.currentTerm)
@@ -189,26 +203,33 @@ private struct AssignmentsList: View {
 
     // MARK: Footer and empty state
 
-    /// "18 more submissions in later terms. Show all" (§6.2). Nothing is hidden without being acknowledged.
+    /// "18 more submissions in later terms. Show all" (§6.2). Nothing is hidden without being
+    /// acknowledged, and "Show all" is the only way to reach the hidden ones, so it reads as an
+    /// action in `accent` rather than as more grey text.
     private var footer: some View {
         Button {
             store.scope = .all
         } label: {
-            Text(footerText)
-                .font(.system(size: 12))
-                .foregroundStyle(SBColor.textTertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 12)
-                .padding(.horizontal, SBSpacing.rowHorizontal)
-                .contentShape(Rectangle())
+            HStack(spacing: 4) {
+                Text(footerText)
+                    .foregroundStyle(SBColor.textTertiary)
+                Text("Show all")
+                    .foregroundStyle(SBColor.accent)
+            }
+            .font(.system(size: 12))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 12)
+            .padding(.horizontal, SBSpacing.rowHorizontal)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(footerText) Show all")
     }
 
     private var footerText: String {
         let location = store.hiddenAreAllLater ? "later terms" : "other terms"
         let noun = store.hiddenCount == 1 ? "submission" : "submissions"
-        return "\(store.hiddenCount) more \(noun) in \(location). Show all"
+        return "\(store.hiddenCount) more \(noun) in \(location)."
     }
 
     private var emptyState: some View {
