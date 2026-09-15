@@ -36,6 +36,7 @@ final class AppModel {
 
     private(set) var database: Database?
     private(set) var assignments: AssignmentStore?
+    private(set) var sync: SyncStore?
     private(set) var termCalendar: TermCalendar?
     private(set) var events: [ProgrammeEvent] = []
     let editor = AssignmentEditor()
@@ -69,13 +70,40 @@ final class AppModel {
             await store.load()
             assignments = store
 
+            let sync = SyncStore(
+                database: database, credentials: KeychainCredentialStore(), deviceID: deviceID, now: now)
+            store.didWrite = { [weak sync] in sync?.noteLocalWrite() }
+            self.sync = sync
+
             phase = firstRun ? .firstRun(firstRunFacts(store: store)) : .ready
+            // Launch trigger (§3.4), off the critical path: the window never waits on the network.
+            Task { [weak self] in
+                await sync.start()
+                await self?.assignments?.load()
+                #if DEBUG
+                    await self?.pairFromEnvironmentIfRequested()
+                #endif
+            }
         } catch {
             phase = .failed(
                 "StudyBot couldn't open its data store. Check that ~/Library/Application Support is writable, then relaunch. (\(error.localizedDescription))"
             )
         }
     }
+
+    #if DEBUG
+        /// `STUDYBOT_PAIR_URL` and `STUDYBOT_PAIR_CODE` pair this build on launch, so the sandboxed
+        /// app can be checked against a local server without typing into it. Debug only.
+        private func pairFromEnvironmentIfRequested() async {
+            let env = ProcessInfo.processInfo.environment
+            guard let url = env["STUDYBOT_PAIR_URL"], let code = env["STUDYBOT_PAIR_CODE"], let sync,
+                !sync.isPaired
+            else { return }
+            _ = await sync.pair(
+                serverAddress: url, code: code, deviceName: env["STUDYBOT_PAIR_NAME"] ?? "Debug Mac")
+            await assignments?.load()
+        }
+    #endif
 
     /// First run, screen one → Today.
     func continueFromFirstRun() {

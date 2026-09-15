@@ -87,6 +87,18 @@
                 try? await Task.sleep(for: .seconds(1.5))
                 await capture("8-today-again", to: directory)
 
+                // The Settings scene has no programmatic opener the tour can reach, so show the
+                // same view in a plain window for the capture.
+                let settings = NSWindow(
+                    contentViewController: NSHostingController(rootView: SettingsView().environment(model)))
+                settings.title = "Settings"
+                settings.setContentSize(NSSize(width: 620, height: 480))
+                settings.center()
+                settings.makeKeyAndOrderFront(nil)
+                try? await Task.sleep(for: .seconds(1.5))
+                await capture("9-settings", to: directory, preferring: "Settings")
+                settings.close()
+
                 NSApplication.shared.terminate(nil)
             }
         }
@@ -97,18 +109,29 @@
         /// screen, vibrancy and scroll views included, but needs Screen Recording permission for
         /// the shell running the script. Otherwise the window's layer tree is rendered, which
         /// needs no permission but cannot show behind-window blending.
-        private static func capture(_ name: String, to directory: URL) async {
+        /// `preferring` names a window by title (the Settings window) instead of the key one.
+        private static func capture(_ name: String, to directory: URL, preferring title: String? = nil) async
+        {
             if ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_EXTERNAL"] != nil {
-                await waitForExternalCapture(name, in: directory)
+                await waitForExternalCapture(name, in: directory, preferring: title)
             } else {
                 renderLayerTree(name, to: directory)
             }
         }
 
-        private static func waitForExternalCapture(_ name: String, in directory: URL) async {
+        private static func waitForExternalCapture(
+            _ name: String, in directory: URL, preferring title: String?
+        )
+            async
+        {
             let ready = directory.appendingPathComponent("\(name).ready")
             let done = directory.appendingPathComponent("\(name).done")
-            let windowNumber = NSApplication.shared.windows.first(where: { $0.isVisible })?.windowNumber ?? 0
+            let visible = NSApplication.shared.windows.filter(\.isVisible)
+            let titled = title.flatMap { wanted in
+                visible.first { $0.title.localizedCaseInsensitiveContains(wanted) }
+            }
+            let window = titled ?? NSApplication.shared.keyWindow ?? visible.first
+            let windowNumber = window?.windowNumber ?? 0
             try? "\(windowNumber)".write(to: ready, atomically: true, encoding: .utf8)
             for _ in 0..<150 where !FileManager.default.fileExists(atPath: done.path) {
                 try? await Task.sleep(for: .milliseconds(100))

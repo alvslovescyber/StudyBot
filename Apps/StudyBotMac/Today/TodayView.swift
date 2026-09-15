@@ -24,6 +24,14 @@ struct TodayView: View {
                 .sbType(SBType.title)
                 .foregroundStyle(SBColor.textPrimary)
 
+            // The only sync UI outside Settings (§3.4): one quiet line, and only when it matters.
+            if let notice = model.sync?.todayNotice {
+                Text(notice)
+                    .font(.system(size: 12))
+                    .foregroundStyle(SBColor.textTertiary)
+                    .padding(.top, 6)
+            }
+
             if let banner = blockBanner {
                 blockBannerView(banner)
                     .padding(.top, 18)

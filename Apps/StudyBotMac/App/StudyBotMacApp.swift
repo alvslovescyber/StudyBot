@@ -26,6 +26,11 @@ struct StudyBotMacApp: App {
         .commands {
             AppCommands(model: model)
         }
+
+        Settings {
+            SettingsView()
+                .environment(model)
+        }
     }
 
     /// The full range, so the system setting rules, unless a debug snapshot pins one size.
