@@ -16,15 +16,17 @@ extension StudyBotSchemaV1 {
         var seq: Int
         var deletedAt: Date?
         var dirty: Bool
+        var deviceID: String
         /// The whole `Proposal`, encoded by `RecordCoding`.
         var body: Data
         /// Fields from a newer build, encoded by `RecordCoding`. Round-tripped, never dropped.
         var unknownFields: Data?
-        // Index columns, derived from the body on every write.
-        var kind: String
+        // Promoted index columns (§4): the only fields the store can query, sort or filter on.
+        // Derived from the body on every write.
+        var state: String
         var source: String
         var sourceRef: String
-        var state: String
+        var kind: String
         var targetID: UUID?
 
         init(value: Proposal, unknownFields: Data?) throws {
@@ -36,10 +38,11 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
-            kind = value.kind.rawValue
+            deviceID = value.sync.deviceID
+            state = value.state.rawValue
             source = value.source.rawValue
             sourceRef = value.sourceRef
-            state = value.state.rawValue
+            kind = value.kind.rawValue
             targetID = value.targetID
             body = try RecordCoding.encode(value)
             self.unknownFields = unknownFields
@@ -53,10 +56,11 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
-            kind = value.kind.rawValue
+            deviceID = value.sync.deviceID
+            state = value.state.rawValue
             source = value.source.rawValue
             sourceRef = value.sourceRef
-            state = value.state.rawValue
+            kind = value.kind.rawValue
             targetID = value.targetID
             body = try RecordCoding.encode(value)
             self.unknownFields = unknownFields

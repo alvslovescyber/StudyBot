@@ -55,6 +55,12 @@ public struct Module: Syncable {
         self.isArchived = isArchived
     }
 
+    /// The id of the one term this module sits in, derived from `year` and `termNumber`.
+    /// Nil for year-spanning modules.
+    public var termID: UUID? {
+        termNumber.map { Term.stableID(year: year, number: $0) }
+    }
+
     /// The deterministic id for a module code, so both Macs derive the same record.
     public static func stableID(forCode code: String) -> UUID {
         StableID.uuid(namespace: StableID.Namespace.module, name: code.uppercased())

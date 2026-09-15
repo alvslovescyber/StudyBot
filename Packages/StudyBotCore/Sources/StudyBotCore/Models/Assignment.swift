@@ -39,6 +39,10 @@ public struct Assignment: Syncable {
     public var subtasks: [Subtask]
     /// The mandatory-submission event this assignment was created from, if any. Not editable.
     public var programmeEventID: UUID?
+    /// The term the due date falls in, so the Assignments list's current-term scope (§6.2) is
+    /// a column filter. Maintained by whoever sets `dueDate`; nil when there is no due date or
+    /// the date falls in a gap between terms.
+    public var termID: UUID?
     /// The Moodle assignment id once ELE2 ingestion has matched it (§8.1). Seam only in v1.
     public var ele2AssignmentID: String?
 
@@ -62,6 +66,7 @@ public struct Assignment: Syncable {
         feedback: String? = nil,
         subtasks: [Subtask] = [],
         programmeEventID: UUID? = nil,
+        termID: UUID? = nil,
         ele2AssignmentID: String? = nil
     ) {
         self.sync = sync
@@ -83,6 +88,7 @@ public struct Assignment: Syncable {
         self.feedback = feedback
         self.subtasks = subtasks
         self.programmeEventID = programmeEventID
+        self.termID = termID
         self.ele2AssignmentID = ele2AssignmentID
     }
 

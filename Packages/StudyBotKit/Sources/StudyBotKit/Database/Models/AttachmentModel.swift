@@ -16,11 +16,13 @@ extension StudyBotSchemaV1 {
         var seq: Int
         var deletedAt: Date?
         var dirty: Bool
+        var deviceID: String
         /// The whole `Attachment`, encoded by `RecordCoding`.
         var body: Data
         /// Fields from a newer build, encoded by `RecordCoding`. Round-tripped, never dropped.
         var unknownFields: Data?
-        // Index columns, derived from the body on every write.
+        // Promoted index columns (§4): the only fields the store can query, sort or filter on.
+        // Derived from the body on every write.
         var sha256: String?
         var assignmentID: UUID?
         var sessionID: UUID?
@@ -35,6 +37,7 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
+            deviceID = value.sync.deviceID
             sha256 = value.sha256
             assignmentID = value.assignmentID
             sessionID = value.sessionID
@@ -51,6 +54,7 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
+            deviceID = value.sync.deviceID
             sha256 = value.sha256
             assignmentID = value.assignmentID
             sessionID = value.sessionID

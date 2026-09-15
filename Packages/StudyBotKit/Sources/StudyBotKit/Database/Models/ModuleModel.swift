@@ -16,14 +16,18 @@ extension StudyBotSchemaV1 {
         var seq: Int
         var deletedAt: Date?
         var dirty: Bool
+        var deviceID: String
         /// The whole `Module`, encoded by `RecordCoding`.
         var body: Data
         /// Fields from a newer build, encoded by `RecordCoding`. Round-tripped, never dropped.
         var unknownFields: Data?
-        // Index columns, derived from the body on every write.
+        // Promoted index columns (§4): the only fields the store can query, sort or filter on.
+        // Derived from the body on every write.
         var code: String
         var year: Int
+        var termID: UUID?
         var isArchived: Bool
+        var isSpecialismOption: Bool
 
         init(value: Module, unknownFields: Data?) throws {
             id = value.sync.id
@@ -34,9 +38,12 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
+            deviceID = value.sync.deviceID
             code = value.code
             year = value.year
+            termID = value.termID
             isArchived = value.isArchived
+            isSpecialismOption = value.isSpecialismOption
             body = try RecordCoding.encode(value)
             self.unknownFields = unknownFields
         }
@@ -49,9 +56,12 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
+            deviceID = value.sync.deviceID
             code = value.code
             year = value.year
+            termID = value.termID
             isArchived = value.isArchived
+            isSpecialismOption = value.isSpecialismOption
             body = try RecordCoding.encode(value)
             self.unknownFields = unknownFields
         }

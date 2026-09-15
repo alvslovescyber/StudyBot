@@ -52,17 +52,22 @@ public struct ProgrammeCalendarService: Sendable {
         let reading = try ICSProgrammeCalendarReader.read(data, importedAt: now)
         var summary = Summary(issues: reading.issues)
 
-        // Events
+        // Events, then terms derived from them, then each event stamped with its term.
         let existing = try await store.programmeEvents(includeCancelled: true)
         let outcome = ProgrammeCalendarImporter.merge(existing: existing, incoming: reading.events, now: now)
-        try await store.saveProgrammeEvents(outcome.events)
+        let calendar = TermCalendar(events: outcome.events, derivedAt: now)
+        let events = outcome.events.map { event in
+            var stamped = event
+            stamped.termID = calendar.term(containing: LocalDay(event.startDate))?.id
+            return stamped
+        }
+        try await store.saveProgrammeEvents(events)
         summary.eventsAdded = outcome.added.count
         summary.eventsUpdated = outcome.updated.count
         summary.eventsCancelled = outcome.cancelled.count
         summary.eventsRestored = outcome.restored.count
 
         // Terms
-        let calendar = TermCalendar(events: outcome.events, derivedAt: now)
         let storedTerms = Dictionary(
             uniqueKeysWithValues: try await store.fetchAll(Term.self, includeDeleted: true).map {
                 ($0.id, $0.value)
@@ -102,12 +107,14 @@ public struct ProgrammeCalendarService: Sendable {
             }
         }
         var assignmentsToSave: [Assignment] = []
-        for stub in AssignmentStubs.stubs(for: outcome.events, modules: allModules, now: now) {
+        for var stub in AssignmentStubs.stubs(for: events, modules: allModules, now: now) {
             guard let eventID = stub.programmeEventID else { continue }
+            stub.termID = stub.dueDate.flatMap { calendar.term(containing: LocalDay($0))?.id }
             if var current = byEvent[eventID] {
                 let moved = current.dueDate.map { LocalDay($0) } != stub.dueDate.map { LocalDay($0) }
                 if moved, !current.fieldOverrides.contains("dueDate") {
                     current.dueDate = stub.dueDate
+                    current.termID = stub.termID
                     current.sync.markEdited(at: now)
                     assignmentsToSave.append(current)
                     summary.assignmentsRescheduled += 1

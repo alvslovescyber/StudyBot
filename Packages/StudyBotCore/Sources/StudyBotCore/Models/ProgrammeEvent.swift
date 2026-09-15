@@ -28,6 +28,9 @@ public struct ProgrammeEvent: Identifiable, Codable, Hashable, Sendable {
     public var cancelledAt: Date?
     /// When the importer last saw this event in a calendar file.
     public var lastImportedAt: Date
+    /// The term this event belongs to, set by the importer from `TermCalendar`. Nil for
+    /// events in the gaps between terms (bank holidays, closures, the summer reading weeks).
+    public var termID: UUID?
 
     public init(
         id: UUID? = nil,
@@ -38,7 +41,8 @@ public struct ProgrammeEvent: Identifiable, Codable, Hashable, Sendable {
         moduleCodes: [String],
         sourceUID: String,
         cancelledAt: Date? = nil,
-        lastImportedAt: Date
+        lastImportedAt: Date,
+        termID: UUID? = nil
     ) {
         self.id = id ?? ProgrammeEvent.stableID(forSourceUID: sourceUID)
         self.startDate = startDate
@@ -49,6 +53,7 @@ public struct ProgrammeEvent: Identifiable, Codable, Hashable, Sendable {
         self.sourceUID = sourceUID
         self.cancelledAt = cancelledAt
         self.lastImportedAt = lastImportedAt
+        self.termID = termID
     }
 
     /// The deterministic id for an ICS UID, so every device derives the same record.

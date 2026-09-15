@@ -14,6 +14,7 @@ extension StudyBotSchemaV1 {
         var kind: String
         var cancelledAt: Date?
         var lastImportedAt: Date
+        var termID: UUID?
         /// The whole `ProgrammeEvent`, encoded by `RecordCoding`.
         var body: Data
 
@@ -25,6 +26,7 @@ extension StudyBotSchemaV1 {
             kind = value.kind.rawValue
             cancelledAt = value.cancelledAt
             lastImportedAt = value.lastImportedAt
+            termID = value.termID
             body = try RecordCoding.encode(value)
         }
 
@@ -34,6 +36,7 @@ extension StudyBotSchemaV1 {
             kind = value.kind.rawValue
             cancelledAt = value.cancelledAt
             lastImportedAt = value.lastImportedAt
+            termID = value.termID
             body = try RecordCoding.encode(value)
         }
 

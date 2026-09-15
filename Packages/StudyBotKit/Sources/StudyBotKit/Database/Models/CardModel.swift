@@ -16,14 +16,16 @@ extension StudyBotSchemaV1 {
         var seq: Int
         var deletedAt: Date?
         var dirty: Bool
+        var deviceID: String
         /// The whole `Card`, encoded by `RecordCoding`.
         var body: Data
         /// Fields from a newer build, encoded by `RecordCoding`. Round-tripped, never dropped.
         var unknownFields: Data?
-        // Index columns, derived from the body on every write.
-        var deckID: UUID
+        // Promoted index columns (§4): the only fields the store can query, sort or filter on.
+        // Derived from the body on every write.
         var dueDate: Date
         var box: Int
+        var deckID: UUID
 
         init(value: Card, unknownFields: Data?) throws {
             id = value.sync.id
@@ -34,9 +36,10 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
-            deckID = value.deckID
+            deviceID = value.sync.deviceID
             dueDate = value.dueDate
             box = value.box
+            deckID = value.deckID
             body = try RecordCoding.encode(value)
             self.unknownFields = unknownFields
         }
@@ -49,9 +52,10 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
-            deckID = value.deckID
+            deviceID = value.sync.deviceID
             dueDate = value.dueDate
             box = value.box
+            deckID = value.deckID
             body = try RecordCoding.encode(value)
             self.unknownFields = unknownFields
         }

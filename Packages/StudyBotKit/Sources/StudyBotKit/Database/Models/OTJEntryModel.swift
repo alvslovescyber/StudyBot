@@ -16,12 +16,16 @@ extension StudyBotSchemaV1 {
         var seq: Int
         var deletedAt: Date?
         var dirty: Bool
+        var deviceID: String
         /// The whole `OTJEntry`, encoded by `RecordCoding`.
         var body: Data
         /// Fields from a newer build, encoded by `RecordCoding`. Round-tripped, never dropped.
         var unknownFields: Data?
-        // Index columns, derived from the body on every write.
+        // Promoted index columns (§4): the only fields the store can query, sort or filter on.
+        // Derived from the body on every write.
         var date: Date
+        var category: String
+        var assignmentID: UUID?
         var sessionID: UUID?
         var isSubmittedToProvider: Bool
 
@@ -34,7 +38,10 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
+            deviceID = value.sync.deviceID
             date = value.date
+            category = value.category.rawValue
+            assignmentID = value.assignmentID
             sessionID = value.sessionID
             isSubmittedToProvider = value.isSubmittedToProvider
             body = try RecordCoding.encode(value)
@@ -49,7 +56,10 @@ extension StudyBotSchemaV1 {
             seq = value.sync.seq
             deletedAt = value.sync.deletedAt
             dirty = value.sync.dirty
+            deviceID = value.sync.deviceID
             date = value.date
+            category = value.category.rawValue
+            assignmentID = value.assignmentID
             sessionID = value.sessionID
             isSubmittedToProvider = value.isSubmittedToProvider
             body = try RecordCoding.encode(value)
