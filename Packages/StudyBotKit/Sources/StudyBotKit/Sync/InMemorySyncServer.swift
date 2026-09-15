@@ -70,8 +70,9 @@ public actor InMemorySyncServer: SyncTransport {
             case .accept(let replacing):
                 let archivedAs = replacing.map { archiveRecord($0.wireRecord) }
                 let stored = store(
-                    incoming, from: SyncMerge.writer(of: incoming, pushedBy: request.deviceID), over: existing
-                )
+                    incoming, from: SyncMerge.writer(of: incoming, pushedBy: request.deviceID),
+                    over: existing,
+                    replacing: archivedAs)
                 accepted.append(
                     SyncAccepted(
                         id: stored.id, version: stored.version, seq: stored.seq, archivedAs: archivedAs))
@@ -122,9 +123,10 @@ public actor InMemorySyncServer: SyncTransport {
 
     /// Merges the pushed fields into what the server holds (absent keys unchanged, null
     /// clears) and assigns the next version and seq.
-    private func store(_ incoming: SyncRecord, from deviceID: String, over existing: ServerRecordState?)
-        -> ServerRecordState
-    {
+    private func store(
+        _ incoming: SyncRecord, from deviceID: String, over existing: ServerRecordState?,
+        replacing archivedAs: String?
+    ) -> ServerRecordState {
         var fields = existing?.fields ?? [:]
         for (key, value) in incoming.fields {
             if value.isNull { fields.removeValue(forKey: key) } else { fields[key] = value }
@@ -132,7 +134,8 @@ public actor InMemorySyncServer: SyncTransport {
         headSeq += 1
         let stored = ServerRecordState(
             type: incoming.type, id: incoming.id, version: (existing?.version ?? 0) + 1, seq: headSeq,
-            updatedAt: incoming.updatedAt, deletedAt: incoming.deletedAt, deviceID: deviceID, fields: fields)
+            updatedAt: incoming.updatedAt, deletedAt: incoming.deletedAt, deviceID: deviceID, fields: fields,
+            replacedArchiveID: archivedAs)
         records[incoming.id] = stored
         return stored
     }

@@ -27,6 +27,10 @@ public struct SyncRecord: Codable, Hashable, Sendable {
     /// present on records the server returns, so a client can run the same tie-break the
     /// server ran when a pulled change meets a local edit it has not pushed yet (§4).
     public var deviceID: String?
+    /// Server to client only: when this version overrode a concurrent edit by last-write-wins,
+    /// the archive id of the version it replaced (§3.5 `archivedAs`). A Mac whose own write
+    /// was the one replaced uses it to keep the loser locally and say so on the record.
+    public var archivedAs: String?
 
     public init(
         type: String,
@@ -37,7 +41,8 @@ public struct SyncRecord: Codable, Hashable, Sendable {
         fields: [String: JSONValue],
         version: Int? = nil,
         seq: Int? = nil,
-        deviceID: String? = nil
+        deviceID: String? = nil,
+        archivedAs: String? = nil
     ) {
         self.type = type
         self.id = id
@@ -48,6 +53,7 @@ public struct SyncRecord: Codable, Hashable, Sendable {
         self.version = version
         self.seq = seq
         self.deviceID = deviceID
+        self.archivedAs = archivedAs
     }
 
     /// Whether this record is a tombstone.

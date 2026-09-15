@@ -10,6 +10,9 @@ import SwiftData
 struct SyncApplier {
     let context: ModelContext
     let now: Date
+    /// This Mac, so a clean local version this Mac wrote that the server then overrode can be
+    /// kept as a loser here too, not only in the server's archive.
+    let deviceID: String
 
     /// Acknowledgements for pushed records. `pushed` supplies the `updatedAt` each was pushed
     /// with, so an edit made during the push keeps the record dirty.
@@ -35,13 +38,22 @@ struct SyncApplier {
                 summary.unknownTypes.insert(change.type)
                 continue
             }
-            if let local = try operations.metadata(id: change.id, in: context), local.dirty {
-                if SyncMerge.localEditWins(local: local, over: change) {
-                    summary.keptLocal += 1
-                    continue
-                }
-                if let losing = try operations.wireRecord(id: change.id, in: context) {
-                    try archive(losing, replacedBy: change, serverArchiveID: archiveIDs[change.id])
+            if let local = try operations.metadata(id: change.id, in: context) {
+                if local.dirty {
+                    if SyncMerge.localEditWins(local: local, over: change) {
+                        summary.keptLocal += 1
+                        continue
+                    }
+                    if let losing = try operations.wireRecord(id: change.id, in: context) {
+                        try archive(losing, replacedBy: change, serverArchiveID: archiveIDs[change.id])
+                        summary.losersArchived += 1
+                    }
+                } else if change.archivedAs != nil, local.deviceID == deviceID, change.deviceID != deviceID,
+                    let losing = try operations.wireRecord(id: change.id, in: context)
+                {
+                    // Our accepted write was overridden by a concurrent edit elsewhere. The server
+                    // archived it; keep it here as well so the record can say so.
+                    try archive(losing, replacedBy: change, serverArchiveID: change.archivedAs)
                     summary.losersArchived += 1
                 }
             }

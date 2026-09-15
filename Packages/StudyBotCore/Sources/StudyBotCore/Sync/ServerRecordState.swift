@@ -14,10 +14,12 @@ public struct ServerRecordState: Codable, Hashable, Sendable {
     public var deviceID: String
     /// Every field of the record as last written, known or not to any particular build.
     public var fields: [String: JSONValue]
+    /// The archive id of the version this one overrode by last-write-wins, if it did.
+    public var replacedArchiveID: String?
 
     public init(
         type: String, id: UUID, version: Int, seq: Int, updatedAt: Date, deletedAt: Date? = nil,
-        deviceID: String, fields: [String: JSONValue]
+        deviceID: String, fields: [String: JSONValue], replacedArchiveID: String? = nil
     ) {
         self.type = type
         self.id = id
@@ -27,6 +29,7 @@ public struct ServerRecordState: Codable, Hashable, Sendable {
         self.deletedAt = deletedAt
         self.deviceID = deviceID
         self.fields = fields
+        self.replacedArchiveID = replacedArchiveID
     }
 
     /// The state as a wire record for `changes`: `baseVersion` is the version itself, since
@@ -34,7 +37,7 @@ public struct ServerRecordState: Codable, Hashable, Sendable {
     public var wireRecord: SyncRecord {
         SyncRecord(
             type: type, id: id, baseVersion: version, updatedAt: updatedAt, deletedAt: deletedAt,
-            fields: fields, version: version, seq: seq, deviceID: deviceID)
+            fields: fields, version: version, seq: seq, deviceID: deviceID, archivedAs: replacedArchiveID)
     }
 
     /// The metadata `LastWriteWins` compares.

@@ -120,7 +120,8 @@ public actor SyncEngine {
                 let request = SyncPushRequest(
                     schemaVersion: schemaVersion, deviceID: deviceID, cursor: cursor, records: batch)
                 let response = try await transport.push(request, token: token)
-                let summary = try await database.applyPushResponse(response, pushed: batch, now: now())
+                let summary = try await database.applyPushResponse(
+                    response, pushed: batch, deviceID: deviceID, now: now())
                 pushed += response.accepted.count
                 pulled += summary.applied
                 regressed = summary.cursorRegressed
@@ -132,7 +133,7 @@ public actor SyncEngine {
                 let response = try await transport.pull(
                     since: cursor, limit: SyncPullResponse.pageSize, schemaVersion: schemaVersion,
                     token: token)
-                let summary = try await database.applyPullResponse(response, now: now())
+                let summary = try await database.applyPullResponse(response, deviceID: deviceID, now: now())
                 pulled += summary.applied
                 hasMore = response.hasMore
                 regressed = summary.cursorRegressed

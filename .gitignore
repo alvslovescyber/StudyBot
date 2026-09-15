@@ -3,6 +3,8 @@
 .swiftpm/
 Package.resolved
 !Packages/**/Package.resolved
+# The server pins its four dependencies (§3.10): the lockfile is reviewed on update.
+!Server/Package.resolved
 
 # Xcode
 DerivedData/

@@ -49,12 +49,12 @@ extension Database {
     // MARK: Incoming
 
     /// Applies a push response: acknowledgements, then changes, then the cursor. One save.
-    public func applyPushResponse(_ response: SyncPushResponse, pushed: [SyncRecord], now: Date) throws
-        -> SyncApplication
-    {
+    public func applyPushResponse(
+        _ response: SyncPushResponse, pushed: [SyncRecord], deviceID: String, now: Date
+    ) throws -> SyncApplication {
         var state = try syncState()
         var summary = SyncApplication(cursor: state.cursor)
-        let applier = SyncApplier(context: modelContext, now: now)
+        let applier = SyncApplier(context: modelContext, now: now, deviceID: deviceID)
         try applier.acknowledge(response.accepted, pushed: pushed)
         try applier.apply(changes: response.changes, conflicts: response.conflicts, into: &summary)
         try applier.advanceCursor(to: response.cursor, state: &state, summary: &summary)
@@ -64,10 +64,12 @@ extension Database {
     }
 
     /// Applies a page of pulled changes and the cursor. One save.
-    public func applyPullResponse(_ response: SyncPullResponse, now: Date) throws -> SyncApplication {
+    public func applyPullResponse(_ response: SyncPullResponse, deviceID: String, now: Date) throws
+        -> SyncApplication
+    {
         var state = try syncState()
         var summary = SyncApplication(cursor: state.cursor)
-        let applier = SyncApplier(context: modelContext, now: now)
+        let applier = SyncApplier(context: modelContext, now: now, deviceID: deviceID)
         try applier.apply(changes: response.changes, conflicts: [], into: &summary)
         try applier.advanceCursor(to: response.cursor, state: &state, summary: &summary)
         try writeSyncState(state)

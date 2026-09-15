@@ -95,6 +95,10 @@ struct SyncEngineTests {
         let archived = await server.archivedRecords
         #expect(archived.count == 1)
         #expect(archived.first?.record.fields["title"] == "A's wording")
+        // A learns its accepted write was overridden and keeps the loser too.
+        let onA = try await macA.database.conflictLosers(for: id)
+        #expect(onA.first?.record.fields["title"] == "A's wording")
+        #expect(onA.first?.serverArchiveID == archived.first?.id)
     }
 
     @Test("a same-millisecond tie resolves to the lower deviceID on both Macs, whichever syncs first")
@@ -113,15 +117,16 @@ struct SyncEngineTests {
             #expect(try await macB.title(id) == "A at the same instant", "first to sync: \(firstToSync)")
             #expect(try await macA.dirtyCount() == 0)
             #expect(try await macB.dirtyCount() == 0)
-            // B's version is retrievable: on the server always, and on B when B lost on push.
+            // B's version is retrievable on the server and on B, whether B lost on its push or
+            // had its accepted write overridden afterwards.
             let archived = await server.archivedRecords
             #expect(archived.count == 1)
             #expect(archived.first?.record.fields["title"] == "B at the same instant")
-            if firstToSync == "a-air" {
-                #expect(
-                    try await macB.database.conflictLosers(for: id).first?.record.fields["title"]
-                        == "B at the same instant")
-            }
+            let losers = try await macB.database.conflictLosers(for: id)
+            #expect(losers.count == 1, "first to sync: \(firstToSync)")
+            #expect(losers.first?.record.fields["title"] == "B at the same instant")
+            #expect(losers.first?.serverArchiveID == archived.first?.id)
+            #expect(try await macA.database.conflictLosers(for: id).isEmpty, "the winner archives nothing")
         }
     }
 
