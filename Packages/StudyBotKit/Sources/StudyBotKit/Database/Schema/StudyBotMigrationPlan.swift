@@ -2,21 +2,25 @@ import SwiftData
 
 /// The ordered list of schema versions and the stages between them (§16 "Migrations").
 ///
-/// There is one version today, so there are no stages. The plan exists now so that adding
-/// V2 is "append a schema and a stage", not "introduce migrations into a store that already
-/// holds a year of notes". `MigrationTests` loads a store written by the previous version.
+/// V1 shipped with milestone two; V2 adds the sync engine's two local tables. Every new
+/// version appends a schema and a stage here and a test in `MigrationTests` that opens a
+/// store written by the previous version.
 enum StudyBotMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [StudyBotSchemaV1.self]
+        [StudyBotSchemaV1.self, StudyBotSchemaV2.self]
     }
 
     static var stages: [MigrationStage] {
-        []
+        [migrateV1toV2]
     }
+
+    /// Two tables added, nothing changed: lightweight.
+    static let migrateV1toV2 = MigrationStage.lightweight(
+        fromVersion: StudyBotSchemaV1.self, toVersion: StudyBotSchemaV2.self)
 
     /// The schema this build reads and writes.
     static var current: any VersionedSchema.Type {
-        StudyBotSchemaV1.self
+        StudyBotSchemaV2.self
     }
 }
 
@@ -37,3 +41,5 @@ typealias AttachmentModel = StudyBotSchemaV1.AttachmentModel
 typealias AIRunModel = StudyBotSchemaV1.AIRunModel
 typealias ProgrammeEventModel = StudyBotSchemaV1.ProgrammeEventModel
 typealias NoteRevisionModel = StudyBotSchemaV1.NoteRevisionModel
+typealias ConflictLoserModel = StudyBotSchemaV2.ConflictLoserModel
+typealias SyncStateModel = StudyBotSchemaV2.SyncStateModel
