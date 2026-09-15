@@ -54,4 +54,14 @@ public struct Session: Syncable {
     public var hasNotes: Bool {
         !liveNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+
+    /// The id both Macs derive for the notes of one programme event on one day, so two Macs
+    /// opening the same session offline create the same record rather than two.
+    public static func stableID(eventSourceUID: String, dayISO: String) -> UUID {
+        StableID.uuid(namespace: StableID.Namespace.session, name: "\(eventSourceUID)#\(dayISO)")
+    }
+
+    /// §4 "What counts as attended": notes with content, or explicitly marked. (An off-the-job
+    /// entry linked to the session also counts; the caller checks that.)
+    public var countsAsAttended: Bool { hasNotes || markedAttended }
 }

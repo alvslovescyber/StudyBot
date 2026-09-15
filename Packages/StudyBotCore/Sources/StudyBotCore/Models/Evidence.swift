@@ -23,6 +23,10 @@ public struct Evidence: Syncable {
     public var sessionID: UUID?
     /// What went well, what you'd change.
     public var reflection: String?
+    /// KSB codes typed before the official list exists (§14, question 3). Kept as text so a
+    /// capture never waits on data Exeter has not issued; resolved into `ksbIDs` when the
+    /// list is imported.
+    public var pendingKSBCodes: [String]
 
     public init(
         sync: SyncMetadata,
@@ -35,7 +39,8 @@ public struct Evidence: Syncable {
         otjEntryID: UUID? = nil,
         assignmentID: UUID? = nil,
         sessionID: UUID? = nil,
-        reflection: String? = nil
+        reflection: String? = nil,
+        pendingKSBCodes: [String] = []
     ) {
         self.sync = sync
         self.title = title
@@ -48,5 +53,6 @@ public struct Evidence: Syncable {
         self.assignmentID = assignmentID
         self.sessionID = sessionID
         self.reflection = reflection
+        self.pendingKSBCodes = pendingKSBCodes
     }
 }
