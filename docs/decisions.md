@@ -217,3 +217,59 @@ what `UnknownFieldPreservationTests` exercises, on disk and across a reopen.
 would tie under second precision, and a store round trip through the wire format would
 silently change a timestamp. The store itself uses seconds-since-1970 doubles for the same
 reason.
+
+## 2026-09-15 · Dark mode from milestone three, not "light only in v1"
+
+**Spec said (§9):** "Light mode only in v1."
+
+**Decision:** every colour token is adaptive. The light values are §9 verbatim; the dark values
+are the same palette re-pitched for a dark canvas (`SBColor`). Module colours are mid-tone and
+do not change. Pinned by `TokenTests` under both appearances.
+
+**Why:** Alvis's Macs run dark, and a light-only app drew light tokens over a dark window, which
+looked broken on first sight (15 Sep 2026). Following the system appearance is cheaper than
+explaining why the app does not.
+
+## 2026-09-15 · The sidebar is our own view, not NavigationSplitView
+
+**Spec said (§9):** `NavigationSplitView` "gives this by default".
+
+**Decision:** `RootView` is an `HStack`: a fixed-width `SidebarChrome` (228pt, or the 56pt rail)
+over an `NSVisualEffectView` with the `.sidebar` material and `.behindWindow` blending, a
+hairline, then the opaque content pane. `⌥⌘S` toggles the width with the segmented-control spring.
+
+**Why:** `NavigationSplitView` sized the sidebar itself, ignoring the requested width and
+squeezing it when the detail panel opened. The spec's intent is Finder's sidebar at a known
+width; owning the layout is the only way to guarantee it.
+
+## 2026-09-15 · No em dashes anywhere in the interface
+
+**Spec copy used them** ("StudyBot — your programme is already loaded.", "… — show all").
+
+**Decision:** none in user-visible text. Sentences end and start instead ("Your programme is
+already loaded.", "27 more submissions in later terms. Show all"). Empty cells draw nothing
+rather than a dash. Date ranges keep the en dash ("22–24 Sept"), which is punctuation for a
+range, not a pause.
+
+**Why:** Alvis asked for it, 15 Sep 2026. It also reads cleaner in a Linear/Notion register.
+
+## 2026-09-15 · Today is not a ScrollView yet
+
+**Observation:** in the debug snapshot tour, Today rendered blank whenever its content sat in a
+`ScrollView`, in every arrangement tried, while the Assignments list's `ScrollView` rendered
+fine. Without the scroll view it renders correctly.
+
+**Decision:** Today is a plain column until it has enough content to need scrolling. Before
+adding the scroll view back, confirm with a real screen capture (Screen Recording permission)
+whether the blank is a rendering fault or an artefact of the layer-tree capture.
+
+## 2026-09-15 · A debug snapshot tour instead of screen recording
+
+**Decision:** `SnapshotTour` (DEBUG only) walks the app when launched with
+`STUDYBOT_SNAPSHOT_DIR`, writing a PNG per step by rendering the window's layer tree, in light
+or dark via `STUDYBOT_SNAPSHOT_APPEARANCE`. `docs/screenshots` holds the latest set.
+
+**Why:** the build must be judged against the real import (milestone-three brief), and
+screen-recording permission is not available to a build launched from a terminal. Layer
+rendering needs no permission. Its limits: behind-window vibrancy shows as flat `canvas`, and
+the Today question above.

@@ -22,8 +22,8 @@ single source of truth; this README only tells you how to run things.
 Packages/
   StudyBotCore/   shared between app and server: models, DTOs, sync envelope, validation
   StudyBotKit/    client only, no UI: importers, scheduling (WorkingDays, TermCalendar), support
-  StudyBotUI/     design system primitives                       (later milestone)
-Apps/StudyBotMac/ views and app lifecycle, nothing else          (later milestone)
+  StudyBotUI/     design system: §9 tokens and primitives
+Apps/StudyBotMac/ views and app lifecycle, nothing else (project.yml → XcodeGen)
 Server/           Vapor server                                   (later milestone)
 Tools/seed/       ICS → programme-calendar.json                  (later milestone)
 ```
@@ -104,6 +104,44 @@ next on 23 May 2029, and a "long gap means new term" rule would cut that term in
 module-set rule survives it because both sides of the gap carry the same modules.
 `TermCalendarTests` pins all nine boundaries, so the test suite will say so too.
 
+## What milestone three built
+
+The first thing you can look at. Screenshots of the real first run, light and dark, are in
+`docs/screenshots`.
+
+- **StudyBotUI**: §9 tokens verbatim (adaptive for dark mode) and the primitives: `Btn`,
+  `ListRow`, `SectionHeader`, `StatusIcon`, `PriorityBars`, `ModuleChip`, `DueDateLabel`,
+  `GradeBadge`, `ProgressBar`, `EmptyState`, `Chip`, and the input and card styles.
+- **The Mac app** (`Apps/StudyBotMac`, generated into an Xcode project by XcodeGen): first run
+  per §6.0 with the real numbers, a 228pt vibrancy sidebar that collapses to a 56pt rail on
+  `⌥⌘S`, Today with the block banner and the next deadline, and the Assignments screen per
+  §6.2: grouped by status, 38pt rows, current-term scope with the hidden-count footer, module
+  filter, and a detail panel with edit mode (`⌘E`, `⌘S`, `⎋`, discard confirmation).
+- **Under the screen**: `AssignmentStore` (scope, grouping, explicit save with field
+  ownership), `LastWriteWins` with the deterministic device tie-break, partial-field merging,
+  and every index column §6 needs promoted in the store.
+
+### Running the app
+
+```bash
+xcodegen generate
+```
+
+```bash
+open StudyBot.xcodeproj
+```
+
+Or build and launch from the terminal:
+
+```bash
+xcodebuild -project StudyBot.xcodeproj -scheme StudyBotMac -configuration Debug -derivedDataPath .build/DerivedData CODE_SIGN_IDENTITY=- build && open .build/DerivedData/Build/Products/Debug/StudyBot.app
+```
+
+The store lives in the app's sandbox container under `Library/Application Support/StudyBot`.
+To judge a build without screen recording, launch with `STUDYBOT_SNAPSHOT_DIR=<folder inside
+the container>` and optionally `STUDYBOT_SNAPSHOT_APPEARANCE=light|dark`; a PNG per screen is
+written and the app quits.
+
 ## Requirements
 
 - macOS 15 or later.
@@ -111,8 +149,8 @@ module-set rule survives it because both sides of the gap carry the same modules
   Command Line Tools **plus** a swift.org toolchain from <https://www.swift.org/install/macos/>.
   Apple's Command Line Tools alone build the packages but cannot load the Swift Testing
   framework at test time. The Mac app and the SwiftData store (later milestones) need full Xcode.
-- Optional locally, required in CI: `brew install swiftlint`. `swift-format` ships with
-  the toolchain and is run as `xcrun swift-format`.
+- Optional locally, required in CI: `brew install swiftlint xcodegen`. `swift-format` ships
+  with the toolchain and is run as `xcrun swift-format`.
 
 ## Build and test
 
