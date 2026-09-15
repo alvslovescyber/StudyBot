@@ -385,7 +385,7 @@ Enough to sleep, not so much it eats the build. The bar below is the required mi
 | `WorkingDays` | Excludes bank holidays, closures and campus days; counts across a term boundary; returns 0 rather than negative for a past date | Unit |
 | `TermCalendar` | Correct term for any date in the three years; days-to-next-block; week-of-term; behaviour in the gap between terms | Unit |
 | `DeadlineDensity` | Detects the 1–20 July 2027 cluster from a date in October 2026; does not fire on two spaced submissions | Unit |
-| Sync merge | Clean push; clean pull; conflicting edit resolves to later `updatedAt`; loser is archived; tombstone propagates; cursor paginates past 500 records; a replayed push is idempotent | Unit |
+| Sync merge | Clean push; clean pull; conflicting edit resolves to later `updatedAt`; an exact `updatedAt` tie resolves identically on both clients via `deviceID`; loser is archived; tombstone propagates; cursor paginates past 500 records; a replayed push is idempotent | Unit |
 | Sync engine | Interrupted mid-push leaves no partial state; resumes from the last cursor; never runs twice concurrently; offline produces no user-facing error | Data-safety |
 | Two-client convergence | Two simulated clients edit different records offline, both converge; both edit the same record, one wins and the loser is retrievable | Data-safety |
 | Confidentiality guard | Content flagged confidential never appears in an assembled prompt, through any code path; the server rejects a flagged payload with 422 | Unit + Integration |
@@ -443,6 +443,12 @@ Written down because a three-year solo project is really you collaborating with 
 **These are defined as value types (`struct`) in `StudyBotCore`**, because the same definitions compile into the Vapor server, which cannot use SwiftData. Relationships between value types are held as IDs, not nested objects — a struct cannot own a two-way object graph.
 
 `StudyBotKit` wraps them in SwiftData `@Model` classes for local storage, converting to and from the Core structs at that boundary. SwiftData relationships there are bidirectional with explicit inverses. Nothing outside `StudyBotKit` knows SwiftData exists.
+
+**Storage shape.** Each persisted row holds: the eight sync fields as real columns, a small set of promoted index columns, the whole Core value encoded as a JSON `body`, and an `unknownFields` blob. There are no SwiftData relationship properties and no inverses — relationships are id columns, as they are in Core.
+
+The body is the record; index columns are derived from it on every write. This means adding a field to a Core struct needs no SwiftData migration, which over three years of revisions matters more than object-graph convenience. Cascading deletion (§16) is explicit code in the stores where it can be tested, rather than implicit SwiftData behaviour.
+
+The cost, stated plainly: you can only query, sort or filter on a promoted column. Promoting one later is a migration, and it will want doing mid-feature when nobody has time. So promote everything a specified screen needs before building that screen, not when the query fails. The list is knowable from §6 in every case.
 
 **Every syncable model carries the same eight fields**, defined once in `StudyBotCore` and not repeated in each listing below:
 
@@ -765,6 +771,8 @@ Silent bugs live here. All of it is fixed, not configurable.
 - **Weeks start Monday.** Every "this week" calculation, the off-the-job weekly target, and the Sunday review all run Monday 00:00 to Sunday 23:59.
 - **Programme events are all-day and date-only.** Never given a time, never converted through a timezone. Store as `Date` at local midnight and compare by calendar day, not by interval.
 - **The ICS `DTEND` on all-day events is exclusive.** A `DTSTART:20260923 / DTEND:20260925` event runs 23–24 September, not 23–25. This caught me parsing the real file; get it wrong and every block is a day too long.
+- `updatedAt` keeps milliseconds when it has them. It decides last-write-wins, and two edits a second apart on two Macs would otherwise tie. Whole-second dates still encode exactly as the §3.5 example shows, so the wire format is unchanged for them.
+- Ties break deterministically on `deviceID`, lexicographically, lower wins. Two edits can still land in the same millisecond, and worse, the two Macs' clocks will drift — `updatedAt` is client wall clock, so a machine running 400ms fast can win an exchange it should have lost. Neither problem is worth solving properly for one user, but both Macs must reach the same answer. A tie resolved differently on each machine is how a record ends up permanently disagreeing with itself, and that failure is very hard to see and very hard to undo.
 - **British Summer Time changes twice a year during term.** Anything scheduled by wall-clock time (the 07:00 Monday prep, the 18:00 Sunday review) must be scheduled in local wall-clock terms, not as a fixed UTC offset, or it drifts by an hour twice a year.
 - Dates are formatted only at the edge, through `RelativeDate`: under 14 days relative ("in 11 days"), beyond that absolute ("15 Oct"), and the year shown only when it isn't the current one.
 - **Working days** exclude weekends, bank holidays, closures and on-campus days — all read from the programme calendar, never hardcoded.
@@ -1509,6 +1517,14 @@ Rules: colour never carries meaning alone — every status has an icon and a lab
 - **SF Pro** for interface. Native on both platforms, correct on iOS, and avoids bundling a webfont.
 - **New York** for the reading view of structured notes and long-form draft text. Apple's serif, available system-wide, and it makes a 2,500-word draft read like a document rather than a UI.
 - **SF Mono** for code blocks, the command palette input, and numeric data that should align in columns (hours, KSB codes). **Never for prose.** Live notes are sans-serif — monospace reads as a terminal and makes handwriting-speed capture feel like programming.
+
+Every size below is a base value at the default text size, not an absolute. §16 requires Dynamic Type up to the largest accessibility sizes, and a fixed point size cannot satisfy that — this was a contradiction between §9 and §16 and this paragraph resolves it in §16's favour.
+
+`SBType` exposes each role through a scaling function driven by the current Dynamic Type category (`@ScaledMetric` or equivalent). Anything that must stay in proportion to text scales with it: row heights, the 20pt sidebar icon frame, chip padding, button padding, the measure caps, and the gap between an icon and its label.
+
+What does not scale: hairline borders stay 1px, module dots stay 6pt, the term strip's marks stay fixed, and the sidebar's collapsed rail stays 56pt. These are graphic elements rather than text, and growing them makes the interface coarse rather than readable.
+
+At the largest accessibility sizes, dense rows are allowed to become two lines rather than truncating. A row that clips is a failure; a row that grows is not.
 
 Scale, in points:
 
