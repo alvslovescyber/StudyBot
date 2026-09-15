@@ -15,12 +15,25 @@ public enum RecordFields {
 
     /// The wire `fields` for a stored record: known fields merged with unknown ones. Unknown
     /// fields never overwrite a known key.
+    ///
+    /// A known optional that is nil is sent as an explicit `null`. The server merges pushed
+    /// fields into what it holds, so an omitted key means "unchanged"; only a null means
+    /// "cleared". Without this, clearing a grade locally could never clear it on the server.
     public static func fields<T: Persistable>(of record: StoredRecord<T>) throws -> [String: JSONValue] {
         var fields = try knownFields(of: record.value)
+        for name in propertyNames(of: record.value) where name != syncKey && fields[name] == nil {
+            fields[name] = .null
+        }
         for (key, value) in record.unknownFields where fields[key] == nil {
             fields[key] = value
         }
         return fields
+    }
+
+    /// Every stored property of the value, nil optionals included. Core models use synthesized
+    /// `Codable`, so property names are wire names.
+    static func propertyNames<T>(of value: T) -> [String] {
+        Mirror(reflecting: value).children.compactMap(\.label)
     }
 
     /// The fields of a value as JSON, without `sync`.
