@@ -103,6 +103,23 @@ struct SyncDTOTests {
         #expect(record.isDeleted)
     }
 
+    @Test("wire dates keep milliseconds when present and stay plain when not")
+    func datePrecision() throws {
+        let whole = Date(timeIntervalSince1970: 1_790_970_250)
+        let fractional = Date(timeIntervalSince1970: 1_790_970_250.25)
+        #expect(SyncCoding.string(from: whole) == "2026-10-02T19:44:10Z")
+        #expect(SyncCoding.string(from: fractional) == "2026-10-02T19:44:10.250Z")
+        #expect(SyncCoding.date(from: "2026-10-02T19:44:10Z") == whole)
+        #expect(SyncCoding.date(from: "2026-10-02T19:44:10.250Z") == fractional)
+        #expect(SyncCoding.date(from: "15/10/2026") == nil)
+
+        let encoded = try SyncCoding.encode([fractional])
+        #expect(try SyncCoding.decode([Date].self, from: encoded) == [fractional])
+        #expect(throws: DecodingError.self) {
+            try SyncCoding.decode([Date].self, from: Data(#"["yesterday"]"#.utf8))
+        }
+    }
+
     @Test("the pull page size is 500 per §3.4")
     func pageSize() {
         #expect(SyncPullResponse.pageSize == 500)
