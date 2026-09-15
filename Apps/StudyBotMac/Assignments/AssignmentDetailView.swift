@@ -123,38 +123,57 @@ struct AssignmentDetailView: View {
         return shown.programmeEventID != nil ? "Module not known until the brief arrives" : "No module"
     }
 
-    // MARK: Chips: status, priority, due date, source
+    // MARK: Chips: status, priority, due date, word limit, weighting, source
 
+    /// Assignment metadata, all in one row: status, priority, due date, word limit and weighting.
+    /// Word limit and weighting are facts about the assignment, not about grading, so they sit
+    /// here rather than under "Grade and feedback".
     @ViewBuilder
     private var chips: some View {
-        HStack(spacing: 8) {
-            if isEditing {
-                Picker("Status", selection: field(\.status, default: .backlog)) {
-                    ForEach(AssignmentStatus.allCases, id: \.self) { status in
-                        Label(StatusIcon.label(for: status), systemImage: "circle").tag(status)
+        if isEditing {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Picker("Status", selection: field(\.status, default: .backlog)) {
+                        ForEach(AssignmentStatus.allCases, id: \.self) { status in
+                            Label(StatusIcon.label(for: status), systemImage: "circle").tag(status)
+                        }
                     }
-                }
-                .pickerStyle(.menu).controlSize(.small).fixedSize()
-                Picker("Priority", selection: field(\.priority, default: .none)) {
-                    ForEach(Priority.allCases, id: \.self) { priority in
-                        Text(priority.rawValue.capitalized).tag(priority)
+                    .pickerStyle(.menu).controlSize(.small).fixedSize()
+                    Picker("Priority", selection: field(\.priority, default: .none)) {
+                        ForEach(Priority.allCases, id: \.self) { priority in
+                            Text(priority.rawValue.capitalized).tag(priority)
+                        }
                     }
+                    .pickerStyle(.menu).controlSize(.small).fixedSize()
+                    DatePicker(
+                        "Due", selection: dueDateBinding, displayedComponents: .date
+                    )
+                    .datePickerStyle(.field).controlSize(.small).labelsHidden().fixedSize()
+                    .environment(\.calendar, UKCalendar.calendar)
+                    .environment(\.timeZone, UKCalendar.timeZone)
+                    .environment(\.locale, UKCalendar.locale)
                 }
-                .pickerStyle(.menu).controlSize(.small).fixedSize()
-                DatePicker(
-                    "Due", selection: dueDateBinding, displayedComponents: .date
-                )
-                .datePickerStyle(.field).controlSize(.small).labelsHidden().fixedSize()
-                .environment(\.calendar, UKCalendar.calendar)
-                .environment(\.timeZone, UKCalendar.timeZone)
-                .environment(\.locale, UKCalendar.locale)
-            } else {
+                HStack(spacing: 8) {
+                    TextField("Word limit", value: field(\.wordLimit, default: nil), format: .number)
+                        .sbInput().frame(width: 110)
+                    TextField("Weighting %", value: field(\.weighting, default: nil), format: .number)
+                        .sbInput().frame(width: 110)
+                }
+            }
+        } else {
+            HStack(spacing: 8) {
                 Chip(StatusIcon.label(for: shown.status)) { StatusIcon(shown.status, size: 12) }
                 if shown.priority != .none {
                     Chip(shown.priority.rawValue.capitalized) { PriorityBars(shown.priority) }
                 }
                 if let due = shown.dueDate {
                     Chip(RelativeDate.fullDate(due))
+                }
+                if let limit = shown.wordLimit {
+                    Chip(RelativeDate.wordCount(limit))
+                }
+                if let weighting = shown.weighting {
+                    Chip("\(Int(weighting))% of module")
                 }
                 Chip(shown.programmeEventID != nil ? "via programme calendar" : "added by hand")
             }
@@ -163,26 +182,42 @@ struct AssignmentDetailView: View {
 
     // MARK: Sections
 
+    /// The brief arrives as a file, not as typing. Until one exists the section is a dashed
+    /// drop zone in both modes (§6.2 "drop a PDF, the importer extracts text"); the text
+    /// editor appears only once there is brief text to correct. The drop itself lands with
+    /// the PDF importer.
     @ViewBuilder
     private var brief: some View {
-        if isEditing {
-            TextEditor(text: optionalText(field(\.briefText, default: nil)))
-                .frame(minHeight: 76)
-                .sbInput()
-        } else if let brief = shown.briefText, !brief.isEmpty {
-            Text(brief).font(.system(size: 13)).foregroundStyle(SBColor.textSecondary).lineSpacing(4)
+        if let brief = shown.briefText, !brief.isEmpty || isEditing {
+            if isEditing {
+                TextEditor(text: optionalText(field(\.briefText, default: nil)))
+                    .frame(minHeight: 76)
+                    .sbInput()
+            } else {
+                Text(brief).font(.system(size: 13)).foregroundStyle(SBColor.textSecondary).lineSpacing(4)
+            }
         } else {
-            Text("The calendar gave the date. The brief comes from ELE2. Drop the PDF here when it appears.")
-                .font(.system(size: 12.5))
-                .foregroundStyle(SBColor.textTertiary)
-                .lineSpacing(4)
-                .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(SBColor.borderStrong, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                )
+            briefDropZone
         }
+    }
+
+    private var briefDropZone: some View {
+        Text(briefDropCopy)
+            .font(.system(size: 12.5))
+            .foregroundStyle(SBColor.textTertiary)
+            .lineSpacing(4)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(SBColor.borderStrong, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+            )
+    }
+
+    /// §6.2's copy, minus the claim about the module when the calendar did not give one.
+    private var briefDropCopy: String {
+        let gave = store.module(for: shown) == nil ? "the date" : "the date and the module"
+        return "The calendar gave \(gave). The brief comes from ELE2. Drop the PDF here when it appears."
     }
 
     @ViewBuilder
@@ -191,6 +226,7 @@ struct AssignmentDetailView: View {
             TextEditor(text: optionalText(field(\.rubricText, default: nil)))
                 .frame(minHeight: 76)
                 .sbInput()
+                .placeholder("Paste the real marking criteria here", when: shown.rubricText?.isEmpty ?? true)
         } else if let rubric = shown.rubricText, !rubric.isEmpty {
             Text(rubric).font(.system(size: 12)).foregroundStyle(SBColor.textSecondary).lineSpacing(5)
         } else {
@@ -213,6 +249,7 @@ struct AssignmentDetailView: View {
             .lineSpacing(SBType.longFormLineSpacing)
             .frame(minHeight: 96)
             .sbInput()
+            .placeholder("Start writing. The word count updates as you go.", when: draftText.isEmpty)
             .onChange(of: draftText) { _, newValue in
                 guard newValue != (assignment.draftText ?? "") else { return }
                 draftSaveTask?.cancel()
@@ -229,32 +266,18 @@ struct AssignmentDetailView: View {
     @ViewBuilder
     private var gradeAndFeedback: some View {
         if isEditing {
-            HStack(spacing: 8) {
-                TextField("Grade", value: field(\.grade, default: nil), format: .number)
-                    .sbInput().frame(width: 90)
-                TextField("Word limit", value: field(\.wordLimit, default: nil), format: .number)
-                    .sbInput().frame(width: 110)
-                TextField("Weighting %", value: field(\.weighting, default: nil), format: .number)
-                    .sbInput().frame(width: 110)
-            }
+            TextField("Grade", value: field(\.grade, default: nil), format: .number)
+                .sbInput().frame(width: 90)
             TextEditor(text: optionalText(field(\.feedback, default: nil)))
                 .frame(minHeight: 60)
                 .sbInput()
+                .placeholder("Paste the tutor's feedback here", when: shown.feedback?.isEmpty ?? true)
                 .padding(.top, 8)
         } else {
-            HStack(spacing: 10) {
-                if let grade = shown.grade {
-                    GradeBadge(grade, bands: store.settings.gradeBands)
-                } else {
-                    Text("Not graded").font(.system(size: 12.5)).foregroundStyle(SBColor.textTertiary)
-                }
-                if let limit = shown.wordLimit {
-                    Text("\(limit) words").font(.system(size: 12)).foregroundStyle(SBColor.textTertiary)
-                }
-                if let weighting = shown.weighting {
-                    Text("\(Int(weighting))% of module").font(.system(size: 12)).foregroundStyle(
-                        SBColor.textTertiary)
-                }
+            if let grade = shown.grade {
+                GradeBadge(grade, bands: store.settings.gradeBands)
+            } else {
+                Text("Not graded").font(.system(size: 12.5)).foregroundStyle(SBColor.textTertiary)
             }
             if let feedback = shown.feedback, !feedback.isEmpty {
                 Text(feedback).font(.system(size: 12)).foregroundStyle(SBColor.textSecondary).padding(.top, 6)
@@ -325,5 +348,22 @@ private struct Field<Content: View>: View {
             content()
         }
         .padding(.top, 22)
+    }
+}
+
+extension View {
+    /// Placeholder copy over an empty text area (§9: empty states direct). `TextEditor` has no
+    /// prompt of its own, so this draws one in `textTertiary` that ignores the cursor.
+    fileprivate func placeholder(_ text: String, when isEmpty: Bool) -> some View {
+        overlay(alignment: .topLeading) {
+            if isEmpty {
+                Text(text)
+                    .font(.system(size: 13))
+                    .foregroundStyle(SBColor.textTertiary)
+                    .padding(.vertical, 9)
+                    .padding(.horizontal, 16)
+                    .allowsHitTesting(false)
+            }
+        }
     }
 }
