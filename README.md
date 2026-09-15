@@ -146,6 +146,11 @@ Sync and the server, before any AI (§13). Two Macs can now diverge offline and 
   blocks as accent marks, Monday sessions as ticks, submissions as hollow amber rings, today
   as a rule, with the spoken summary §16 asks for. `TermStrip` in Kit decides, `TermStripView`
   in UI draws.
+- **Dynamic Type** (§9 patched, §16): every text size is a base value scaled by `SBScale`
+  from the Dynamic Type size, along with row heights, paddings and icon frames; hairlines,
+  module dots, the term strip and the 56pt rail stay fixed. Dense rows reflow to two lines at
+  accessibility sizes instead of clipping. `docs/screenshots/*-accessibility5` show the
+  largest size in a 1080×600 window.
 - **Settings → Sync** pairs a Mac with a six-word code, shows the status in plain words, and
   can sync now or unpair. Today shows one quiet line only after an hour of failed syncs.
 - **Tests**: `SyncMergeTests` (Core), `SyncEngineTests` and `SyncStoreTests` (Kit, two

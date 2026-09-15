@@ -264,9 +264,8 @@ content in that arrangement; the app was never at fault.
 largest accessibility text sizes without clipping on a 13-inch screen) require. Screenshots
 in `docs/screenshots` are now real captures.
 
-**Still open:** §9's exact point sizes do not scale with Dynamic Type, so §16's "largest
-accessibility sizes" is only met by the system controls today. `SBType` needs a scale factor
-per `DynamicTypeSize` before that row can be called done.
+**Resolved the same day:** the spec's Typography patch made §9's sizes base values; see
+"One scale factor for text and the layout that follows it" below.
 
 ## 2026-09-15 · The brief is a drop zone until a brief exists
 
@@ -401,3 +400,27 @@ arrives when there are screens to jump to (a session's notes, a block in Block m
 **Why:** today a tap on a submission could only open the Assignments list, which the deadline
 card above it already does. Deadline density shading is also left for later, per §9's "worth
 building" list.
+
+## 2026-09-15 · One scale factor for text and the layout that follows it
+
+**Spec said (§9 Typography, patched):** every size is a base value; `SBType` scales it by the
+Dynamic Type category; row heights, icon frames, chip and button padding, measures and icon
+gaps scale with it; hairlines, module dots, the term strip's marks and the 56pt rail do not.
+
+**Decision:** `SBScale` in the environment, derived from `dynamicTypeSize` with the system's
+body ramp (17pt body at each size, divided by 17, so 3.1× at the largest). `sbType(_:)` and
+`sbFont(_:weight:design:)` are the only ways a view names a size; `swiftlint`-visible
+`.system(size:)` calls are gone from every view. Metrics go through `scale(_:)`, rounded to
+half a point.
+
+**What reflows rather than clipping at accessibility sizes:** list rows put the title on its
+own line and the columns beneath, and drop empty columns; sidebar labels wrap to two lines;
+the screen header stacks title over controls; the detail panel's chips stack; the detail
+panel takes the whole content pane instead of a third column, since a 13-inch window cannot
+hold three; the title field wraps to three lines. System pickers step up to `.large`.
+
+**Two judgement calls:** the sidebar grows with text only up to 1.8×, enough for
+"Assignments" to fit on one line at the largest size, so it never eats the content pane; and
+the detail panel's width grows only to 1.4× when it is still a third column.
+
+**Checked** in a 1080×600 window at `accessibility5` (`docs/screenshots/*-accessibility5`).
