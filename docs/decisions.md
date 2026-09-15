@@ -291,3 +291,102 @@ or dark via `STUDYBOT_SNAPSHOT_APPEARANCE`. `docs/screenshots` holds the latest 
 screen-recording permission is not available to a build launched from a terminal. Layer
 rendering needs no permission. Its limits: behind-window vibrancy shows as flat `canvas`, and
 the Today question above.
+
+## 2026-09-15 · The merge rule is one pure function, run in three places
+
+**Decision:** `SyncMerge.decide(incoming:from:against:)` in Core returns accept (naming any
+concurrent server version to archive), reject, or already applied. The Vapor server, the
+in-memory server the Kit tests use, and the client's own check for a pulled change against an
+unpushed edit all call it.
+
+**Why:** the two-client data-safety tests must exercise the real rule, not a test double's
+idea of it, and Kit cannot depend on Vapor. Putting the decision in Core makes the in-memory
+server a faithful stand-in and the same-millisecond tie provably identical on both sides.
+
+## 2026-09-15 · A replayed push is recognised, not re-applied
+
+**Decision:** a pushed record with the same `updatedAt` and the same writer as the server's
+current version is "already applied": acknowledged with the existing version and seq, no new
+version, no archive entry. The writer travels with the record (`SyncRecord.deviceID`) when it
+names one, so a Mac re-offering records after a server restore is judged by who wrote them.
+
+**Why:** the response to a push can be lost after the server committed. Without this, the
+retry would look like a concurrent edit against itself, and every interruption would leave a
+phantom version and a spurious archive entry.
+
+## 2026-09-15 · Nil optionals go on the wire as explicit nulls
+
+**Spec said (§3.5):** `fields` is a partial; an omitted key means unchanged.
+
+**Decision:** the client sends every field it knows, with a nil optional as `null`, plus the
+unknown fields it carries. The server merges: absent unchanged, null cleared.
+
+**Why:** with synthesized `Codable`, a nil optional is simply absent, which under "absent means
+unchanged" would make clearing a grade impossible. Sending the full known set costs nothing
+and keeps the partial semantics for fields this build has never heard of.
+
+## 2026-09-15 · A Mac learns when its accepted write was overridden
+
+**Decision:** the server records, on each version, the archive id of the version it replaced
+by last-write-wins, and sends it as `SyncRecord.archivedAs` in `changes`. A Mac applying such
+a change to a clean copy it wrote keeps that copy as a `ConflictLoser` with the same archive id.
+
+**Why:** the spec's conflict list only covers a push that loses. The other direction, an
+accepted write overridden later by a concurrent edit, was silent on the losing Mac; the end-
+to-end test found it. Now both directions leave a loser on the Mac that lost and on the server.
+
+## 2026-09-15 · Schema V2 rather than amending V1
+
+**Decision:** the sync engine's two local tables (`ConflictLoser`, `SyncState`) are schema
+version 2 with a lightweight migration stage. V1's model classes are reused unchanged.
+
+**Why:** the store on Alvis's Mac was created by the milestone-three build with V1. Amending
+V1 in place would have left that store matching no version in the plan. `MigrationTests`
+writes a V1 store and opens it as V2, and the real store migrated on the next launch.
+
+## 2026-09-15 · The cursor lives in the store, not in defaults
+
+**Decision:** `SyncState` (cursor, server address, last outcomes) is a row in the same SwiftData
+store as the records. The bearer token is the one thing kept elsewhere, in the Keychain.
+
+**Why:** a client store restored from a backup must bring the cursor that matches it. A cursor
+in `UserDefaults` would point past records the restored store never received.
+
+## 2026-09-15 · A server cursor behind ours means "restored from backup"
+
+**Decision:** an empty page's cursor is `min(since, head)`. When the returned cursor is lower
+than the client's, the client marks every local record dirty and pushes them all; the server
+judges each by `updatedAt` and archives the version the restore brought back.
+
+**Why:** `seq` is monotonic on a live server, so regression can only mean a restore. This is
+the reconciliation §3.11 and the "Backup/restore" test row ask for, without any extra endpoint.
+
+## 2026-09-15 · Keychain: data protection first, login keychain as fallback
+
+**Spec said (§3.6):** the token lives in the Keychain with `AfterFirstUnlockThisDeviceOnly`.
+
+**Decision:** `KeychainCredentialStore` tries the data protection keychain with that attribute
+and, when the system answers `errSecMissingEntitlement`, uses the login keychain instead. Reads
+check both.
+
+**Why:** the data protection keychain needs an application identifier, which a locally-signed
+build without the Developer Program does not have. The fallback is still the Keychain and still
+not `UserDefaults`; the accessibility attribute is what waits for real signing. Found by pairing
+the sandboxed app against a local server: save fell back, the read did not, and the engine saw
+no token.
+
+## 2026-09-15 · Pairing from the environment in Debug builds
+
+**Decision:** `STUDYBOT_PAIR_URL`, `STUDYBOT_PAIR_CODE` and `STUDYBOT_PAIR_NAME` pair a Debug
+build on launch, and `Tools/screenshots.sh` passes them through.
+
+**Why:** the only way to prove the sandboxed app, the Keychain, URLSession and the server agree
+is to run them together, and the snapshot tour cannot type into a text field.
+
+## 2026-09-15 · The Assignments header sheds the module filter when narrow
+
+**Decision:** at the minimum window width with the panel open, `ViewThatFits` drops the module
+picker rather than clipping New.
+
+**Why:** seen in the 1080×600 capture. Every day-one stub has no module, so the filter is the
+least useful control to lose.

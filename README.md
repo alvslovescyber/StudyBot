@@ -24,7 +24,7 @@ Packages/
   StudyBotKit/    client only, no UI: importers, scheduling (WorkingDays, TermCalendar), support
   StudyBotUI/     design system: §9 tokens and primitives
 Apps/StudyBotMac/ views and app lifecycle, nothing else (project.yml → XcodeGen)
-Server/           Vapor server                                   (later milestone)
+Server/           Vapor server: one binary, `studybotctl`, serve + operator commands
 Tools/seed/       ICS → programme-calendar.json                  (later milestone)
 ```
 
@@ -121,6 +121,36 @@ The first thing you can look at. Screenshots of the real first run, light and da
   ownership), `LastWriteWins` with the deterministic device tie-break, partial-field merging,
   and every index column §6 needs promoted in the store.
 
+## What milestone four built
+
+Sync and the server, before any AI (§13). Two Macs can now diverge offline and converge.
+
+- **`SyncMerge`** in Core: the one pure decision for a pushed record. Accept (naming any
+  concurrent server version to archive), reject as a conflict, or "already applied" for a
+  replayed push. Later `updatedAt` wins; a same-millisecond tie goes to the lower `deviceID`.
+  The Vapor server and the in-memory test server both run this function.
+- **The server** (`Server/`): Vapor over SQLite. `POST /v1/auth/pair`, `GET` and `POST
+  /v1/sync`, `GET /v1/sync/archive/:id`, `GET /health`. Every push is one transaction. Losing
+  versions land in `conflict_archive` whichever side lost, and the client is told which
+  archive id its write replaced. A client more than one schema version behind gets `409`.
+- **The engine** (`SyncEngine` in Kit): one serialised actor. Push dirty records in pages of
+  500, pull until caught up, apply every response in a single store save with the cursor, so
+  an interruption leaves all of it or none. Offline, blocked, unauthorised are outcomes in
+  `SyncState`, never alerts. Triggers: launch, every five minutes, ten seconds after a local
+  write settles (`SyncStore`).
+- **Losers are kept on both sides.** A local version that loses is a `ConflictLoser` row for
+  30 days (and a `NoteRevision` for session notes) with the server's archive id, so a replaced
+  page of notes is recoverable from the Mac that wrote it and from the server.
+- **Schema V2** adds the two local tables with a lightweight migration from V1.
+- **Settings → Sync** pairs a Mac with a six-word code, shows the status in plain words, and
+  can sync now or unpair. Today shows one quiet line only after an hour of failed syncs.
+- **Tests**: `SyncMergeTests` (Core), `SyncEngineTests` and `SyncStoreTests` (Kit, two
+  simulated Macs against the in-memory server: convergence, the same-millisecond tie from both
+  sides, interrupted mid-push, replay, never concurrent, offline, unknown fields round-trip,
+  one and two schema versions behind, restore from backup, tombstones, pagination), and the
+  server's route tests plus an end-to-end run with the real server on a port and two real
+  client stores over HTTP.
+
 ### Running the app
 
 ```bash
@@ -193,10 +223,81 @@ xcrun swift-format format --in-place --recursive Packages
 
 ## Server
 
-Not yet built. When it is, this section will carry the runnable steps §3.10b requires:
-running locally with a seeded database, generating a pairing code, restoring from a
-Litestream replica, and rotating each credential. The environment keys are already listed
-in [`.env.example`](.env.example); the real file lives outside the repo with mode `0600`.
+One binary, `studybotctl`. The environment keys are listed in [`.env.example`](.env.example);
+the real file lives outside the repo with mode `0600` (§3.10b). Two are needed today:
+`STUDYBOT_DB_PATH` and `STUDYBOT_PAIRING_SECRET`.
+
+### Run it locally
+
+```bash
+cd Server && swift build
+```
+
+```bash
+mkdir -p ~/studybot-server && export STUDYBOT_DB_PATH=~/studybot-server/studybot.sqlite STUDYBOT_PAIRING_SECRET="$(openssl rand -hex 32)" && ./Server/.build/debug/studybotctl serve --hostname 0.0.0.0 --port 8080
+```
+
+The database is created and migrated on first start. `curl http://localhost:8080/health` says
+`{"status":"ok"}`. There is no seed step: the first Mac that pairs pushes the programme it
+imported, and the second Mac pulls it.
+
+### Pair a Mac
+
+On the server, with the same environment variables:
+
+```bash
+./Server/.build/debug/studybotctl pair
+```
+
+It prints six words, valid for ten minutes, single use. On the Mac: StudyBot → Settings (`⌘,`)
+→ Sync → enter the server address (`http://<host>:8080` locally, `https://…` behind Caddy), a
+name for the Mac, and the six words → Pair this Mac. Repeat on the other Mac with a new code.
+
+```bash
+./Server/.build/debug/studybotctl devices
+```
+
+```bash
+./Server/.build/debug/studybotctl revoke <device-id>
+```
+
+Revoking a token is how a lost laptop is handled. That Mac keeps working offline and must
+pair again to sync. Nothing is deleted anywhere.
+
+### Rotate a credential
+
+- **A device token**: `studybotctl revoke <id>`, then pair the Mac again. Tokens are stored
+  only as SHA-256 hashes; the plain token exists in the Mac's Keychain and nowhere else.
+- **The pairing secret**: change `STUDYBOT_PAIRING_SECRET` and restart. Codes issued before
+  the change stop working; existing device tokens are unaffected.
+
+### Restore from a backup
+
+Litestream is not wired up yet (it arrives with the VPS deployment), so today a backup is a
+copy of the SQLite file. To restore: stop the server, put the copy at `STUDYBOT_DB_PATH`,
+start the server. Each Mac notices on its next sync that the server's cursor has gone
+backwards, marks everything it holds dirty, and offers it all back; the server keeps the newer
+version of each record and archives what the restore had brought back. `SyncEngineTests`
+"a server restored from a backup is reconciled" runs exactly this. The two-Mac drill in §3.11
+is the same test done by hand: edit the same note on both Macs offline, reconnect, and find
+the losing version under the record's conflict losers and in `conflict_archive`.
+
+### Housekeeping
+
+```bash
+./Server/.build/debug/studybotctl purge-tombstones
+```
+
+Removes deletions older than 90 days. `sync_log` keeps every sequence number, so cursors stay valid.
+
+### Server tests
+
+```bash
+cd Server && swift test
+```
+
+`EndToEndTests` starts the server on a random port and runs two real client stores through
+`HTTPSyncTransport`; the rest run the routes against in-memory SQLite.
 
 ## Conventions
 
