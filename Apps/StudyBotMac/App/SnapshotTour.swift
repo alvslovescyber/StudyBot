@@ -13,6 +13,27 @@
             ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_DIR"].map { URL(fileURLWithPath: $0) }
         }
 
+        /// `STUDYBOT_SNAPSHOT_TEXT_SIZE=accessibility5` pins a Dynamic Type size for the run, so
+        /// §16's largest sizes can be judged without changing the Mac's own setting.
+        static var textSize: ClosedRange<DynamicTypeSize>? {
+            guard let raw = ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_TEXT_SIZE"] else {
+                return nil
+            }
+            let sizes: [String: DynamicTypeSize] = [
+                "large": .large, "xxxLarge": .xxxLarge, "accessibility1": .accessibility1,
+                "accessibility3": .accessibility3, "accessibility5": .accessibility5,
+            ]
+            return sizes[raw].map { $0...$0 }
+        }
+
+        /// `STUDYBOT_SNAPSHOT_WINDOW=1080x600` sets the window size; the default is 1320×800.
+        static var windowSize: NSSize {
+            let raw = ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_WINDOW"] ?? ""
+            let parts = raw.split(separator: "x").compactMap { Double($0) }
+            guard parts.count == 2 else { return NSSize(width: 1320, height: 800) }
+            return NSSize(width: parts[0], height: parts[1])
+        }
+
         static func runIfRequested(model: AppModel) {
             guard let directory else { return }
             switch ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_APPEARANCE"] {
@@ -25,7 +46,7 @@
                 try? await Task.sleep(for: .seconds(1))
                 // A known size, so captures do not depend on a remembered window frame.
                 NSApplication.shared.windows.first(where: { $0.isVisible })?
-                    .setContentSize(NSSize(width: 1320, height: 800))
+                    .setContentSize(windowSize)
                 try? await Task.sleep(for: .seconds(0.5))
                 await capture("1-first-run", to: directory)
 
@@ -36,6 +57,8 @@
                 await capture("2-today", to: directory)
 
                 model.selection = .assignments
+                // The scope persists in Settings; start from the default so the footer shows.
+                model.assignments?.scope = .currentTerm
                 try? await Task.sleep(for: .seconds(1))
                 await capture("3-assignments", to: directory)
 
@@ -68,10 +91,31 @@
             }
         }
 
-        /// Renders the window's layer tree, which includes layer-backed AppKit controls that
-        /// `cacheDisplay` misses. Needs no screen-recording permission. Behind-window vibrancy
-        /// cannot be rendered this way, so the sidebar shows its fallback material.
+        /// Two ways to capture. With `STUDYBOT_SNAPSHOT_EXTERNAL` set, the tour writes
+        /// `<name>.ready`, waits for an outside process (`Tools/screenshots.sh`) to take a real
+        /// screenshot and touch `<name>.done`, then moves on: that path shows exactly what is on
+        /// screen, vibrancy and scroll views included, but needs Screen Recording permission for
+        /// the shell running the script. Otherwise the window's layer tree is rendered, which
+        /// needs no permission but cannot show behind-window blending.
         private static func capture(_ name: String, to directory: URL) async {
+            if ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_EXTERNAL"] != nil {
+                await waitForExternalCapture(name, in: directory)
+            } else {
+                renderLayerTree(name, to: directory)
+            }
+        }
+
+        private static func waitForExternalCapture(_ name: String, in directory: URL) async {
+            let ready = directory.appendingPathComponent("\(name).ready")
+            let done = directory.appendingPathComponent("\(name).done")
+            let windowNumber = NSApplication.shared.windows.first(where: { $0.isVisible })?.windowNumber ?? 0
+            try? "\(windowNumber)".write(to: ready, atomically: true, encoding: .utf8)
+            for _ in 0..<150 where !FileManager.default.fileExists(atPath: done.path) {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+
+        private static func renderLayerTree(_ name: String, to directory: URL) {
             guard let window = NSApplication.shared.windows.first(where: { $0.isVisible }),
                 let view = window.contentView, let layer = view.layer
             else { return }

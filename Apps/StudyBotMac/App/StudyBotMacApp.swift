@@ -12,6 +12,7 @@ struct StudyBotMacApp: App {
             RootView()
                 .environment(model)
                 .frame(minWidth: 1080, minHeight: 600)
+                .dynamicTypeSize(textSizes)
                 .task {
                     await model.start()
                     #if DEBUG
@@ -25,5 +26,14 @@ struct StudyBotMacApp: App {
         .commands {
             AppCommands(model: model)
         }
+    }
+
+    /// The full range, so the system setting rules, unless a debug snapshot pins one size.
+    private var textSizes: ClosedRange<DynamicTypeSize> {
+        #if DEBUG
+            SnapshotTour.textSize ?? DynamicTypeSize.xSmall...DynamicTypeSize.accessibility5
+        #else
+            DynamicTypeSize.xSmall...DynamicTypeSize.accessibility5
+        #endif
     }
 }
