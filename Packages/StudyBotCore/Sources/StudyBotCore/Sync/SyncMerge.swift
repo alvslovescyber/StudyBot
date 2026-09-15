@@ -25,6 +25,9 @@ public enum SyncMerge {
     }
 
     /// Decides what to do with `incoming`, pushed by `deviceID`, given what the server holds.
+    /// A record that names its own writer (`incoming.deviceID`) is judged by that writer: a Mac
+    /// re-offering records it did not write, after a server restore, must not look like a new
+    /// edit from itself.
     public static func decide(
         incoming: SyncRecord, from deviceID: String, against existing: ServerRecordState?
     ) -> Outcome {
@@ -32,10 +35,11 @@ public enum SyncMerge {
         if incoming.baseVersion == existing.version {
             return .accept(replacing: nil)
         }
-        if incoming.updatedAt == existing.updatedAt && deviceID == existing.deviceID {
+        let writer = incoming.deviceID ?? deviceID
+        if incoming.updatedAt == existing.updatedAt && writer == existing.deviceID {
             return .alreadyApplied
         }
-        let incomingMeta = comparable(incoming, deviceID: deviceID)
+        let incomingMeta = comparable(incoming, deviceID: writer)
         switch LastWriteWins.winner(incomingMeta, existing.comparable) {
         case .first: return .accept(replacing: existing)
         case .second: return .reject
@@ -59,5 +63,12 @@ public enum SyncMerge {
             id: record.id, createdAt: record.updatedAt, updatedAt: record.updatedAt,
             version: record.version ?? record.baseVersion, baseVersion: record.baseVersion,
             seq: record.seq ?? 0, deletedAt: record.deletedAt, dirty: false, deviceID: deviceID)
+    }
+}
+
+extension SyncMerge {
+    /// The writer a server should record for an accepted push: the record's own if it names one.
+    public static func writer(of incoming: SyncRecord, pushedBy deviceID: String) -> String {
+        incoming.deviceID ?? deviceID
     }
 }
