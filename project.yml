@@ -1,0 +1,69 @@
+# XcodeGen spec for the Mac app. `xcodegen generate` writes StudyBot.xcodeproj, which is
+# not committed: this file is the source of truth (spec §3.2 Apps/StudyBotMac).
+name: StudyBot
+options:
+  bundleIdPrefix: com.alvisbabu
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+
+packages:
+  StudyBotCore:
+    path: Packages/StudyBotCore
+  StudyBotKit:
+    path: Packages/StudyBotKit
+  StudyBotUI:
+    path: Packages/StudyBotUI
+
+targets:
+  StudyBotMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: Apps/StudyBotMac
+    dependencies:
+      - package: StudyBotCore
+      - package: StudyBotKit
+      - package: StudyBotUI
+    entitlements:
+      path: Apps/StudyBotMac/StudyBot.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.files.user-selected.read-only: true
+        com.apple.security.network.client: true
+    info:
+      path: Apps/StudyBotMac/Info.plist
+      properties:
+        CFBundleName: StudyBot
+        CFBundleDisplayName: StudyBot
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSApplicationCategoryType: public.app-category.education
+        LSMinimumSystemVersion: "15.0"
+        NSHumanReadableCopyright: ""
+        NSPrincipalClass: NSApplication
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.alvisbabu.studybot
+        PRODUCT_NAME: StudyBot
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY: YES
+        # Locally signed: no Developer Program yet (§3.1, §3.10a). Copy the .app to the
+        # other Mac; Gatekeeper's first-run warning clears with right-click → Open.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: NO
+        COMBINE_HIDPI_IMAGES: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+
+schemes:
+  StudyBotMac:
+    build:
+      targets:
+        StudyBotMac: all
+    run:
+      config: Debug

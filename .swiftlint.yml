@@ -1,6 +1,7 @@
 # SwiftLint — blocking in CI (spec §3.12). Conventions from §3.13.
 included:
   - Packages
+  - Apps
 excluded:
   - "**/.build"
   - "**/Package.swift"

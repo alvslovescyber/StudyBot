@@ -28,8 +28,8 @@ jobs:
           swift --version
           xcrun swift-format --version
 
-      - name: Install SwiftLint
-        run: brew install swiftlint
+      - name: Install SwiftLint and XcodeGen
+        run: brew install swiftlint xcodegen
 
       - name: Cache SwiftPM build
         uses: actions/cache@v4
@@ -37,6 +37,7 @@ jobs:
           path: |
             Packages/StudyBotCore/.build
             Packages/StudyBotKit/.build
+            Packages/StudyBotUI/.build
           key: spm-${{ runner.os }}-${{ hashFiles('Packages/**/Package.swift') }}
           restore-keys: spm-${{ runner.os }}-
 
@@ -53,3 +54,15 @@ jobs:
       - name: Build and test StudyBotKit
         working-directory: Packages/StudyBotKit
         run: swift test
+
+      - name: Build and test StudyBotUI
+        working-directory: Packages/StudyBotUI
+        run: swift test
+
+      - name: Generate the Xcode project
+        run: xcodegen generate --quiet
+
+      - name: Build the Mac app
+        run: |
+          xcodebuild -project StudyBot.xcodeproj -scheme StudyBotMac -configuration Debug \
+            -derivedDataPath .build/DerivedData CODE_SIGN_IDENTITY=- build -quiet

@@ -45,11 +45,21 @@ else
     echo "▸ swiftlint not installed locally; skipping (CI runs it)"
 fi
 
-for pkg in Packages/StudyBotCore Packages/StudyBotKit; do
+for pkg in Packages/StudyBotCore Packages/StudyBotKit Packages/StudyBotUI; do
     echo "▸ swift build  ($pkg)"
     (cd "$pkg" && "$SWIFT_BIN" build --quiet)
     echo "▸ swift test   ($pkg)"
     (cd "$pkg" && "$SWIFT_BIN" test --quiet)
 done
+
+if command -v xcodegen >/dev/null 2>&1 && xcode-select -p 2>/dev/null | grep -q 'Xcode.app'; then
+    echo "▸ xcodegen generate"
+    xcodegen generate --quiet
+    echo "▸ xcodebuild StudyBotMac"
+    xcodebuild -project StudyBot.xcodeproj -scheme StudyBotMac -configuration Debug \
+        -derivedDataPath .build/DerivedData CODE_SIGN_IDENTITY=- build -quiet
+else
+    echo "▸ app build skipped (needs Xcode and xcodegen)"
+fi
 
 echo "✓ all green"
