@@ -253,15 +253,33 @@ range, not a pause.
 
 **Why:** Alvis asked for it, 15 Sep 2026. It also reads cleaner in a Linear/Notion register.
 
-## 2026-09-15 · Today is not a ScrollView yet
+## 2026-09-15 · Today is a ScrollView; the blank capture was the capture's fault
 
-**Observation:** in the debug snapshot tour, Today rendered blank whenever its content sat in a
-`ScrollView`, in every arrangement tried, while the Assignments list's `ScrollView` rendered
-fine. Without the scroll view it renders correctly.
+**Observation:** in the layer-tree snapshot, Today rendered blank inside a `ScrollView`. A
+real screenshot of the same build (`Tools/screenshots.sh`, once Screen Recording was
+available) shows it rendering correctly. The layer render cannot show SwiftUI's scroll view
+content in that arrangement; the app was never at fault.
 
-**Decision:** Today is a plain column until it has enough content to need scrolling. Before
-adding the scroll view back, confirm with a real screen capture (Screen Recording permission)
-whether the blank is a rendering fault or an artefact of the layer-tree capture.
+**Decision:** Today is a `ScrollView`, as §6.1 (the term strip below the fold) and §16 (the
+largest accessibility text sizes without clipping on a 13-inch screen) require. Screenshots
+in `docs/screenshots` are now real captures.
+
+**Still open:** §9's exact point sizes do not scale with Dynamic Type, so §16's "largest
+accessibility sizes" is only met by the system controls today. `SBType` needs a scale factor
+per `DynamicTypeSize` before that row can be called done.
+
+## 2026-09-15 · The brief is a drop zone until a brief exists
+
+**Spec said (§6.2):** "The calendar gave the date and the module. The brief comes from ELE2 —
+drop the PDF here when it appears."
+
+**Decision:** the drop zone shows in read and edit mode alike while `briefText` is nil; a text
+editor appears only once there is brief text to correct. The copy says "the date and the
+module" only when the calendar did give a module; for the 30 stubs it did not, so it says
+"the date". The drop action itself lands with the PDF importer.
+
+**Why:** a brief is a file that arrives, not something typed, and the copy must not claim a
+module the record does not have.
 
 ## 2026-09-15 · A debug snapshot tour instead of screen recording
 

@@ -72,6 +72,22 @@ public enum RelativeDate {
         fullDateFormatter.string(from: date)
     }
 
+    /// Working days as words (§9 "Working-days-until rather than raw days"): "21 working days",
+    /// "1 working day", or "no working days left" once the deadline is today or past.
+    public static func workingDays(_ count: Int) -> String {
+        switch count {
+        case ..<1: return "no working days left"
+        case 1: return "1 working day"
+        default: return "\(count) working days"
+        }
+    }
+
+    /// A word count with a thousands separator, en-GB: "2,500 words", "1 word".
+    public static func wordCount(_ count: Int) -> String {
+        let number = count.formatted(.number.locale(UKCalendar.locale))
+        return count == 1 ? "\(number) word" : "\(number) words"
+    }
+
     private static let shortFormatter = makeFormatter("d MMM")
     private static let shortWithYearFormatter = makeFormatter("d MMM yyyy")
     private static let longDayFormatter = makeFormatter("EEEE d MMMM")

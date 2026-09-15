@@ -65,4 +65,14 @@ struct RelativeDateTests {
         #expect(RelativeDate.longDay(day(9, 23)) == "Wednesday 23 September")
         #expect(RelativeDate.fullDate(day(10, 15)) == "15 October 2026")
     }
+
+    @Test("working days and word counts become words")
+    func countsAsWords() {
+        #expect(RelativeDate.workingDays(21) == "21 working days")
+        #expect(RelativeDate.workingDays(1) == "1 working day")
+        #expect(RelativeDate.workingDays(0) == "no working days left")
+        #expect(RelativeDate.workingDays(-3) == "no working days left")
+        #expect(RelativeDate.wordCount(2_500) == "2,500 words")
+        #expect(RelativeDate.wordCount(1) == "1 word")
+    }
 }

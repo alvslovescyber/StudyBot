@@ -10,40 +10,38 @@ struct TodayView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        // A plain column, not a ScrollView: see docs/decisions.md, "Today is not a ScrollView yet".
-        VStack(alignment: .leading, spacing: 0) {
+        // A ScrollView: §6.1 puts the term strip below the fold and §16 needs the largest
+        // accessibility text sizes to fit without clipping on a 13-inch screen.
+        ScrollView {
             todayContent
-            Spacer(minLength: 0)
         }
         .background(SBColor.surface)
     }
 
     private var todayContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(RelativeDate.longDay(model.now()))
-                    .sbType(SBType.title)
-                    .foregroundStyle(SBColor.textPrimary)
+            Text(RelativeDate.longDay(model.now()))
+                .sbType(SBType.title)
+                .foregroundStyle(SBColor.textPrimary)
 
-                if let banner = blockBanner {
-                    blockBannerView(banner)
-                        .padding(.top, 18)
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Next deadline")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(SBColor.textSecondary)
-                    nextDeadlineCard
-                }
-                .padding(.top, 26)
+            if let banner = blockBanner {
+                blockBannerView(banner)
+                    .padding(.top, 18)
             }
-            .frame(maxWidth: 656, alignment: .leading)
-            .padding(.top, 28)
-            .padding(.horizontal, SBSpacing.detailOuter)
-            .padding(.bottom, 60)
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Next deadline")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(SBColor.textSecondary)
+                nextDeadlineCard
+            }
+            .padding(.top, 26)
         }
+        .frame(maxWidth: 656, alignment: .leading)
+        .padding(.top, 28)
+        .padding(.horizontal, SBSpacing.detailOuter)
+        .padding(.bottom, 60)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Block banner
@@ -104,15 +102,36 @@ struct TodayView: View {
             }
     }
 
-    /// Today is the one place the exact count matters, so it is always a number of days here.
-    private func dueWording(_ due: Date) -> String {
-        let days = UKCalendar.days(from: model.now(), to: due)
-        switch days {
-        case 0: return "due today"
-        case 1: return "due tomorrow"
-        case ..<0: return "overdue by \(-days) days"
-        default: return "due in \(days) days"
+    /// The card's second line (§6.1): the honest number of working days, then what the
+    /// assignment is still missing. The title already carries the date, so it is not repeated.
+    /// Overdue stays "overdue by", which is the one case where the raw day count is the point.
+    private func detailLine(for assignment: Assignment, module: Module?) -> String {
+        var parts: [String] = []
+        if let code = module?.code {
+            parts.append(code)
         }
+        if let due = assignment.dueDate {
+            if UKCalendar.days(from: model.now(), to: due) < 0 {
+                parts.append(RelativeDate.deadline(due, relativeTo: model.now()))
+            } else {
+                let working = WorkingDays(events: model.events).count(from: model.now(), until: due)
+                parts.append(RelativeDate.workingDays(working))
+            }
+        }
+        if assignment.isCalendarStub {
+            parts.append(module == nil ? "module and brief arrive from ELE2" : "brief arrives from ELE2")
+        } else {
+            if let limit = assignment.wordLimit {
+                parts.append(RelativeDate.wordCount(limit))
+            }
+            parts.append(StatusIcon.label(for: assignment.status).lowercased())
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func isOverdue(_ assignment: Assignment) -> Bool {
+        guard let due = assignment.dueDate else { return false }
+        return UKCalendar.days(from: model.now(), to: due) < 0
     }
 
     @ViewBuilder
@@ -129,25 +148,12 @@ struct TodayView: View {
                             .font(.system(size: 14, weight: .medium))
                             .italic(assignment.isCalendarStub)
                             .foregroundStyle(
-                                assignment.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
-                        HStack(spacing: 6) {
-                            if let module = store.module(for: assignment) {
-                                Text(module.code)
-                                Text("·")
-                            } else {
-                                Text("no module yet")
-                                Text("·")
-                            }
-                            if let due = assignment.dueDate {
-                                Text(dueWording(due))
-                                Text("·")
-                                Text(RelativeDate.fullDate(due))
-                                Text("·")
-                            }
-                            Text(StatusIcon.label(for: assignment.status).lowercased())
-                        }
-                        .font(.system(size: 12))
-                        .foregroundStyle(SBColor.textSecondary)
+                                isOverdue(assignment)
+                                    ? SBColor.danger
+                                    : assignment.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
+                        Text(detailLine(for: assignment, module: store.module(for: assignment)))
+                            .font(.system(size: 12))
+                            .foregroundStyle(isOverdue(assignment) ? SBColor.danger : SBColor.textSecondary)
                     }
                     Spacer(minLength: 0)
                 }
