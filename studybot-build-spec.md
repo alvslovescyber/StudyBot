@@ -157,16 +157,7 @@ studybot/
 
 The hardest part of the build. Treat it as its own component with its own tests.
 
-**Every syncable record carries:**
-
-```
-id: UUID              // client-generated, never reassigned
-version: Int          // server-assigned, increments on each accepted write
-updatedAt: Date       // client wall clock, used only for conflict resolution
-deletedAt: Date?      // tombstone; rows are never hard-deleted on sync
-dirty: Bool           // local changes not yet acknowledged
-baseVersion: Int      // the version this local edit was made against
-```
+**Every syncable record carries the eight fields defined in §4** — `id`, `createdAt`, `updatedAt`, `version`, `baseVersion`, `seq`, `deletedAt`, `dirty` — grouped in a single `SyncMetadata` value embedded in each syncable type. §4 is authoritative; this section describes how they behave, not what they are.
 
 **The cursor is a server sequence number, not a timestamp.** A monotonic `seq` assigned per write. Timestamps and clock skew do not mix.
 
@@ -226,12 +217,14 @@ Content-Type: application/json
 ```json
 {
   "cursor": 4839,
-  "accepted": [ { "id": "9A3F…", "version": 8, "seq": 4839 } ],
+  "accepted": [ { "id": "9A3F…", "version": 8, "seq": 4839, "archivedAs": null } ],
   "conflicts": [ { "id": "2B71…", "serverVersion": 12, "resolution": "serverWins",
                    "archivedAs": "c_5512" } ],
   "changes": [ /* records with seq > request cursor, same shape as above */ ]
 }
 ```
+
+`archivedAs` appears on accepted records too, not only conflicts. When a client's write is accepted but overwrites a concurrent server-side edit, that server version is archived and named here. Without it, that direction of loss is silent — the conflict list only covers the case where the client loses.
 
 Notes on the shape: `fields` is a partial — only what changed — so an older client that omits fields it doesn't know about cannot erase them. `conflicts` always names where the losing version was archived. `changes` and `accepted` arrive in the same response so one round trip completes a sync.
 
@@ -447,7 +440,9 @@ Written down because a three-year solo project is really you collaborating with 
 
 ## 4. Data model
 
-SwiftData `@Model` classes. Relationships are bidirectional with explicit inverses.
+**These are defined as value types (`struct`) in `StudyBotCore`**, because the same definitions compile into the Vapor server, which cannot use SwiftData. Relationships between value types are held as IDs, not nested objects — a struct cannot own a two-way object graph.
+
+`StudyBotKit` wraps them in SwiftData `@Model` classes for local storage, converting to and from the Core structs at that boundary. SwiftData relationships there are bidirectional with explicit inverses. Nothing outside `StudyBotKit` knows SwiftData exists.
 
 **Every syncable model carries the same eight fields**, defined once in `StudyBotCore` and not repeated in each listing below:
 
@@ -487,7 +482,7 @@ Seed from the real programme structure. These are confirmed, not placeholders �
 
 **Year 2** — COM2022DA Database Theory and Design · COM2023DA Network and Computer Security · COM2024DA Software Development · COM2027DA Artificial Intelligence and Applications · COM2025DA Web Development · COM2026DA Team Project · COM2028DA Professional Development 2
 
-**Year 3** — two specialism modules chosen from COM3105DA–COM3114DA (Software Engineering, Business Analysis, IT Consulting, Data Analysis, Cyber Security) · COM3104DA Synoptic Project · COM3103DA Professional Development 3
+**Year 3** — all ten specialism options are seeded from the calendar (COM3105DA–COM3114DA, covering Software Engineering, Business Analysis, IT Consulting, Data Analysis and Cyber Security) with `isSpecialismOption: true`. Two are chosen and the other eight archived. Plus COM3104DA Synoptic Project and COM3103DA Professional Development 3. Seven year-1 modules, seven year-2, twelve year-3 — **26 in total**, which is what the calendar yields.
 
 Professional Development runs across all three terms of its year rather than sitting in one. Model it as a module with `spansYear: true` so the term grouping doesn't misplace it. The Synoptic Project runs across terms 2 and 3 of year 3 and needs the same treatment.
 
@@ -516,6 +511,8 @@ kind: EventKind            // induction, onCampus, online, assignment,
 title: String
 moduleCodes: [String]      // which modules that block covers
 sourceUID: String          // the ICS UID, for idempotent re-import
+cancelledAt: Date?         // set when a re-import no longer contains this UID;
+                           // never deleted, so attached notes survive
 sessions: [Session]        // notes the user attaches to this event
 assignment: Assignment?    // for kind == .assignment
 ```
@@ -619,8 +616,7 @@ reflection: String?        // what went well, what you'd change
 ```
 date: Date
 hours: Double
-category: OTJCategory      // lecture, selfStudy, mentoring, shadowing,
-                           // projectWork, research, writingUp, training
+category: OTJCategory      // see Supporting types
 description: String
 assignment: Assignment?
 evidence: Evidence?
@@ -729,7 +725,7 @@ Subtask               title: String, isDone: Bool, dueDate: Date?,
 GradeBand             label: String, minimum: Double, colour: BandColour
                       defaults: Distinction 70, Merit 60, Pass 50, Threshold 40
 
-NotificationPrefs     deadlines: Bool, morningPlan: Bool, morningPlanTime: Date,
+NotificationPrefs     deadlines: Bool, morningPlan: Bool, morningPlanTime: WallClockTime,
                       otjPacing: Bool, gradeReturned: Bool, sessionStarting: Bool,
                       sundayReview: Bool, sundayReviewEmail: Bool
 
@@ -749,6 +745,14 @@ EventKind             induction, onCampus, online, assignment, readingWeek,
                       closure, bankHoliday, gateway, epa
 RevisionReason        idleSnapshot, preSync, conflictLoser
 DraftSource           inApp, importedFile, oneNote
+
+WallClockTime         hour: Int, minute: Int
+                      A time of day with no date and no timezone. Required
+                      anywhere a thing is scheduled by the clock — the 07:00
+                      Monday prep, the 18:00 Sunday review, the morning plan.
+                      Storing these as `Date` silently shifts them by an hour
+                      twice a year when BST changes. Resolve to an instant
+                      only at scheduling time, in Europe/London.
 ```
 
 **What counts as attended.** A session is attended if it has notes with any content, or an off-the-job entry linked to it, or the user explicitly marked it attended. This matters because "session gap" (§4A) and the Sunday review both depend on it, and an app that decides you skipped a lecture because you took notes on paper will be wrong in an annoying way. Marking attended is one tap from the session and from the Sunday digest.
@@ -793,10 +797,9 @@ The whole three years is known in advance. This is the single biggest advantage 
 
 ### On-campus blocks
 
-| | Dates | Term |
-|---|---|---|
-| Induction | Tue 22 Sep 2026 | Y1 T1 |
-| Block 1 | Wed 23 – Thu 24 Sep 2026 | Y1 T1 |
+| | Dates | Term | |
+|---|---|---|---|
+| Block 1 | Tue 22 – Thu 24 Sep 2026 | Y1 T1 | induction + 2 on-campus days |
 | Block 2 | Mon 4 – Wed 6 Jan 2027 | Y1 T2 |
 | Block 3 | Tue 4 – Thu 6 May 2027 | Y1 T3 |
 | Block 4 | Tue 21 – Wed 22 Sep 2027 | Y2 T1 |
@@ -816,7 +819,21 @@ Note the shape: a quiet autumn, a very quiet spring, then five submissions in tw
 - The ICS is **bundled in the app** and imported on first launch. No setup step, no file picker, no empty first run.
 - Re-import is idempotent, matched on `sourceUID`. The university will reissue the calendar; changed dates update in place, new events are added, removed events are marked cancelled rather than deleted so any notes attached to them survive.
 - Settings offers "Update programme calendar" with a file picker for the reissued ICS.
-- A mandatory submission event creates a matching `Assignment` in backlog status with the due date already set, titled from the module it belongs to. The user renames it once they know what it actually is. **Nobody should ever type a deadline into this app by hand.**
+- A mandatory submission event creates a matching `Assignment` in backlog status with the due date already set. **It is titled by date — "Submission due 15 October 2026" — with no module attached.** Titling by module is impossible and the file shows why: of the 30 submissions, 20 name all three of their term's modules and 10 name none at all. Guessing which module a submission belongs to would be wrong roughly two-thirds of the time. The module arrives with the brief from ELE2, and until then the stub stays honest about not knowing.
+- **Adjacent on-campus days merge into one block.** Induction on 22 September and the on-campus days of 23–24 September are three consecutive days on campus and are presented as a single block, 22–24 September, not as two things. The merge is by adjacency of campus-kind days, not a special case for induction.
+- **Nobody should ever type a deadline into this app by hand.**
+
+### Term boundaries
+
+The calendar never labels its terms, so they are derived. The rule, verified against the real file:
+
+**A term is the contiguous run of module-bearing events sharing one module set.** The set changes at exactly eight points across the three years, and those eight points are the term boundaries. Events with no modules attached — deadlines, bank holidays, closures, Gateway, the EPA window — join the term before them and may extend its end date, except bank holidays, closures and the un-moduled summer reading weeks, which never extend a term. Real gaps therefore exist between terms, which is correct.
+
+**Do not assume a term starts at its on-campus block.** The file contradicts this: in 2027 the reading week of 19 April and the session of 26 April already carry term-3 modules, while Block 3 is 4–6 May. The same shape repeats in 2028. A gap-based rule also fails — year 3's final term has a 35-day gap inside it, between 18 April and 23 May 2029.
+
+**Year 3's specialism-2 options and the Synoptic Project are year-spanning.** All of `COM3106DA`, `COM3108DA`, `COM3110DA`, `COM3112DA`, `COM3114DA` and `COM3104DA` appear on every event from 8 January to 23 May 2029, across the term-2/term-3 boundary. They therefore carry `spansYear: true`, the same as Professional Development. Confirm with Exeter alongside open question 13 — it may be a quirk of how the calendar was written rather than how the modules are actually taught.
+
+**Year 3 is the exception.** Its module set changes only once, because the Synoptic Project spans terms 2 and 3, so the calendar gives no signal for where year-3 term 3 begins. Default to **18 April 2029**, the first teaching event after the Easter bank holidays, which matches the April term-3 starts in years 1 and 2. Encode it as that rule, not as a hardcoded date, and confirm it with Exeter (§14).
 
 ### Derived signals
 
@@ -857,7 +874,7 @@ Five tabs map one-to-one to the five sidebar items. Modules & notes becomes a dr
 
 The first two minutes decide whether this feels like a finished product or a project. An AI building this should not have to invent any of it.
 
-**Launch one, before anything is configured, the app is already useful.** The programme calendar is bundled, so within a second of first launch there are 9 terms, 21 modules, 156 events and 30 dated submissions in the list. No empty state, no "get started" wizard, no sample data to delete.
+**Launch one, before anything is configured, the app is already useful.** The programme calendar is bundled, so within a second of first launch there are 9 terms, 26 modules, 156 events and 30 dated submissions in the list. No empty state, no "get started" wizard, no sample data to delete.
 
 Sequence:
 
@@ -1838,7 +1855,8 @@ Still open, and answerable in the first week:
 10. **Whether ELE2 has Moodle web services enabled** (`/login/token.php` with the `moodle_mobile_app` service). This single answer decides whether assignment ingestion is fully automatic or calendar-feed only, and it is worth asking IT in week one. Either way, confirm you can self-serve the private calendar export URL from the ELE2 calendar page — that is the fallback and it should always work.
 11. **Whether the Exeter tenant permits third-party Graph access** for mail and OneNote. One consent prompt covers both; if it's refused, §8.2 and §8.5 are dead and everything else still works.
 12. **Which Moodle grade endpoint ELE2 exposes** — `mod_assign_get_grades` or the gradereport API. Decides how §8.4a is implemented.
-13. **How your OneNote notebooks are organised** — section names are what modules get matched against, so a consistent naming scheme makes §8.5 work and an inconsistent one makes it noise.
+13. **Where year-3 term 3 begins.** The calendar can't say, because the Synoptic Project spans terms 2 and 3 so the module set never changes. The derived default is 18 April 2029; confirm it.
+14. **How your OneNote notebooks are organised** — section names are what modules get matched against, so a consistent naming scheme makes §8.5 work and an inconsistent one makes it noise.
 
 ---
 
