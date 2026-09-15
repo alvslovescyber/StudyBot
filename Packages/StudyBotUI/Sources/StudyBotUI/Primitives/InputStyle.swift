@@ -8,6 +8,7 @@ public struct SBInputStyle: ViewModifier {
     public func body(content: Content) -> some View {
         content
             .textFieldStyle(.plain)
+            .scrollContentBackground(.hidden)
             .font(.system(size: 13))
             .foregroundStyle(SBColor.textPrimary)
             .padding(.vertical, 9)

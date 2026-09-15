@@ -24,10 +24,9 @@ public struct ModuleChip: View {
             .help("\(module.code) \(module.name)")
             .accessibilityLabel(module.name)
         } else {
-            // No module yet: the calendar stubs. An em dash, not an invented chip.
-            Text("—")
-                .font(.system(size: 11))
-                .foregroundStyle(SBColor.textTertiary)
+            // No module yet: the calendar stubs. Nothing is drawn rather than an invented chip.
+            Color.clear
+                .frame(width: 1, height: 1)
                 .accessibilityLabel("No module")
         }
     }

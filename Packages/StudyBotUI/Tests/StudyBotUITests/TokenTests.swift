@@ -1,3 +1,4 @@
+import AppKit
 import StudyBotCore
 import SwiftUI
 import Testing
@@ -5,14 +6,20 @@ import Testing
 @testable import StudyBotUI
 
 /// §0: "Do not invent these — design tokens and component values (§9)." Pins the values.
+@MainActor
 @Suite("Design tokens match §9")
 struct TokenTests {
-    private func hex(_ color: Color) -> String {
-        let resolved = color.resolve(in: EnvironmentValues())
-        func channel(_ value: Float) -> String {
-            String(format: "%02X", Int((value * 255).rounded()))
+    /// The token's hex under an appearance. Adaptive tokens resolve through AppKit.
+    private func hex(_ color: Color, appearance: NSAppearance.Name = .aqua) -> String {
+        guard let named = NSAppearance(named: appearance) else { return "?" }
+        var result = "?"
+        named.performAsCurrentDrawingAppearance {
+            guard let rgb = NSColor(color).usingColorSpace(.sRGB) else { return }
+            func channel(_ value: CGFloat) -> String { String(format: "%02X", Int((value * 255).rounded())) }
+            result =
+                "#" + channel(rgb.redComponent) + channel(rgb.greenComponent) + channel(rgb.blueComponent)
         }
-        return "#" + channel(resolved.red) + channel(resolved.green) + channel(resolved.blue)
+        return result
     }
 
     @Test("colour tokens")
@@ -35,6 +42,19 @@ struct TokenTests {
         #expect(hex(SBColor.module(.indigo)) == "#5E6AD2")
         #expect(hex(SBColor.module(.slate)) == "#6B7280")
         #expect(hex(Color(hex: "garbage")) == "#000000", "a malformed hex is loud, not silent")
+    }
+
+    @Test("every adaptive token has a distinct dark value and text stays legible on canvas")
+    func darkTokens() {
+        #expect(hex(SBColor.canvas, appearance: .darkAqua) == "#1A1A1C")
+        #expect(hex(SBColor.surface, appearance: .darkAqua) == "#202023")
+        #expect(hex(SBColor.textPrimary, appearance: .darkAqua) == "#EDEDEF")
+        #expect(hex(SBColor.accent, appearance: .darkAqua) == "#7B86E2")
+        #expect(hex(SBColor.danger, appearance: .darkAqua) == "#E0655B")
+        #expect(hex(SBColor.canvas, appearance: .darkAqua) != hex(SBColor.canvas))
+        #expect(hex(SBColor.textPrimary, appearance: .darkAqua) != hex(SBColor.textPrimary))
+        #expect(
+            hex(SBColor.module(.indigo), appearance: .darkAqua) == "#5E6AD2", "module colours do not change")
     }
 
     @Test("status and band colours map as §6.2 and §9 say")

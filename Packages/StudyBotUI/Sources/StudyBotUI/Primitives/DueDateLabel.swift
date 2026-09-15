@@ -29,7 +29,7 @@ public struct DueDateLabel: View {
     }
 
     private var text: String {
-        guard let dueDate else { return "—" }
+        guard let dueDate else { return "" }
         if isOverdue {
             return RelativeDate.deadline(dueDate, relativeTo: now)
         }
