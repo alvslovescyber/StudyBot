@@ -263,6 +263,34 @@ To judge a build without screen recording, launch with `STUDYBOT_SNAPSHOT_DIR=<f
 the container>` and optionally `STUDYBOT_SNAPSHOT_APPEARANCE=light|dark`; a PNG per screen is
 written and the app quits.
 
+## What the UI revision built
+
+Spec patches 7 to 9 and the screens that were empty. Judged against the real data: three
+stubs, no briefs, no grades.
+
+- **Motion is one table** (§9, patched). `SBMotion` holds every timing as a number; views
+  attach one through `sbAnimation`, and Reduce Motion swaps every spring for a 100ms crossfade.
+  Hover and selection have no transition at all. Rows that change status move to their new
+  group; counts roll; the palette springs in; the sidebar's labels crossfade out first.
+- **Today is two columns** from about 1430pt of window: date, block banner, next deadline,
+  today's plan and this week's hours on the left; questions to ask, recent notes and the term
+  at a glance on the right; the term strip full width beneath, its marks named on hover.
+  The plan (§6.1) is generated locally, three items at most, accept or dismiss; before
+  induction it is one honest line about the first brief.
+- **Hours in one keystroke.** `L` anywhere outside a text field (or ⌘L) opens one line:
+  "2h project work: rewrote the pipeline checks". Return files it and the week bar grows at
+  once; if the write fails the bar shrinks back and says why. No streaks, no badges.
+- **Assignments**: hover reveals status, priority and due date at the right of the row, each
+  set without edit mode; columns cap at 960pt and sit left; group counts roll.
+- **Revision** (§6.4 Study): today's queue, Space to flip (a real 3D turn), Got it or Again,
+  Leitner boxes 1 to 5, a Weak areas strip, and empty states that say what will fill them.
+- **Sidebar counts and module colour**: one number per section; module colours assigned so
+  no two modules in a term share one; chips tinted, the open module accented, a
+  single-module session's note edged in its colour.
+
+Screenshots of every screen in light, dark and the largest text size are in
+`docs/screenshots` (`./Tools/screenshots.sh light "" 1680x960` regenerates one set).
+
 ## Requirements
 
 - macOS 15 or later.

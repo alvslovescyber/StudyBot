@@ -39,7 +39,7 @@ targets:
       properties:
         CFBundleName: StudyBot
         CFBundleDisplayName: StudyBot
-        CFBundleShortVersionString: "0.6.0"
+        CFBundleShortVersionString: "0.7.0"
         CFBundleVersion: "6"
         LSApplicationCategoryType: public.app-category.education
         LSMinimumSystemVersion: "15.0"
