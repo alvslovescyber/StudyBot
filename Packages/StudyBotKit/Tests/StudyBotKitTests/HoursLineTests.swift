@@ -8,7 +8,8 @@ struct HoursLineTests {
     @Test("the leading duration in every shape people type it")
     func durations() {
         let cases: [(String, Double)] = [
-            ("2h", 2), ("2.5h", 2.5), ("2,5h", 2.5), ("2 hours", 2), ("1h30", 1.5), ("1h 30m", 1.5), ("90m", 1.5),
+            ("2h", 2), ("2.5h", 2.5), ("2,5h", 2.5), ("2 hours", 2), ("1h30", 1.5), ("1h 30m", 1.5),
+            ("90m", 1.5),
             ("45 min", 0.75), ("1:30", 1.5), ("3", 3), ("1hr", 1), ("2hrs reading", 2),
         ]
         for (text, hours) in cases {
@@ -40,6 +41,7 @@ struct HoursLineTests {
         #expect(HoursLine.parse("") == nil)
         #expect(HoursLine.parse("0h nothing") == nil)
         #expect(HoursLine.hint == "Start with how long: 2h, 90m or 1h30.")
-        #expect(OTJCategory.projectWork.label == "Project work" && OTJCategory.selfStudy.label == "Self study")
+        #expect(
+            OTJCategory.projectWork.label == "Project work" && OTJCategory.selfStudy.label == "Self study")
     }
 }

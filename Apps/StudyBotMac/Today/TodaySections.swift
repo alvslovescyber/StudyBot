@@ -58,10 +58,12 @@ struct NextDeadlineSection: View {
                                 .foregroundStyle(
                                     model.isOverdue(assignment)
                                         ? SBColor.danger
-                                        : assignment.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
+                                        : assignment.isCalendarStub
+                                            ? SBColor.textSecondary : SBColor.textPrimary)
                             Text(model.deadlineDetail(for: assignment, module: store.module(for: assignment)))
                                 .sbFont(12)
-                                .foregroundStyle(model.isOverdue(assignment) ? SBColor.danger : SBColor.textSecondary)
+                                .foregroundStyle(
+                                    model.isOverdue(assignment) ? SBColor.danger : SBColor.textSecondary)
                         }
                         Spacer(minLength: 0)
                     }
@@ -162,7 +164,9 @@ struct HoursSection: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("\(WeekBarView.hours(week.total)) of \(WeekBarView.hours(week.target)) hours")
                     .sbFont(13, weight: .medium)
-                    .foregroundStyle(behind(week, today: today) ? SBColor.statusDrafting : SBColor.textPrimary)
+                    .foregroundStyle(
+                        behind(week, today: today) ? SBColor.statusDrafting : SBColor.textPrimary
+                    )
                     .monospacedDigit()
                     .contentTransition(.numericText(value: week.total))
                     .sbAnimation(SBMotion.count, value: week.total)
@@ -173,7 +177,8 @@ struct HoursSection: View {
                     .foregroundStyle(SBColor.textTertiary)
                     .padding(.horizontal, scale(5)).padding(.vertical, scale(1))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(SBColor.border))
+                        RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(SBColor.border)
+                    )
                     .accessibilityLabel("Shortcut: L")
             }
             WeekBarView(
@@ -275,10 +280,12 @@ struct RecentNotesSection: View {
                                     }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                Text(RelativeDate.string(for: session.sync.updatedAt, relativeTo: model.now()))
-                                    .sbFont(12)
-                                    .foregroundStyle(SBColor.textTertiary)
-                                    .lineLimit(1)
+                                Text(
+                                    RelativeDate.string(for: session.sync.updatedAt, relativeTo: model.now())
+                                )
+                                .sbFont(12)
+                                .foregroundStyle(SBColor.textTertiary)
+                                .lineLimit(1)
                             }
                             .padding(.vertical, scale(7))
                             .contentShape(Rectangle())

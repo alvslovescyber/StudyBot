@@ -125,15 +125,19 @@ struct NotesStoreTests {
         let second = await store.open(other, moduleID: nil)
         store.updateLiveNotes(first.id, text: "- sets\nASK: does order matter\n")
         store.updateLiveNotes(second.id, text: "ASK: is the exam open book\n- relations\n")
-        _ = await store.open(try #require(SessionCatalog.slot(on: RealCalendar.day(2026, 10, 12), in: events)), moduleID: nil)
+        _ = await store.open(
+            try #require(SessionCatalog.slot(on: RealCalendar.day(2026, 10, 12), in: events)), moduleID: nil)
 
         #expect(store.allSessions.count == 3)
         #expect(store.allQuestions.map(\.text) == ["does order matter", "is the exam open book"])
-        #expect(store.recentSessions(limit: 5).map(\.id) == [second.id, first.id], "newest first, notes only")
+        #expect(
+            store.recentSessions(limit: 5).map(\.id) == [second.id, first.id], "newest first, notes only")
         #expect(store.recentSessions(limit: 1).count == 1)
         #expect(store.session(id: first.id)?.firstNoteLine == "sets")
         #expect(store.session(id: second.id)?.firstNoteLine == "ASK: is the exam open book")
-        #expect(Session(sync: .new(at: Self.t0), title: "t", date: Self.t0, liveNotes: "\n  \n").firstNoteLine == nil)
+        #expect(
+            Session(sync: .new(at: Self.t0), title: "t", date: Self.t0, liveNotes: "\n  \n").firstNoteLine
+                == nil)
         await store.flushAll()
     }
 

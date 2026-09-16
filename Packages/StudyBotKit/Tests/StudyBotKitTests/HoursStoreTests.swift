@@ -22,7 +22,9 @@ struct HoursStoreTests {
         #expect(entry.hours == 2 && entry.category == .projectWork)
         #expect(LocalDay(entry.date) == RealCalendar.day(2026, 10, 6))
         #expect(wrote == 1)
-        #expect(try await records.fetch(OTJEntry.self, id: entry.id)?.value.description == "rewrote the pipeline checks")
+        #expect(
+            try await records.fetch(OTJEntry.self, id: entry.id)?.value.description
+                == "rewrote the pipeline checks")
 
         _ = await store.log("90m lecture", on: RealCalendar.day(2026, 10, 4))
         let week = store.week(containing: RealCalendar.day(2026, 10, 6))

@@ -92,19 +92,22 @@ public enum TodayPlanner {
             let overdue = dueDay < input.today
             let working = input.workingDays.count(from: input.today, until: dueDay)
             guard overdue || working <= deadlineHorizonWorkingDays else { return nil }
-            if let next = assignment.subtasks.sorted(by: { $0.order < $1.order }).first(where: { !$0.isDone }) {
+            if let next = assignment.subtasks.sorted(by: { $0.order < $1.order }).first(where: { !$0.isDone })
+            {
                 return PlanItem(
                     id: "subtask.\(assignment.id).\(next.id)", title: "\(next.title): \(assignment.title)",
                     minutes: 60)
             }
             switch assignment.status {
             case .backlog, .todo:
-                return PlanItem(id: "plan.\(assignment.id)", title: "Break \(assignment.title) into steps", minutes: 30)
+                return PlanItem(
+                    id: "plan.\(assignment.id)", title: "Break \(assignment.title) into steps", minutes: 30)
             case .drafting:
                 return PlanItem(id: "draft.\(assignment.id)", title: "Draft \(assignment.title)", minutes: 90)
             case .review:
                 return PlanItem(
-                    id: "review.\(assignment.id)", title: "Read \(assignment.title) through once more", minutes: 45)
+                    id: "review.\(assignment.id)", title: "Read \(assignment.title) through once more",
+                    minutes: 45)
             case .submitted, .graded:
                 return nil
             }
@@ -117,7 +120,8 @@ public enum TodayPlanner {
         return input.sessions
             .filter { session in
                 let day = LocalDay(session.date)
-                return session.hasNotes && session.structuredNotes == nil && day < input.today && day >= weekAgo
+                return session.hasNotes && session.structuredNotes == nil && day < input.today
+                    && day >= weekAgo
             }
             .sorted { $0.date > $1.date }
             .map { PlanItem(id: "notes.\($0.id)", title: "Review notes: \($0.title)", minutes: 30) }
@@ -129,7 +133,8 @@ public enum TodayPlanner {
         var items: [PlanItem] = []
         let weekday = input.today.isoWeekday
         if weekday >= 4, input.evidenceThisWeek == 0 {
-            items.append(PlanItem(id: "evidence.week", title: "Log this week's work as evidence", minutes: 10))
+            items.append(
+                PlanItem(id: "evidence.week", title: "Log this week's work as evidence", minutes: 10))
         }
         if weekday >= 3, input.hoursThisWeek < input.targetHoursPerWeek / 2 {
             items.append(PlanItem(id: "hours.week", title: "Log off-the-job hours", minutes: 5))

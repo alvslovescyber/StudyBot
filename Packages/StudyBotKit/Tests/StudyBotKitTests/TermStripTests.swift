@@ -49,11 +49,15 @@ struct TermStripTests {
         #expect(real.marks.first?.label == "Block 1, \(blockDates)")
         #expect(real.marks.filter { $0.kind == .session }.allSatisfy { $0.moduleColour == nil })
         let monday = try #require(real.marks.first { $0.kind == .session })
-        let mondayEvent = try #require(events.first { LocalDay($0.startDate) == monday.day && $0.kind == .online })
-        #expect(monday.label == "\(mondayEvent.title), \(RelativeDate.absolute(monday.day.date, relativeTo: today.date))")
+        let mondayEvent = try #require(
+            events.first { LocalDay($0.startDate) == monday.day && $0.kind == .online })
+        #expect(
+            monday.label
+                == "\(mondayEvent.title), \(RelativeDate.absolute(monday.day.date, relativeTo: today.date))")
         let submission = try #require(real.marks.first { $0.kind == .submission })
         #expect(
-            submission.label.hasSuffix("due \(RelativeDate.absolute(submission.day.date, relativeTo: today.date))"))
+            submission.label.hasSuffix(
+                "due \(RelativeDate.absolute(submission.day.date, relativeTo: today.date))"))
         #expect(submission.label.hasPrefix("1 submission") || submission.label.hasPrefix("2 submissions"))
 
         // A session that does name one module takes that module's colour.

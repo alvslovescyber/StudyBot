@@ -78,7 +78,8 @@ public final class HoursStore {
             return nil
         }
         let entry = OTJEntry(
-            sync: .new(at: now(), deviceID: deviceID), date: (day ?? LocalDay(now())).date, hours: parsed.hours,
+            sync: .new(at: now(), deviceID: deviceID), date: (day ?? LocalDay(now())).date,
+            hours: parsed.hours,
             category: parsed.category, description: parsed.description)
         do {
             try entry.validate()

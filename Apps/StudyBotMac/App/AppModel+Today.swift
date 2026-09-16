@@ -81,7 +81,8 @@ extension AppModel {
         guard let calendar = termCalendar else { return nil }
         let dueDates = assignments?.assignments.compactMap(\.dueDate) ?? []
         let colours = Dictionary(
-            (assignments?.modules ?? []).map { ($0.code, $0.colour) }, uniquingKeysWith: { first, _ in first })
+            (assignments?.modules ?? []).map { ($0.code, $0.colour) }, uniquingKeysWith: { first, _ in first }
+        )
         return TermStrip(
             calendar: calendar, events: events, submissionDates: dueDates, today: LocalDay(now()),
             moduleColours: colours)
@@ -91,7 +92,9 @@ extension AppModel {
     var termGlance: TermGlance? {
         guard let calendar = termCalendar else { return nil }
         let today = LocalDay(now())
-        guard let term = calendar.term(containing: today) ?? calendar.nextTerm(after: today) else { return nil }
+        guard let term = calendar.term(containing: today) ?? calendar.nextTerm(after: today) else {
+            return nil
+        }
         return TermGlance(
             term: term, today: today, weekOfTerm: calendar.weekOfTerm(today), slots: sessionSlots,
             sessions: notes?.allSessions ?? [], evidence: evidence?.items ?? [], hours: hours?.entries ?? [],
@@ -104,12 +107,15 @@ extension AppModel {
         guard let plan else { return }
         let today = LocalDay(now())
         let monday = today.adding(days: -(today.isoWeekday - 1))
-        let evidenceThisWeek = (evidence?.items ?? []).filter { LocalDay($0.date) >= monday && LocalDay($0.date) <= today }
-            .count
+        let evidenceThisWeek = (evidence?.items ?? []).filter {
+            LocalDay($0.date) >= monday && LocalDay($0.date) <= today
+        }
+        .count
         let input = TodayPlanner.Input(
             today: today, assignments: assignments?.assignments ?? [], sessions: notes?.allSessions ?? [],
             workingDays: WorkingDays(events: events), evidenceThisWeek: evidenceThisWeek,
-            hoursThisWeek: hours?.week(containing: today).total ?? 0, targetHoursPerWeek: hours?.targetPerWeek ?? 6,
+            hoursThisWeek: hours?.week(containing: today).total ?? 0,
+            targetHoursPerWeek: hours?.targetPerWeek ?? 6,
             isInTerm: termCalendar?.term(containing: today) != nil)
         plan.refresh(with: TodayPlanner.plan(input))
     }

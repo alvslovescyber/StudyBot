@@ -20,7 +20,8 @@ struct HoursField: View {
                 .onTapGesture { model.hoursFieldShown = false }
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: scale(10)) {
-                    Image(systemName: "clock").sbFont(13, weight: .medium).foregroundStyle(SBColor.textTertiary)
+                    Image(systemName: "clock").sbFont(13, weight: .medium).foregroundStyle(
+                        SBColor.textTertiary)
                     TextField("2h project work: what you did", text: $text)
                         .textFieldStyle(.plain)
                         .sbFont(14)
@@ -52,7 +53,8 @@ struct HoursField: View {
             .frame(width: min(scale(520), 860))
             .background(SBColor.surface)
             .overlay(
-                RoundedRectangle(cornerRadius: SBRadius.sheet, style: .continuous).strokeBorder(SBColor.border)
+                RoundedRectangle(cornerRadius: SBRadius.sheet, style: .continuous).strokeBorder(
+                    SBColor.border)
             )
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.sheet, style: .continuous))
             .sbShadow(SBShadow.palette)

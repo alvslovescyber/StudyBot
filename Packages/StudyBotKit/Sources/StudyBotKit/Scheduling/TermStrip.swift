@@ -80,7 +80,8 @@ public struct TermStrip: Hashable, Sendable {
         for event in events where !event.isCancelled && event.kind == .online {
             let day = LocalDay(event.startDate)
             if inTerm(day) {
-                let colour = event.moduleCodes.count == 1 ? event.moduleCodes.first.flatMap { moduleColours[$0] } : nil
+                let colour =
+                    event.moduleCodes.count == 1 ? event.moduleCodes.first.flatMap { moduleColours[$0] } : nil
                 marks.append(
                     Mark(
                         kind: .session, start: position(day), end: position(day), day: day,

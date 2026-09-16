@@ -25,9 +25,10 @@ public struct TermGlance: Hashable, Sendable {
 
         let held = slots.filter { inTerm($0.day) && $0.day <= today }
         sessionsHeld = held.count
-        sessionsAttended = held.filter { slot in
-            byID[slot.id]?.countsAsAttended == true || hoursBySession.contains(slot.id)
-        }.count
+        sessionsAttended =
+            held.filter { slot in
+                byID[slot.id]?.countsAsAttended == true || hoursBySession.contains(slot.id)
+            }.count
         notesWritten = sessions.filter { inTerm(LocalDay($0.date)) && $0.hasNotes }.count
         evidenceLogged = evidence.filter { inTerm(LocalDay($0.date)) }.count
         hoursLogged = hours.filter { inTerm(LocalDay($0.date)) }.reduce(0) { $0 + $1.hours }

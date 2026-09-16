@@ -35,7 +35,8 @@ struct TodayPlannerTests {
         // Wednesday 16 September 2026, before induction: no hours to log yet, so only deadlines speak.
         let plan = TodayPlanner.plan(
             try input(
-                today: RealCalendar.day(2026, 9, 16), assignments: stubs, evidenceThisWeek: 0, hoursThisWeek: 0,
+                today: RealCalendar.day(2026, 9, 16), assignments: stubs, evidenceThisWeek: 0,
+                hoursThisWeek: 0,
                 isInTerm: false))
         #expect(plan.count == 1)
         #expect(plan.first?.title.hasPrefix("Check ELE2 for the brief: ") == true)
@@ -59,7 +60,8 @@ struct TodayPlannerTests {
             sync: .new(at: Self.t0), title: "Requirements report", status: .drafting,
             dueDate: RealCalendar.day(2026, 10, 15).date, briefText: "brief")
         withSubtasks.subtasks = [
-            Subtask(title: "Draft section 2", order: 1), Subtask(title: "Read the brief", isDone: true, order: 0),
+            Subtask(title: "Draft section 2", order: 1),
+            Subtask(title: "Read the brief", isDone: true, order: 0),
         ]
         let drafting = Assignment(
             sync: .new(at: Self.t0), title: "Maths worksheet", status: .drafting,
@@ -68,13 +70,16 @@ struct TodayPlannerTests {
             sync: .new(at: Self.t0), title: "Networks essay", status: .todo,
             dueDate: RealCalendar.day(2026, 10, 30).date, briefText: "brief")
         let far = Assignment(
-            sync: .new(at: Self.t0), title: "Next term", status: .todo, dueDate: RealCalendar.day(2027, 3, 1).date,
+            sync: .new(at: Self.t0), title: "Next term", status: .todo,
+            dueDate: RealCalendar.day(2027, 3, 1).date,
             briefText: "brief")
         let plan = TodayPlanner.plan(
             try input(today: today, assignments: [far, backlog, drafting, withSubtasks]))
-        #expect(plan.map(\.title) == [
-            "Draft section 2: Requirements report", "Draft Maths worksheet", "Break Networks essay into steps",
-        ])
+        #expect(
+            plan.map(\.title) == [
+                "Draft section 2: Requirements report", "Draft Maths worksheet",
+                "Break Networks essay into steps",
+            ])
         #expect(plan.map(\.minutes) == [60, 90, 30])
         #expect(plan.count == TodayPlanner.maximumItems, "the far one is cut by the horizon and the cap")
     }
@@ -108,9 +113,10 @@ struct TodayPlannerTests {
         #expect(TodayPlanner.plan(try input(today: monday, evidenceThisWeek: 0, hoursThisWeek: 0)).isEmpty)
         let wednesday = RealCalendar.day(2026, 10, 7)
         #expect(
-            TodayPlanner.plan(try input(today: wednesday, evidenceThisWeek: 0, hoursThisWeek: 0)).map(\.id) == [
-                "hours.week"
-            ], "evidence waits for Thursday; hours from Wednesday")
+            TodayPlanner.plan(try input(today: wednesday, evidenceThisWeek: 0, hoursThisWeek: 0)).map(\.id)
+                == [
+                    "hours.week"
+                ], "evidence waits for Thursday; hours from Wednesday")
     }
 
     @Test("durations read as people say them")

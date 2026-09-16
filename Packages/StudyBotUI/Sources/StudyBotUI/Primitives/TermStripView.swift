@@ -79,7 +79,9 @@ public struct TermStripView: View {
                     Color.clear.preference(key: LabelWidthKey.self, value: text.size.width)
                 }
             }
-            .modifier(ClampedX(centre: x((mark.start + mark.end) / 2, width: width), bounds: width + Self.inset * 2))
+            .modifier(
+                ClampedX(centre: x((mark.start + mark.end) / 2, width: width), bounds: width + Self.inset * 2)
+            )
     }
 
     private var canvas: some View {
@@ -102,8 +104,12 @@ public struct TermStripView: View {
                     let rect = CGRect(x: left - 1, y: midY - 8, width: right - left + 2, height: 16)
                     context.fill(Path(roundedRect: rect, cornerRadius: 1.5), with: .color(SBColor.accent))
                 case .session:
-                    let rect = CGRect(x: x(mark.start) - 0.5, y: midY - (isHovered ? 5 : 3), width: 1, height: isHovered ? 10 : 6)
-                    let colour = mark.moduleColour.map(SBColor.module) ?? (isHovered ? SBColor.textSecondary : SBColor.textTertiary)
+                    let rect = CGRect(
+                        x: x(mark.start) - 0.5, y: midY - (isHovered ? 5 : 3), width: 1,
+                        height: isHovered ? 10 : 6)
+                    let colour =
+                        mark.moduleColour.map(SBColor.module)
+                        ?? (isHovered ? SBColor.textSecondary : SBColor.textTertiary)
                     context.fill(Path(rect), with: .color(colour))
                 case .submission:
                     let ring = Path(

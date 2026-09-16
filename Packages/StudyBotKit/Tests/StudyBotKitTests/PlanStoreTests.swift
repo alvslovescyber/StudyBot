@@ -8,7 +8,8 @@ import Testing
 struct PlanStoreTests {
     private nonisolated static let day1 = RealCalendar.day(2026, 10, 6).date.addingTimeInterval(9 * 3_600)
     private nonisolated static let items = [
-        PlanItem(id: "a", title: "Draft section 2", minutes: 60), PlanItem(id: "b", title: "Review notes", minutes: 30),
+        PlanItem(id: "a", title: "Draft section 2", minutes: 60),
+        PlanItem(id: "b", title: "Review notes", minutes: 30),
     ]
 
     @Test("a proposal follows the latest items until it is accepted, then it is the day's checklist")

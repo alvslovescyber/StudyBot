@@ -23,7 +23,8 @@ public struct HoursLine: Hashable, Sendable {
     // MARK: Duration
 
     private static let durationPattern = try? NSRegularExpression(
-        pattern: #"^(\d+(?:[.,]\d+)?)(?::(\d{1,2}))?\s*(hours?|hrs?|h|minutes?|mins?|m)?(?:\s*(\d{1,2})\s*(?:minutes?|mins?|m)?)?(?=\s|$|[:,–—-])"#,
+        pattern:
+            #"^(\d+(?:[.,]\d+)?)(?::(\d{1,2}))?\s*(hours?|hrs?|h|minutes?|mins?|m)?(?:\s*(\d{1,2})\s*(?:minutes?|mins?|m)?)?(?=\s|$|[:,–—-])"#,
         options: [.caseInsensitive])
 
     /// Hours as a decimal and the text after the duration. "2h", "2.5h", "2 hours", "1h30",
@@ -69,7 +70,9 @@ public struct HoursLine: Hashable, Sendable {
 
     /// The category the text starts with, if any, and the text after it.
     private static func categoryPrefix(of text: String) -> (OTJCategory?, String) {
-        let stripped = text.drop { $0.isWhitespace || $0 == ":" || $0 == "," || $0 == "-" || $0 == "–" || $0 == "—" }
+        let stripped = text.drop {
+            $0.isWhitespace || $0 == ":" || $0 == "," || $0 == "-" || $0 == "–" || $0 == "—"
+        }
         let lowered = stripped.lowercased()
         for (words, category) in categoryWords where lowered.hasPrefix(words) {
             let after = stripped.dropFirst(words.count)
