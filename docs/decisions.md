@@ -656,3 +656,21 @@ field, so `L` is watched by a local key-event monitor that steps aside whenever 
 first responder, a sheet is up, or the palette or field is already open. ⌘L in the File menu
 is the discoverable twin (§10: every shortcut appears in a menu). The field is an overlay like
 the palette, not a modal sheet, and it closes on Return before the write completes.
+
+## 2026-09-16 · Hover actions set one field without entering edit mode
+
+**Spec said (§6.2):** editing is a mode: read-only by default, Edit, then Save changes.
+**Brief said (UI revision plan):** hover reveals status, priority and due date at the right
+of the row; a status change animates the row to its new group.
+
+**Decision:** the three hover actions write one field each through the store's ordinary save
+(the field joins `fieldOverrides`, so ELE2 never overwrites it) without the panel's edit
+mode. Everything else stays behind Edit. The list is one flat `ForEach` of headers and rows
+with stable ids, so a status change is the same view moving to its new group with the 280ms
+spring; a deleted row collapses in height; an inserted one fades in at full height. Row
+columns cap at 960pt and sit left; the actions sit at the row's right edge, invisible until
+hover and instant when they appear.
+
+**Why:** status, priority and date are the three fields that change a dozen times a term and
+never need a form; the brief is later than §6.2 and names them. Edit mode still guards the
+fields where a slip costs something (title, brief, rubric, grade).

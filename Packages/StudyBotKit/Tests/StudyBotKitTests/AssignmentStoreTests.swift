@@ -20,6 +20,37 @@ struct AssignmentStoreTests {
         return store
     }
 
+    @Test("a hover action sets one field, marks it hand-set, and the row moves group")
+    func quickSet() async throws {
+        let store = try await makeStore()
+        let stub = try #require(store.visible.first)
+        #expect(store.groups.map(\.status) == [.backlog])
+
+        await store.set(stub.id, status: .drafting)
+        let drafting = try #require(store.assignment(id: stub.id))
+        #expect(drafting.status == .drafting)
+        #expect(drafting.fieldOverrides == ["status"])
+        #expect(drafting.sync.dirty)
+        #expect(store.groups.map(\.status) == [.drafting, .backlog], "work in progress leads the list")
+        #expect(store.groups.first?.assignments.map(\.id) == [stub.id])
+
+        await store.set(stub.id, priority: .high)
+        #expect(store.assignment(id: stub.id)?.priority == .high)
+        #expect(store.assignment(id: stub.id)?.fieldOverrides == ["status", "priority"])
+
+        let newDue = LocalDay(year: 2026, month: 10, day: 22).date.addingTimeInterval(13 * 3_600)
+        await store.set(stub.id, dueDate: newDue)
+        let moved = try #require(store.assignment(id: stub.id))
+        #expect(moved.dueDate == LocalDay(year: 2026, month: 10, day: 22).date, "stored as a day")
+        #expect(moved.termID == store.currentTerm?.id, "the term follows the date")
+        #expect(moved.fieldOverrides == ["status", "priority", "dueDate"])
+
+        let version = moved.sync.updatedAt
+        await store.set(stub.id, status: .drafting)
+        #expect(
+            store.assignment(id: stub.id)?.sync.updatedAt == version, "setting the same value writes nothing")
+    }
+
     @Test("on 14 September 2026 the default scope shows the three term-1 stubs and hides 27")
     func firstDayScope() async throws {
         let store = try await makeStore()

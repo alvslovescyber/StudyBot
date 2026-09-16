@@ -192,6 +192,29 @@ public final class AssignmentStore {
         }
     }
 
+    /// One field changed from a row's hover actions (§6.2 hover reveals status, priority and
+    /// due date). The same write as a save of one field: it joins `fieldOverrides`, so ELE2
+    /// never overwrites what was set by hand.
+    public func set(_ id: UUID, status: AssignmentStatus) async {
+        guard var record = assignment(id: id), record.status != status else { return }
+        record.status = status
+        await save(record, changedFields: ["status"])
+    }
+
+    public func set(_ id: UUID, priority: Priority) async {
+        guard var record = assignment(id: id), record.priority != priority else { return }
+        record.priority = priority
+        await save(record, changedFields: ["priority"])
+    }
+
+    public func set(_ id: UUID, dueDate: Date?) async {
+        guard var record = assignment(id: id) else { return }
+        let day = dueDate.map(UKCalendar.startOfDay)
+        guard record.dueDate.map(LocalDay.init) != day.map(LocalDay.init) else { return }
+        record.dueDate = day
+        await save(record, changedFields: ["dueDate"])
+    }
+
     /// Creates a new, untitled assignment in backlog and returns it for the detail panel to
     /// open in edit mode.
     public func createAssignment() async -> Assignment? {
