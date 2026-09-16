@@ -18,6 +18,8 @@ struct SettingsView: View {
                 if let sync = model.sync {
                     SyncSection(sync: sync)
                         .padding(.top, 24)
+                    DataSection()
+                        .padding(.top, 28)
                 } else {
                     Text("Sync becomes available once the store has opened.")
                         .sbType(SBType.body)
@@ -106,6 +108,86 @@ private struct SyncSection: View {
             Text("Unpairing forgets the server and the token on this Mac only. Nothing is deleted anywhere.")
                 .sbFont(11.5)
                 .foregroundStyle(SBColor.textTertiary)
+        }
+    }
+}
+
+/// §6.8 "Data": export everything, restore from an export. The export is the third copy the
+/// two Macs do not give you (§16); run it after every block.
+private struct DataSection: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.sbScale) private var scale
+    @State private var isWorking = false
+    @State private var confirmingRestore: URL?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Data")
+                .sbFont(12, weight: .semibold)
+                .foregroundStyle(SBColor.textSecondary)
+            Text(
+                "An export is a folder in Downloads: your notes as Markdown, every record as JSON, the calendar, and every kept version. Readable without StudyBot. Run it after each block."
+            )
+            .sbFont(12)
+            .foregroundStyle(SBColor.textSecondary)
+            HStack(spacing: scale(8)) {
+                Btn.primary(
+                    isWorking ? "Exporting…" : "Export everything", icon: "square.and.arrow.up", size: .small
+                ) {
+                    Task {
+                        isWorking = true
+                        await model.exportEverything()
+                        isWorking = false
+                    }
+                }
+                .disabled(isWorking)
+                Btn.secondary("Restore from an export…", size: .small) { chooseExport() }
+                    .disabled(isWorking)
+                if let url = model.lastExportURL {
+                    Btn.secondary("Show in Finder", size: .small) {
+                        NSWorkspace.shared.activateFileViewerSelecting([url])
+                    }
+                }
+            }
+            if let status = model.dataStatus {
+                Text(status)
+                    .sbFont(12)
+                    .foregroundStyle(
+                        status.contains("could not") || status.contains("Couldn't")
+                            || status.contains("not a StudyBot") ? SBColor.danger : SBColor.textSecondary)
+            }
+        }
+        .confirmationDialog(
+            "Restore this export?",
+            isPresented: Binding(
+                get: { confirmingRestore != nil }, set: { if !$0 { confirmingRestore = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Restore") {
+                guard let folder = confirmingRestore else { return }
+                Task {
+                    isWorking = true
+                    await model.restore(from: folder)
+                    isWorking = false
+                }
+            }
+            Button("Cancel", role: .cancel) { confirmingRestore = nil }
+        } message: {
+            Text(
+                "Records in the export replace records with the same id on this Mac. Nothing else is touched, and the next sync reconciles with the server."
+            )
+        }
+    }
+
+    private func chooseExport() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Restore"
+        panel.message = "Choose a StudyBot export folder."
+        if panel.runModal() == .OK, let url = panel.url {
+            confirmingRestore = url
         }
     }
 }

@@ -33,6 +33,21 @@ struct TodayView: View {
                     .foregroundStyle(SBColor.textTertiary)
                     .padding(.top, 6)
             }
+            // §16: under 2 GB once, under 500 MB until there is room.
+            if let disk = model.disk, let notice = disk.todayNotice {
+                HStack(spacing: scale(8)) {
+                    Text(notice)
+                        .sbFont(12, weight: disk.level == .critical ? .medium : .regular)
+                        .foregroundStyle(disk.level == .critical ? SBColor.danger : SBColor.textSecondary)
+                    if disk.noticeIsDismissible {
+                        Button("Dismiss") { disk.dismissLowWarning() }
+                            .buttonStyle(.plain)
+                            .sbFont(12)
+                            .foregroundStyle(SBColor.accent)
+                    }
+                }
+                .padding(.top, 6)
+            }
 
             if let banner = blockBanner {
                 blockBannerView(banner)

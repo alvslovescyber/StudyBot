@@ -496,3 +496,39 @@ field.
 `STUDYBOT_DRILL=append:…|show`, and prints both stores and the archive. It is not two Macs: the
 network, the clocks and the Keychain are one machine's. The real drill on two Macs is written
 up in the README and remains Alvis's to run.
+
+## 2026-09-16 · Disk full: one write path, one banner, snapshots yield
+
+**Spec said (§16 Reliability, patched):** a failed store write must surface immediately and
+persistently on the note, the text stays; check free space on launch and hourly; snapshots
+are skipped rather than allowed to fail; a test forces the failure.
+
+**Decision:** `NotesStore.write` is the only path to the store for notes. A failure lands in
+`saveFailures` with `DiskSpace.saveFailureMessage`, which recognises Cocoa's out-of-space
+code, POSIX `ENOSPC` and SQLite's "database or disk is full" however SwiftData wraps them.
+The workspace shows a banner in `danger` above the editor with Try again; it clears only when
+a write succeeds. `DiskMonitor` checks the store's volume on launch and hourly: under 2 GB
+Today warns once with Dismiss, under 500 MB the line stays and revision snapshots are
+skipped. Quitting with unsaved notes puts up an alert whose default button keeps the app
+open. `DiskFullTests` forces the failure through a store whose writes throw, and asserts the
+banner text, the retained text, the retry and the silent snapshot skip.
+
+**Not done:** ⌘W closes the window but the app and its in-memory notes stay alive, so nothing
+is lost; a window-close guard would need an `NSWindowDelegate` SwiftUI does not hand over.
+
+## 2026-09-16 · The export is a folder, in Downloads, on demand
+
+**Spec said (§16):** weekly automatic export plus one on demand, JSON bundle plus
+attachments, notes as Markdown readable without StudyBot, restore tested end to end.
+
+**Decision:** on demand only for now, from Settings → Data, into `~/Downloads/StudyBot
+exports/` (the sandbox's Downloads entitlement, so no save panel and a place Alvis can see).
+Records carry their sync metadata verbatim and every field including unknown ones; notes are
+one Markdown file per session; revisions, losers, the calendar and the sync state (never the
+token) come too. Restore reads the folder back and replaces records by id. The format is
+`docs/export-format.md`. `ExportBundleTests` exports a store holding every type, restores into
+an empty store and asserts equality type by type. The README says to run it after every block.
+
+**Why not automatic yet:** a weekly timer that writes into Downloads unasked needs its own
+retention rule and a place in Settings to see it ran; that is a small follow-up, and the
+on-demand path is the one that must exist before the 22nd.

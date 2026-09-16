@@ -1,3 +1,4 @@
+import AppKit
 import StudyBotUI
 import SwiftUI
 
@@ -6,6 +7,7 @@ import SwiftUI
 @main
 struct StudyBotMacApp: App {
     @State private var model = AppModel()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
         WindowGroup("StudyBot") {
@@ -14,6 +16,7 @@ struct StudyBotMacApp: App {
                 .frame(minWidth: 1080, minHeight: 600)
                 .dynamicTypeSize(textSizes)
                 .task {
+                    delegate.model = model
                     await model.start()
                     #if DEBUG
                         if ProcessInfo.processInfo.environment["STUDYBOT_DRILL"] == nil {
@@ -42,5 +45,26 @@ struct StudyBotMacApp: App {
         #else
             DynamicTypeSize.xSmall...DynamicTypeSize.accessibility5
         #endif
+    }
+}
+
+/// Quitting over unsaved notes is the one thing §16 forbids. Everything else about the app's
+/// lifecycle is SwiftUI's.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    @MainActor var model: AppModel?
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        MainActor.assumeIsolated {
+            guard let model, model.hasUnsavedNotes else { return .terminateNow }
+            let alert = NSAlert()
+            alert.messageText = "Some notes are not saved"
+            let titles = model.notes?.unsavedSessionTitles.joined(separator: ", ") ?? ""
+            alert.informativeText =
+                "\(titles) could not be written. The text is still in StudyBot. Free some disk space, then Try again on the note. Quitting now loses it."
+            alert.alertStyle = .critical
+            alert.addButton(withTitle: "Keep StudyBot open")
+            alert.addButton(withTitle: "Quit and lose the notes")
+            return alert.runModal() == .alertFirstButtonReturn ? .terminateCancel : .terminateNow
+        }
     }
 }

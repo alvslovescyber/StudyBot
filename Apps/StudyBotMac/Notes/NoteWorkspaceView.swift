@@ -24,6 +24,9 @@ struct NoteWorkspaceView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            if let failure = model.notes?.saveFailures[slot.id] {
+                saveFailureBanner(failure)
+            }
             if !losers.isEmpty {
                 replacedNotice
             }
@@ -88,6 +91,30 @@ struct NoteWorkspaceView: View {
         .padding(.vertical, scale(12))
         .padding(.horizontal, scale(SBSpacing.rowHorizontal))
         .overlay(alignment: .bottom) { SBColor.border.frame(height: 1) }
+    }
+
+    /// §16: a failed save is a banner that stays, on the note, with the text still in the editor.
+    private func saveFailureBanner(_ message: String) -> some View {
+        HStack(spacing: scale(10)) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .sbFont(13, weight: .medium)
+            Text(message)
+                .sbFont(13, weight: .medium)
+            Text("The text is still here and still yours. Free some disk space, then try again.")
+                .sbFont(12)
+                .foregroundStyle(SBColor.textSecondary)
+            Spacer(minLength: 0)
+            Btn.secondary("Try again", size: .small) {
+                Task { await model.notes?.retrySave(slot.id) }
+            }
+        }
+        .foregroundStyle(SBColor.danger)
+        .padding(.vertical, scale(10))
+        .padding(.horizontal, scale(SBSpacing.rowHorizontal))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(SBColor.canvas)
+        .overlay(alignment: .bottom) { SBColor.danger.frame(height: 1) }
+        .accessibilityLabel("\(message) The text is still here.")
     }
 
     /// §3.4: "An older version of this note was replaced. View it."

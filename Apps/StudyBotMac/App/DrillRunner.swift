@@ -18,6 +18,13 @@
         static func runIfRequested(model: AppModel) async {
             guard let spec = ProcessInfo.processInfo.environment["STUDYBOT_DRILL"] else { return }
             if case .firstRun = model.phase { model.continueFromFirstRun() }
+            if spec == "export" {
+                // Proves the sandboxed build can write into Downloads and says where it did.
+                await model.exportEverything()
+                FileHandle.standardError.write(Data(((model.dataStatus ?? "no status") + "\n").utf8))
+                NSApplication.shared.terminate(nil)
+                return
+            }
             guard let notes = model.notes, let calendar = model.termCalendar,
                 let block = calendar.blocks.first,
                 let induction = SessionCatalog.days(of: block, in: model.events).first?.slots.first

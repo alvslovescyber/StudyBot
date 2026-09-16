@@ -40,6 +40,9 @@ final class AppModel {
     private(set) var notes: NotesStore?
     private(set) var evidence: EvidenceStore?
     private(set) var sync: SyncStore?
+    /// Free space on the store's volume (§16 Reliability).
+    private(set) var disk: DiskMonitor?
+    private(set) var storeURL: URL?
 
     /// The session open in Modules & notes or Block mode.
     var selectedSlotID: UUID?
@@ -67,6 +70,10 @@ final class AppModel {
             let url = try AppModel.storeURL()
             let database = try Database.onDisk(at: url)
             self.database = database
+            storeURL = url
+            let disk = DiskMonitor(storeURL: url)
+            disk.start()
+            self.disk = disk
 
             let firstRun = try await database.programmeEvents().isEmpty
             let importedAt = now()
@@ -84,6 +91,7 @@ final class AppModel {
             await store.load()
             assignments = store
             let notes = NotesStore(store: database, revisions: database, deviceID: deviceID, now: now)
+            notes.snapshotsAllowed = { [weak disk] in disk?.snapshotsAllowed ?? true }
             await notes.load()
             self.notes = notes
             let evidence = EvidenceStore(store: database, deviceID: deviceID, now: now)
@@ -136,6 +144,9 @@ final class AppModel {
             await assignments?.load()
         }
     #endif
+
+    /// §16: the user must never quit over unsaved work believing it was saved.
+    var hasUnsavedNotes: Bool { notes?.hasUnsavedNotes ?? false }
 
     /// First run, screen one → Today.
     func continueFromFirstRun() {
@@ -229,6 +240,55 @@ final class AppModel {
         var draft = EvidenceStore.Draft(date: now(), source: source, sessionID: sessionID)
         draft.title = title
         evidenceDraft = draft
+    }
+
+    // MARK: Export and restore (§16)
+
+    /// The last export or restore outcome, for Settings → Data.
+    var dataStatus: String?
+    var lastExportURL: URL?
+
+    /// Writes a bundle into ~/Downloads/StudyBot exports. On demand from Settings.
+    func exportEverything() async {
+        guard let database else { return }
+        do {
+            let downloads = try FileManager.default.url(
+                for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            let parent = downloads.appendingPathComponent("StudyBot exports", isDirectory: true)
+            let version =
+                Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+            let (url, manifest) = try await ExportBundle.write(
+                from: database, into: parent, appVersion: version, deviceID: deviceID, now: now())
+            lastExportURL = url
+            let notes = manifest.counts["notes"] ?? 0
+            let records = manifest.counts.filter {
+                !["notes", "programmeEvents", "noteRevisions", "conflictLosers"].contains($0.key)
+            }.values.reduce(0, +)
+            dataStatus =
+                "Exported \(records) records and \(notes) notes to Downloads/StudyBot exports/\(url.lastPathComponent)."
+        } catch {
+            dataStatus = DiskSpace.saveFailureMessage(for: error, subject: "The export")
+        }
+    }
+
+    /// Reads a bundle back into this store and reloads every screen.
+    func restore(from folder: URL) async {
+        guard let database else { return }
+        do {
+            let summary = try await ExportBundle.restore(from: folder, into: database)
+            await assignments?.load()
+            await notes?.load()
+            await evidence?.load()
+            await sync?.load()
+            events = try await database.programmeEvents(includeCancelled: false)
+            termCalendar = TermCalendar(events: events, derivedAt: now())
+            dataStatus =
+                "Restored \(summary.records) records, \(summary.noteRevisions) note versions and \(summary.programmeEvents) calendar events from \(folder.lastPathComponent)."
+        } catch let error as ExportError {
+            dataStatus = error.message
+        } catch {
+            dataStatus = "Couldn't restore: \(error.localizedDescription)"
+        }
     }
 
     // MARK: ⌘K (§6.7)

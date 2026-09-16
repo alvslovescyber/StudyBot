@@ -184,6 +184,16 @@ Capture, for induction week. AI is deliberately absent; it works on notes that a
 - **Modules & notes**: the current term's modules with their sessions in date order, a dot
   for sessions that have notes, and the workspace beside them.
 
+### Export after every block
+
+Settings → Data → Export everything writes a folder into `~/Downloads/StudyBot exports/`:
+notes as Markdown, every record as JSON, the calendar, every kept version. It is the third
+copy the two Macs do not give you. **Run it after each on-campus block and each week of
+Mondays**, and copy the folder somewhere that is not this Mac. The format is documented in
+[`docs/export-format.md`](docs/export-format.md); restore is the button beside it, and
+`ExportBundleTests` proves an export restores into an empty store with nothing lost.
+Automatic weekly export is not built yet.
+
 ### Copy it to the other Mac
 
 ```bash
