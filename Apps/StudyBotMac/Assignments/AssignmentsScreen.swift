@@ -73,25 +73,37 @@ private struct AssignmentsList: View {
             }
 
             ScrollView {
-                LazyVStack(spacing: 0) {
+                // One flat list with stable ids, so an assignment that changes status is the
+                // same view moving to its new group (§9: 280ms spring), not a removal and an
+                // insertion. Headers and rows share the list for the same reason.
+                VStack(spacing: 0) {
                     if store.groups.isEmpty {
                         emptyState
                     }
-                    ForEach(store.groups) { group in
-                        SectionHeader(
-                            StatusIcon.label(for: group.status),
-                            count: group.assignments.count,
-                            isCollapsed: collapsedBinding(group.status))
-                        if !collapsed.contains(group.status) {
-                            ForEach(group.assignments) { assignment in
-                                row(assignment)
-                            }
+                    ForEach(rows) { item in
+                        switch item {
+                        case .header(let group):
+                            SectionHeader(
+                                StatusIcon.label(for: group.status), count: group.assignments.count,
+                                isCollapsed: collapsedBinding(group.status)
+                            )
+                            .transition(.opacity)
+                        case .assignment(let assignment):
+                            row(assignment)
+                                .transition(
+                                    .asymmetric(
+                                        insertion: .opacity.animation(SBMotion.rowInsert.animation),
+                                        removal: .modifier(
+                                            active: RowCollapse(collapsed: true),
+                                            identity: RowCollapse(collapsed: false)
+                                        ).animation(SBMotion.rowRemove.animation)))
                         }
                     }
                     if store.hiddenCount > 0 {
                         footer
                     }
                 }
+                .sbAnimation(SBMotion.rowMove, value: rows.map(\.id))
             }
         }
         .focusable()
@@ -169,37 +181,75 @@ private struct AssignmentsList: View {
 
     // MARK: Rows
 
+    /// Headers and assignments as one list. A row's id is its assignment's, wherever it sits.
+    private enum RowItem: Identifiable {
+        case header(AssignmentStore.Group)
+        case assignment(Assignment)
+
+        var id: String {
+            switch self {
+            case .header(let group): "h.\(group.status.rawValue)"
+            case .assignment(let assignment): "a.\(assignment.id)"
+            }
+        }
+    }
+
+    private var rows: [RowItem] {
+        store.groups.flatMap { group -> [RowItem] in
+            var items: [RowItem] = [.header(group)]
+            if !collapsed.contains(group.status) {
+                items += group.assignments.map(RowItem.assignment)
+            }
+            return items
+        }
+    }
+
+    /// The row's columns never grow past this, so on a wide window the title does not float
+    /// in space with the date at the far edge (§6.2 revision).
+    private static let columnsWidth: CGFloat = 960
+    /// Room at the right for the three hover actions.
+    private static let actionsWidth: CGFloat = 84
+
     /// One line at ordinary sizes; at accessibility sizes the title takes a line of its own
     /// and the columns drop beneath it, so the row grows rather than truncating (§9).
     private func row(_ assignment: Assignment) -> some View {
         ListRow(isSelected: model.selectedAssignmentID == assignment.id) {
             model.open(assignment)
         } content: {
-            StatusIcon(assignment.status)
-            if scale.isAccessibility {
-                VStack(alignment: .leading, spacing: scale(4)) {
-                    rowTitle(assignment).lineLimit(2)
-                    HStack(spacing: scale(11)) {
-                        if let module = store.module(for: assignment) {
-                            ModuleChip(module)
+            HStack(spacing: scale(11)) {
+                StatusIcon(assignment.status)
+                if scale.isAccessibility {
+                    VStack(alignment: .leading, spacing: scale(4)) {
+                        rowTitle(assignment).lineLimit(2)
+                        HStack(spacing: scale(11)) {
+                            if let module = store.module(for: assignment) {
+                                ModuleChip(module)
+                            }
+                            if assignment.priority != .none {
+                                PriorityBars(assignment.priority)
+                            }
+                            DueDateLabel(assignment.dueDate, now: model.now())
+                            trailingColumn(assignment)
+                            Spacer(minLength: 0)
                         }
-                        if assignment.priority != .none {
-                            PriorityBars(assignment.priority)
-                        }
-                        DueDateLabel(assignment.dueDate, now: model.now())
-                        trailingColumn(assignment)
-                        Spacer(minLength: 0)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    rowTitle(assignment).lineLimit(1)
+                    ModuleChip(store.module(for: assignment)).frame(width: 58, alignment: .leading)
+                    PriorityBars(assignment.priority)
+                    DueDateLabel(assignment.dueDate, now: model.now()).frame(
+                        width: scale(96), alignment: .trailing)
+                    trailingColumn(assignment).frame(width: scale(56), alignment: .trailing)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                rowTitle(assignment).lineLimit(1)
-                ModuleChip(store.module(for: assignment)).frame(width: 58, alignment: .leading)
-                PriorityBars(assignment.priority)
-                DueDateLabel(assignment.dueDate, now: model.now()).frame(
-                    width: scale(96), alignment: .trailing)
-                trailingColumn(assignment).frame(width: scale(56), alignment: .trailing)
             }
+            .frame(maxWidth: scale(Self.columnsWidth), alignment: .leading)
+            Spacer(minLength: scale(Self.actionsWidth))
+        } actions: { hovering in
+            RowActions(assignment: assignment, store: store, now: model.now())
+                .opacity(hovering ? 1 : 0)
+                .allowsHitTesting(hovering)
+                .accessibilityHidden(!hovering)
         }
         .contextMenu {
             Button("Edit") {
@@ -298,6 +348,139 @@ private struct AssignmentsList: View {
             max((currentIndex ?? (delta > 0 ? -1 : visible.count)) + delta, 0), visible.count - 1)
         model.open(visible[nextIndex])
         return .handled
+    }
+}
+
+/// The three actions a hover reveals at the right of a row (§6.2 revision): status,
+/// priority, due date. Each is one field set without entering edit mode; the detail panel's
+/// edit mode remains the place for everything else. Invisible until hover, instant when it
+/// appears, and the menus spring from their anchor (§9).
+private struct RowActions: View {
+    let assignment: Assignment
+    let store: AssignmentStore
+    let now: Date
+    @Environment(\.sbScale) private var scale
+    @State private var pickingDate = false
+
+    var body: some View {
+        HStack(spacing: scale(4)) {
+            Menu {
+                ForEach(AssignmentStatus.allCases, id: \.self) { status in
+                    Button {
+                        Task { await store.set(assignment.id, status: status) }
+                    } label: {
+                        Label(
+                            StatusIcon.label(for: status),
+                            systemImage: status == assignment.status ? "checkmark" : "")
+                    }
+                }
+            } label: {
+                actionLabel { StatusIcon(assignment.status, size: 13) }
+            }
+            .help("Status")
+            .accessibilityLabel("Status: \(StatusIcon.label(for: assignment.status))")
+
+            Menu {
+                ForEach(Priority.allCases, id: \.self) { priority in
+                    Button {
+                        Task { await store.set(assignment.id, priority: priority) }
+                    } label: {
+                        Label(
+                            priority == .none ? "No priority" : priority.rawValue.capitalized,
+                            systemImage: priority == assignment.priority ? "checkmark" : "")
+                    }
+                }
+            } label: {
+                actionLabel {
+                    if assignment.priority == .none {
+                        Image(systemName: "chart.bar").sbFont(11, weight: .medium).foregroundStyle(
+                            SBColor.textSecondary)
+                    } else {
+                        PriorityBars(assignment.priority)
+                    }
+                }
+            }
+            .help("Priority")
+            .accessibilityLabel("Priority")
+
+            Button {
+                pickingDate.toggle()
+            } label: {
+                actionLabel {
+                    Image(systemName: "calendar").sbFont(12, weight: .medium).foregroundStyle(
+                        SBColor.textSecondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .help("Due date")
+            .accessibilityLabel("Due date")
+            .popover(isPresented: $pickingDate, arrowEdge: .bottom) {
+                DueDatePopover(assignment: assignment, store: store, now: now)
+            }
+        }
+        .menuStyle(.button)
+        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
+    }
+
+    private func actionLabel<Glyph: View>(@ViewBuilder _ glyph: () -> Glyph) -> some View {
+        glyph()
+            .frame(width: scale(24), height: scale(22))
+            .background(
+                RoundedRectangle(cornerRadius: SBRadius.control, style: .continuous).fill(SBColor.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.control, style: .continuous).strokeBorder(
+                    SBColor.border)
+            )
+            .contentShape(Rectangle())
+    }
+}
+
+/// The due date, picked on a calendar; Clear removes it.
+private struct DueDatePopover: View {
+    let assignment: Assignment
+    let store: AssignmentStore
+    let now: Date
+    @Environment(\.dismiss) private var dismiss
+    @State private var date: Date = .now
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            DatePicker("Due", selection: $date, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+                .environment(\.calendar, UKCalendar.calendar)
+                .environment(\.timeZone, UKCalendar.timeZone)
+                .environment(\.locale, UKCalendar.locale)
+                .onChange(of: date) { _, newValue in
+                    Task { await store.set(assignment.id, dueDate: newValue) }
+                }
+            HStack {
+                if assignment.dueDate != nil {
+                    Btn.secondary("Clear date", size: .small) {
+                        Task { await store.set(assignment.id, dueDate: nil) }
+                        dismiss()
+                    }
+                }
+                Spacer()
+                Btn.secondary("Done", size: .small) { dismiss() }
+            }
+        }
+        .padding(12)
+        .onAppear { date = assignment.dueDate ?? UKCalendar.startOfDay(now) }
+    }
+}
+
+/// A deleted row collapses in height and its neighbours close up (§9).
+private struct RowCollapse: ViewModifier {
+    let collapsed: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .frame(height: collapsed ? 0 : nil)
+            .clipped()
+            .opacity(collapsed ? 0 : 1)
     }
 }
 
