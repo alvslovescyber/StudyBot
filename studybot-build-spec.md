@@ -1474,7 +1474,7 @@ The values in this section are not a starting point to riff on. They are the des
 
 Six rules that decide most questions without needing to ask:
 
-1. **Nothing moves that the user didn't move.** No hover lifts, no scale on press, no drifting, floating, pulsing or breathing. State changes are colour, material and opacity. Geometry is fixed. This is the single clearest line between a native Mac app and a web page wearing one as a costume.
+1. **Nothing moves under the cursor; everything else may move in response.** A control being hovered or pressed changes colour and material only — never position, never scale. But the interface as a whole is not static: a row that changes status animates to its new group, a panel slides, a count rolls, a menu springs. The test is whether the motion is the app *answering* something the user did. Animation on appearance, on scroll, or on idle is decoration and stays forbidden. Nothing pulses, glows, floats or breathes.
 2. **Structure comes from hairlines and whitespace.** Not from boxes inside boxes, not from cards with shadows, not from background tints marking out regions. If two things need separating, a 1px rule or 24pt of space does it.
 3. **Colour carries meaning or it doesn't appear.** Module identity, status, overdue, the accent on a primary action. Nothing is coloured to look nice. The interface is greyscale plus one accent plus a small set of status colours, and that's the whole palette.
 4. **Depth belongs to controls.** Only pressable things get gradients and shadows. Everything else is flat. When depth is scarce it reads as affordance; when it's everywhere it reads as decoration.
@@ -1509,6 +1509,10 @@ Status and semantic colours, all muted to sit on a near-white canvas without sho
 | `statusReview` | `#5E6AD2` | |
 | `statusDone` | `#4A9E6B` | |
 | `danger` | `#C4483D` | Overdue, destructive actions |
+
+**Module colour is the spine of the interface.** It is currently used only in a 6pt dot. Extend it: the left edge of a session note, the tint of a module chip's background at 8% opacity, the accent on a module's row in the sidebar when selected, the segment of the term strip belonging to that module. Eight desaturated colours across 26 modules means repeats — assign so that modules sharing a term never share a colour.
+
+This is the one place more colour is warranted. It is meaningful (which module), consistent (always the same colour for the same module), and it does the work that would otherwise need labels.
 
 Module colours come from a fixed palette of eight, all similarly desaturated so no module visually dominates.
 
@@ -1628,19 +1632,29 @@ Motion is rare, and every instance answers something the person did. If a builde
 
 | Where | What | Timing |
 |---|---|---|
-| Sidebar selection | Background and colour only — never a symbol variant or weight change | 120ms ease |
-| Command palette | Opacity 0→1, scale 0.97→1, y +6→0 | 180ms, spring, damping 0.86 |
-| Detail panel | Slides in from the right edge | 260ms spring, damping 0.88 |
-| Flashcard flip | 3D `rotateY` 180°, content swaps at 90° | 420ms, ease-in-out |
-| Progress bars | Width animates from 0 on first appearance only | 500ms ease-out, 60ms stagger |
-| Segmented control | Selected pill slides to the new position | 220ms spring |
+| Row hover | Background fill | **0ms — instant, no transition** |
+| Row selection | Background and text colour | 0ms |
+| Button hover | Gradient brightens | 100ms ease |
+| Button press | Gradient darkens, shadow inverts. No transform. | 60ms |
+| Row changes status | Row animates from its old group to its new position | 280ms spring, damping 0.86 |
+| Row deleted | Collapses in height, neighbours close up | 200ms ease-out |
+| Row inserted | Neighbours part, row fades in at full height | 240ms spring |
 | Section collapse | Height and opacity | 200ms ease |
-| Button press | Gradient darkens, shadow inverts to inset. No transform. | 80ms |
-| Today, on first open of a session | The four blocks fade and rise 8px, staggered 50ms | 320ms ease-out |
+| Count changes | Old digit slides up and out, new slides in | 180ms |
+| Detail panel | Slides in from the right edge | 260ms spring, damping 0.88 |
+| Command palette | Opacity and scale 0.97 → 1 | 180ms spring |
+| Popover / menu | Scale 0.96 → 1 from its anchor point | 140ms spring |
+| Progress bar value change | Width animates to the new value | 400ms ease-out |
+| Hours logged | The week bar grows to its new height | 500ms spring, damping 0.8 |
+| Segmented control | Selected pill slides | 220ms spring |
+| Flashcard flip | 3D rotateY, content swaps at 90° | 420ms ease-in-out |
+| Sidebar collapse | Width, labels crossfade out over the first 80ms | 220ms spring |
 
-That last one is the single orchestrated moment. It happens once per launch and nowhere else. No other view animates on appearance, no card fades in on scroll, no number counts up, and nothing pulses, bounces or glows.
+**Still forbidden:** animation on first appearance of content that already existed, scroll-triggered reveals, staggered entrances beyond the single Today orchestration, hover lifts, scale on press, anything that pulses, glows or loops.
 
-Reduce Motion replaces every entry above with a 100ms opacity crossfade, and disables the flip entirely in favour of an instant swap.
+**Everything a person points at responds in under 100ms.** Hover and selection have no transition at all — a perceptible hover transition reads as lag, which is the specific thing that makes an interface feel cheap.
+
+Reduce Motion replaces every spring with a 100ms crossfade and disables the flip.
 
 ### The sidebar
 
