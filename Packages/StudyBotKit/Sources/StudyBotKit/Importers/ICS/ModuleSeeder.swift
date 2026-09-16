@@ -12,7 +12,10 @@ import StudyBotCore
 /// - Year-3 codes offered inside a "Specialism N module (out of …)" phrase are
 ///   `isSpecialismOption`. They have no name in the calendar, so the code stands in until the
 ///   user renames them in Settings; nothing is invented.
-/// - Colours are assigned round-robin in programme order and are user-changeable afterwards.
+/// - Colours: eight across 26 modules means repeats, so they are assigned in programme order
+///   such that modules sharing a term never share a colour while one is free (§9 patch 9).
+///   Only year 3's specialism options, eleven modules in one term, are forced to repeat, and
+///   then the least-used colour in that term is taken. User-changeable afterwards.
 public enum ModuleSeeder {
     /// Builds modules from a calendar reading and the terms derived from it.
     public static func modules(
@@ -37,21 +40,45 @@ public enum ModuleSeeder {
             return false  // stable: keep first-appearance order within a year
         }
 
+        var usedByTerm: [UUID: [ModuleColour]] = [:]
         return codes.enumerated().map { index, code in
             let year = Module.year(fromCode: code) ?? 0
             let termsTeaching = terms.terms.filter {
                 $0.year == year && terms.moduleCodes(in: $0).contains(code)
             }
             let spansYear = termsTeaching.count > 1
+            // A year-spanning module shares every term of its year.
+            let sharedTerms = spansYear ? terms.terms.filter { $0.year == year } : termsTeaching
+            let colour = ModuleSeeder.colour(
+                preferring: index, avoiding: sharedTerms.flatMap { usedByTerm[$0.id] ?? [] })
+            for term in sharedTerms {
+                usedByTerm[term.id, default: []].append(colour)
+            }
             return Module(
                 sync: SyncMetadata.new(id: Module.stableID(forCode: code), at: now),
                 name: reading.moduleNames[code] ?? code,
                 code: code,
-                colour: ModuleColour.roundRobin(index),
+                colour: colour,
                 year: year,
                 termNumber: spansYear ? nil : termsTeaching.first?.number,
                 spansYear: spansYear,
                 isSpecialismOption: reading.specialismOptionCodes.contains(code))
         }
+    }
+
+    /// The first colour from `index` round the palette that no module sharing a term has taken;
+    /// when every colour is taken, the one taken fewest times.
+    public static func colour(preferring index: Int, avoiding taken: [ModuleColour]) -> ModuleColour {
+        let palette = ModuleColour.allCases
+        let order = (0..<palette.count).map { ModuleColour.roundRobin(index + $0) }
+        if let free = order.first(where: { !taken.contains($0) }) { return free }
+        var counts: [ModuleColour: Int] = [:]
+        for colour in taken { counts[colour, default: 0] += 1 }
+        return order.min {
+            (counts[$0] ?? 0, order.firstIndex(of: $0) ?? 0) < (
+                counts[$1] ?? 0, order.firstIndex(of: $1) ?? 0
+            )
+        }
+            ?? palette[0]
     }
 }

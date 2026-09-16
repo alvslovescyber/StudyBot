@@ -46,6 +46,30 @@ struct ModuleSeederTests {
         #expect(modules.allSatisfy { $0.isValid })
     }
 
+    @Test("modules sharing a term never share a colour while one is free; year 3 repeats at most twice")
+    func coloursByTerm() throws {
+        let (reading, modules) = try seed()
+        let calendar = TermCalendar(events: reading.events, derivedAt: RealCalendar.importedAt)
+        for term in calendar.terms {
+            let inTerm = modules.filter { module in
+                module.year == term.year && (module.spansYear || module.termID == term.id)
+            }
+            var counts: [ModuleColour: Int] = [:]
+            for module in inTerm { counts[module.colour, default: 0] += 1 }
+            if inTerm.count <= ModuleColour.allCases.count {
+                #expect(
+                    counts.values.allSatisfy { $0 == 1 }, "year \(term.year) term \(term.number): \(counts)")
+            } else {
+                #expect(
+                    counts.values.allSatisfy { $0 <= 2 }, "year \(term.year) term \(term.number): \(counts)")
+            }
+        }
+        let programming = try #require(modules.first { $0.code == "COM1018DA" })
+        #expect(programming.colour == .indigo, "the first module keeps the first colour")
+        #expect(ModuleSeeder.colour(preferring: 0, avoiding: [.indigo]) == .green)
+        #expect(ModuleSeeder.colour(preferring: 0, avoiding: ModuleColour.allCases + [.indigo]) == .green)
+    }
+
     @Test("Professional Development spans its year; everything else in years 1–2 sits in one term")
     func termsAndSpanning() throws {
         let modules = try seed().modules
