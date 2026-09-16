@@ -38,4 +38,17 @@ struct LiveNoteParserTests {
             lines[4].range == NSRange(location: 34, length: 0), "the empty line after the trailing newline")
         #expect(LiveNoteParser.lines(in: "").map(\.kind) == [.plain])
     }
+
+    @Test("a note without a trailing newline ends on its last line, and one line is one line")
+    func noTrailingNewline() {
+        let lines = LiveNoteParser.lines(in: "first\n- second")
+        #expect(lines.map(\.kind) == [.plain, .bullet])
+        #expect(lines[1].range == NSRange(location: 6, length: 8))
+        #expect(LiveNoteParser.lines(in: "only").map(\.range) == [NSRange(location: 0, length: 4)])
+        #expect(
+            LiveNoteParser.lines(in: "\n").map(\.range) == [
+                NSRange(location: 0, length: 0), NSRange(location: 1, length: 0),
+            ])
+        #expect(LiveNoteParser.lines(in: "a\n\nb").map(\.kind) == [.plain, .plain, .plain])
+    }
 }

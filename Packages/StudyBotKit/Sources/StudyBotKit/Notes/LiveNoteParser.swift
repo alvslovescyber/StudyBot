@@ -21,12 +21,14 @@ public enum LiveNoteParser {
     /// The marker a question line starts with. Case-insensitive, and allowed after a bullet.
     public static let questionMarker = "ASK:"
 
-    /// Every line, in order, with its kind.
+    /// Every line, in order, with its kind. A trailing newline yields one empty last line, the
+    /// one the caret sits on.
     public static func lines(in text: String) -> [Line] {
         let nsText = text as NSString
+        let length = nsText.length
         var result: [Line] = []
         var location = 0
-        while location <= nsText.length {
+        repeat {
             let lineRange = nsText.lineRange(for: NSRange(location: location, length: 0))
             var contentLength = lineRange.length
             if contentLength > 0, let last = Unicode.Scalar(nsText.character(at: NSMaxRange(lineRange) - 1)),
@@ -38,12 +40,11 @@ public enum LiveNoteParser {
             result.append(classify(content, at: lineRange.location, length: contentLength))
             if lineRange.length == 0 { break }
             location = NSMaxRange(lineRange)
-            if location == nsText.length, !text.isEmpty, text.hasSuffix("\n") {
-                // A trailing newline means an empty last line the caret can sit on.
-                result.append(
-                    Line(kind: .plain, range: NSRange(location: location, length: 0), markerRange: nil))
-                break
-            }
+        } while location < length
+        if length > 0, let last = Unicode.Scalar(nsText.character(at: length - 1)),
+            CharacterSet.newlines.contains(last)
+        {
+            result.append(Line(kind: .plain, range: NSRange(location: length, length: 0), markerRange: nil))
         }
         return result
     }
