@@ -72,7 +72,7 @@ struct DiskFullTests {
         // The disk fills mid-sentence.
         await records.setFailing(true)
         store.updateLiveNotes(session.id, text: "the lecturer said the exam is open book")
-        try await Task.sleep(for: .milliseconds(80))
+        #expect(await eventually { store.saveFailures[session.id] != nil }, "the failed write surfaces")
         #expect(store.saveFailures[session.id] == "This note could not be saved. Your disk is full.")
         #expect(store.hasUnsavedNotes)
         #expect(store.unsavedSessionTitles == ["Online lectures"])
@@ -83,9 +83,10 @@ struct DiskFullTests {
             await records.fetch(Session.self, id: session.id)?.value.liveNotes == "",
             "nothing reached the store")
 
-        // Typing on keeps working and keeps the banner.
+        // Typing on keeps working, is tried again, and keeps the banner.
+        let attemptsBefore = await records.writeAttempts
         store.updateLiveNotes(session.id, text: "the lecturer said the exam is open book, two hours")
-        try await Task.sleep(for: .milliseconds(80))
+        #expect(await eventually { await records.writeAttempts > attemptsBefore }, "the save was tried again")
         #expect(store.saveFailures[session.id] != nil)
 
         // Room again: the retry succeeds, the banner clears, and the latest text is what landed.
@@ -110,11 +111,13 @@ struct DiskFullTests {
         let slot = try #require(SessionCatalog.slot(on: RealCalendar.day(2026, 9, 28), in: events))
         let session = await store.open(slot, moduleID: nil)
         store.updateLiveNotes(session.id, text: "notes worth keeping")
+        #expect(
+            await eventually {
+                await records.fetch(Session.self, id: session.id)?.value.liveNotes == "notes worth keeping"
+            }, "the note itself was written")
+        // Past the snapshot delay with the note long written: still nothing.
         try await Task.sleep(for: .milliseconds(150))
         #expect(await revisions.revisions.isEmpty, "no snapshot below the critical level")
-        #expect(
-            await records.fetch(Session.self, id: session.id)?.value.liveNotes == "notes worth keeping",
-            "the note itself was written")
         #expect(store.lastError == nil)
     }
 

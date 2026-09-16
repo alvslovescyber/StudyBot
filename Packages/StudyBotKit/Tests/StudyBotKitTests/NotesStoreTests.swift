@@ -35,7 +35,7 @@ struct NotesStoreTests {
         let revisions = FakeRevisionStore()
         let store = NotesStore(
             store: records, revisions: revisions, deviceID: "air", now: { Self.t0 },
-            saveDelay: .milliseconds(40), snapshotDelay: .milliseconds(120))
+            saveDelay: .milliseconds(40), snapshotDelay: .milliseconds(400))
         let events = try RealCalendar.events()
         let slot = try #require(SessionCatalog.slot(on: RealCalendar.day(2026, 9, 28), in: events))
         return Harness(store: store, records: records, revisions: revisions, slot: slot)
@@ -70,21 +70,22 @@ struct NotesStoreTests {
         #expect(store.session(id: session.id)?.sync.dirty == true)
         #expect(try await records.fetch(Session.self, id: slot.id)?.value.liveNotes == "", "not written yet")
 
-        try await Task.sleep(for: .milliseconds(90))
         #expect(
-            try await records.fetch(Session.self, id: slot.id)?.value.liveNotes.hasSuffix("- relations")
-                == true)
+            try await eventually {
+                try await records.fetch(Session.self, id: slot.id)?.value.liveNotes.hasSuffix("- relations")
+                    == true
+            }, "written once typing paused")
         #expect(writes == writesAfterOpen + 1, "one write for two keystrokes")
         #expect(await revisions.revisions.isEmpty, "no snapshot yet")
 
-        try await Task.sleep(for: .milliseconds(150))
+        #expect(await eventually { await revisions.revisions.count == 1 }, "a snapshot after quiet")
         let snapshots = await revisions.revisions
         #expect(snapshots.count == 1)
         #expect(snapshots.first?.reason == .idleSnapshot)
         #expect(snapshots.first?.body.hasSuffix("- relations") == true)
 
-        // Quiet again with nothing changed: no second identical snapshot.
-        try await Task.sleep(for: .milliseconds(150))
+        // Quiet again with nothing changed, well past the snapshot delay: no second identical snapshot.
+        try await Task.sleep(for: .milliseconds(500))
         #expect(await revisions.revisions.count == 1)
     }
 

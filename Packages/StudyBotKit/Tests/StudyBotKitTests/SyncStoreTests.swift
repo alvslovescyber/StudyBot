@@ -100,8 +100,9 @@ struct SyncStoreTests {
             try await Task.sleep(for: .milliseconds(10))
         }
         #expect(await server.pushCount == pushesAfterPairing, "nothing yet: the writes have not settled")
-        try await Task.sleep(for: .milliseconds(250))
-        #expect(await server.pushCount == pushesAfterPairing + 1)
+        #expect(
+            await eventually { await server.pushCount == pushesAfterPairing + 1 },
+            "one sync once the writes settled")
         #expect(try await database.dirtyWireRecords().isEmpty)
     }
 

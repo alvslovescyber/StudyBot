@@ -117,9 +117,12 @@ struct AssignmentStoreTests {
         #expect(store.visible.isEmpty, "no stub has a module yet")
         store.moduleFilter = nil
         store.scope = .all
-        try await Task.sleep(for: .milliseconds(50))
+        #expect(
+            try await eventually {
+                try await records.fetchAll(Settings.self, includeDeleted: false).first?.value
+                    .assignmentListScope == .all
+            }, "the scope choice persists")
         let persisted = try await records.fetchAll(Settings.self, includeDeleted: false).first?.value
-        #expect(persisted?.assignmentListScope == .all)
         #expect(persisted?.sync.deviceID == "mac-a")
     }
 }

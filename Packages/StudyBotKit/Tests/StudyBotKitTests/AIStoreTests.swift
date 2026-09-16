@@ -73,9 +73,10 @@ struct AIStoreTests {
         #expect(h.ai.runs.count == 1 && h.ai.runs.first?.capability == .structureNotes)
         #expect(h.ai.runs.first?.promptSummary == "Structured the notes of Online lectures")
         #expect(h.ai.budget?.spentPence == 103)
-        try await Task.sleep(for: .milliseconds(50))
         #expect(
-            try await h.records.fetchAll(AIRun.self, includeDeleted: false).count == 1,
+            try await eventually {
+                try await h.records.fetchAll(AIRun.self, includeDeleted: false).count == 1
+            },
             "the AI-use record persists")
     }
 
