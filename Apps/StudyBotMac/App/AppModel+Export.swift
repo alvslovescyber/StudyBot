@@ -74,6 +74,7 @@ extension AppModel {
             await notes?.load()
             await evidence?.load()
             await hours?.load()
+            await revision?.load()
             await sync?.load()
             try await reloadProgramme()
             dataStatus =

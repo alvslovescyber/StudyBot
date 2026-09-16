@@ -77,24 +77,9 @@ struct RootView: View {
         case .modules:
             ModulesScreen()
         case .revision:
-            ComingLaterView(
-                title: "Revision", line: "Queue clear. Decks appear once notes have been structured.")
+            RevisionScreen()
         case .portfolio:
             PortfolioScreen()
-        }
-    }
-}
-
-/// A section that exists in the sidebar but not yet in the build. One honest line, no illustration.
-private struct ComingLaterView: View {
-    let title: String
-    let line: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ScreenHeader(title: title) { EmptyView() }
-            EmptyState(line)
-            Spacer()
         }
     }
 }

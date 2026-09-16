@@ -41,6 +41,7 @@ final class AppModel {
     private(set) var notes: NotesStore?
     private(set) var evidence: EvidenceStore?
     private(set) var hours: HoursStore?
+    private(set) var revision: RevisionStore?
     /// Today's plan (§6.1), local to this Mac.
     private(set) var plan: PlanStore?
     private(set) var sync: SyncStore?
@@ -109,6 +110,9 @@ final class AppModel {
             let hours = HoursStore(store: database, deviceID: deviceID, now: now)
             await hours.load()
             self.hours = hours
+            let revision = RevisionStore(store: database, deviceID: deviceID, now: now)
+            await revision.load()
+            self.revision = revision
             plan = PlanStore(persistence: UserDefaultsPlanPersistence(), now: now)
 
             let credentials = KeychainCredentialStore(account: KeychainCredentialStore.defaultAccount)
@@ -120,6 +124,7 @@ final class AppModel {
             notes.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             evidence.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             hours.didWrite = { [weak sync] in sync?.noteLocalWrite() }
+            revision.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             self.sync = sync
 
             // §6.6: Block mode comes up by itself when today is inside an on-campus block.
@@ -135,6 +140,7 @@ final class AppModel {
                 await self?.notes?.load()
                 await self?.evidence?.load()
                 await self?.hours?.load()
+                await self?.revision?.load()
                 self?.refreshPlan()
                 await self?.refreshAI()
                 self?.startAutomaticExports()

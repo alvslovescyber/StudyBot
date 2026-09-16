@@ -154,12 +154,19 @@
             model.evidenceDraft = nil
             try? await Task.sleep(for: .seconds(0.5))
 
+            await captureHoursAndRevision(model: model, directory: directory, sample: sample)
+
+        }
+
+        /// Hours logged and the field, then a small deck due today with one card lapsed.
+        private static func captureHoursAndRevision(model: AppModel, directory: URL, sample: Bool) async {
             // Hours: a few entries so the week bar has heights, then the field itself.
             if sample, let hours = model.hours {
                 let today = LocalDay(model.now())
                 let monday = today.adding(days: -(today.isoWeekday - 1))
                 _ = await hours.log("1h30 lecture: networks", on: monday)
-                _ = await hours.log("2h project work: rewrote the pipeline checks", on: monday.adding(days: 1))
+                _ = await hours.log(
+                    "2h project work: rewrote the pipeline checks", on: monday.adding(days: 1))
                 _ = await hours.log("45m mentoring with Sam")
                 model.refreshPlan()
             }
@@ -169,6 +176,48 @@
             model.hoursFieldShown = false
             try? await Task.sleep(for: .seconds(0.5))
 
+            // Revision: a small deck due today, one card already lapsed.
+            if sample, let database = model.database, let revision = model.revision {
+                let module = model.assignments?.modules.first { $0.code == "COM1014DA" }
+                let deck = Deck(
+                    sync: .new(at: model.now(), deviceID: model.deviceID), title: "Sets and relations",
+                    moduleID: module?.id)
+                let today = LocalDay(model.now()).date
+                let cards = SampleCard.sets.map { sample in
+                    Card(
+                        sync: .new(at: model.now(), deviceID: model.deviceID), deckID: deck.id,
+                        front: sample.front, back: sample.back, source: "from the notes of 28 Sep", box: 1,
+                        dueDate: today, lapses: sample.lapses)
+                }
+                try? await database.saveAll([deck])
+                try? await database.saveAll(cards)
+                await revision.load()
+            }
+            model.selection = .revision
+            try? await Task.sleep(for: .seconds(1.5))
+            await capture("15-revision", to: directory)
+        }
+
+        private struct SampleCard {
+            let front: String
+            let back: String
+            let lapses: Int
+
+            static let sets = [
+                SampleCard(
+                    front: "What makes a relation transitive?",
+                    back: "If a relates to b and b to c, then a relates to c.", lapses: 0),
+                SampleCard(
+                    front: "What is the Cartesian product A × B?",
+                    back: "The set of all ordered pairs (a, b) with a in A and b in B.", lapses: 2),
+                SampleCard(
+                    front: "When is a function injective?",
+                    back: "Distinct inputs always give distinct outputs.",
+                    lapses: 0),
+                SampleCard(
+                    front: "What is the power set of A?",
+                    back: "The set of every subset of A, including the empty set and A itself.", lapses: 1),
+            ]
         }
 
         /// The Settings scene has no programmatic opener the tour can reach, so show the same
