@@ -30,6 +30,45 @@ struct TermStripTests {
         #expect(strip.summary == "Term 1, starts in 7 days. Next submission in 30 days.")
     }
 
+    @Test("every mark says what it is; a Monday session is coloured only when it names one module")
+    func labelsAndColours() throws {
+        let events = try RealCalendar.events()
+        let calendar = TermCalendar(events: events, derivedAt: RealCalendar.importedAt)
+        let submissions = events.filter { $0.kind == .assignment }.map(\.startDate)
+        let today = RealCalendar.day(2026, 9, 15)
+        // The real calendar names a whole term's modules on every Monday session, so on real
+        // data no tick is coloured: the strip stays honest rather than guessing a module.
+        #expect(events.allSatisfy { $0.kind != .online || $0.moduleCodes.count != 1 })
+        let real = try #require(
+            TermStrip(
+                calendar: calendar, events: events, submissionDates: submissions, today: today,
+                moduleColours: ["COM1018DA": .teal]))
+        // "Sep" or "Sept" depends on the ICU build, so the expectation is built the same way.
+        let blockDates = RelativeDate.dayRange(
+            RealCalendar.day(2026, 9, 22).date, RealCalendar.day(2026, 9, 24).date, relativeTo: today.date)
+        #expect(real.marks.first?.label == "Block 1, \(blockDates)")
+        #expect(real.marks.filter { $0.kind == .session }.allSatisfy { $0.moduleColour == nil })
+        let monday = try #require(real.marks.first { $0.kind == .session })
+        let mondayEvent = try #require(events.first { LocalDay($0.startDate) == monday.day && $0.kind == .online })
+        #expect(monday.label == "\(mondayEvent.title), \(RelativeDate.absolute(monday.day.date, relativeTo: today.date))")
+        let submission = try #require(real.marks.first { $0.kind == .submission })
+        #expect(
+            submission.label.hasSuffix("due \(RelativeDate.absolute(submission.day.date, relativeTo: today.date))"))
+        #expect(submission.label.hasPrefix("1 submission") || submission.label.hasPrefix("2 submissions"))
+
+        // A session that does name one module takes that module's colour.
+        let single = ProgrammeEvent(
+            startDate: RealCalendar.day(2026, 10, 5).date, endDate: RealCalendar.day(2026, 10, 5).date,
+            kind: .online, title: "Programming", moduleCodes: ["COM1018DA"], sourceUID: "single",
+            lastImportedAt: RealCalendar.importedAt)
+        let withSingle = try #require(
+            TermStrip(
+                calendar: calendar, events: events + [single], submissionDates: submissions, today: today,
+                moduleColours: ["COM1018DA": .teal]))
+        let coloured = withSingle.marks.filter { $0.moduleColour == .teal }
+        #expect(coloured.map(\.label) == ["Programming, 5 Oct"])
+    }
+
     @Test("mid-term the strip places today, says the week, and counts to the next submission")
     func midTerm() throws {
         let strip = try strip(on: RealCalendar.day(2026, 10, 13))

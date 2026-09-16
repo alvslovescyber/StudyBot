@@ -19,6 +19,22 @@ public struct TermStrip: Hashable, Sendable {
         public let start: Double
         public let end: Double
         public let day: LocalDay
+        /// What the mark is, for hover: "Block 1, 22–24 Sept", "Programming, 28 Sept".
+        public let label: String
+        /// A Monday session's module, when the calendar names exactly one (§9 patch 9).
+        public let moduleColour: ModuleColour?
+
+        public init(
+            kind: MarkKind, start: Double, end: Double, day: LocalDay, label: String,
+            moduleColour: ModuleColour? = nil
+        ) {
+            self.kind = kind
+            self.start = start
+            self.end = end
+            self.day = day
+            self.label = label
+            self.moduleColour = moduleColour
+        }
     }
 
     public let term: Term
@@ -34,7 +50,10 @@ public struct TermStrip: Hashable, Sendable {
 
     /// The current term (or, between terms and before induction, the next one), or nil when the
     /// calendar has no term at or after `today`.
-    public init?(calendar: TermCalendar, events: [ProgrammeEvent], submissionDates: [Date], today: LocalDay) {
+    public init?(
+        calendar: TermCalendar, events: [ProgrammeEvent], submissionDates: [Date], today: LocalDay,
+        moduleColours: [String: ModuleColour] = [:]
+    ) {
         guard let term = calendar.term(containing: today) ?? calendar.nextTerm(after: today) else {
             return nil
         }
@@ -47,20 +66,36 @@ public struct TermStrip: Hashable, Sendable {
         }
         let inTerm: (LocalDay) -> Bool = { $0 >= first && $0 <= last }
 
+        let now = today.date
         var marks: [Mark] = []
         for block in calendar.blocks where block.end >= first && block.start <= last {
             let start = max(block.start, first)
             let end = min(block.end, last)
-            marks.append(Mark(kind: .block, start: position(start), end: position(end), day: start))
+            let dates = RelativeDate.dayRange(block.start.date, block.end.date, relativeTo: now)
+            marks.append(
+                Mark(
+                    kind: .block, start: position(start), end: position(end), day: start,
+                    label: "Block \(block.number), \(dates)"))
         }
         for event in events where !event.isCancelled && event.kind == .online {
             let day = LocalDay(event.startDate)
             if inTerm(day) {
-                marks.append(Mark(kind: .session, start: position(day), end: position(day), day: day))
+                let colour = event.moduleCodes.count == 1 ? event.moduleCodes.first.flatMap { moduleColours[$0] } : nil
+                marks.append(
+                    Mark(
+                        kind: .session, start: position(day), end: position(day), day: day,
+                        label: "\(event.title), \(RelativeDate.absolute(day.date, relativeTo: now))",
+                        moduleColour: colour))
             }
         }
-        for date in Set(submissionDates.map(LocalDay.init)).sorted() where inTerm(date) {
-            marks.append(Mark(kind: .submission, start: position(date), end: position(date), day: date))
+        let submissionDays = submissionDates.map(LocalDay.init)
+        for date in Set(submissionDays).sorted() where inTerm(date) {
+            let count = submissionDays.filter { $0 == date }.count
+            let noun = count == 1 ? "submission" : "submissions"
+            marks.append(
+                Mark(
+                    kind: .submission, start: position(date), end: position(date), day: date,
+                    label: "\(count) \(noun) due \(RelativeDate.absolute(date.date, relativeTo: now))"))
         }
         self.marks = marks.sorted { ($0.start, $0.day) < ($1.start, $1.day) }
 
