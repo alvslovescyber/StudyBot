@@ -23,16 +23,36 @@ struct RootView: View {
                     .padding(SBSpacing.region)
             )
         case .ready:
+            ready
+        }
+    }
+
+    @ViewBuilder
+    private var ready: some View {
+        @Bindable var model = model
+        ZStack {
             HStack(spacing: 0) {
                 SidebarChrome(isCollapsed: model.sidebarCollapsed) {
                     SidebarView()
                 }
-                content
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(SBColor.surface)
+                Group {
+                    if let block = model.blockMode {
+                        BlockModeScreen(block: block)
+                    } else {
+                        content
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(SBColor.surface)
             }
-            .ignoresSafeArea()
             .animation(SBMotion.segment, value: model.sidebarCollapsed)
+            if model.paletteShown {
+                CommandPaletteView()
+            }
+        }
+        .ignoresSafeArea()
+        .sheet(item: $model.evidenceDraft) { draft in
+            EvidenceSheet(draft: draft).environment(model)
         }
     }
 
@@ -44,15 +64,12 @@ struct RootView: View {
         case .assignments:
             AssignmentsScreen()
         case .modules:
-            ComingLaterView(
-                title: "Modules & notes",
-                line: "Session notes arrive in the next milestone. Your 26 modules are already imported.")
+            ModulesScreen()
         case .revision:
             ComingLaterView(
                 title: "Revision", line: "Queue clear. Decks appear once notes have been structured.")
         case .portfolio:
-            ComingLaterView(
-                title: "Portfolio", line: "No evidence yet. Capture arrives with the next milestone.")
+            PortfolioScreen()
         }
     }
 }

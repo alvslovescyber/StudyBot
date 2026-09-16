@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import StudyBotCore
@@ -36,7 +37,20 @@ final class AppModel {
 
     private(set) var database: Database?
     private(set) var assignments: AssignmentStore?
+    private(set) var notes: NotesStore?
+    private(set) var evidence: EvidenceStore?
     private(set) var sync: SyncStore?
+
+    /// The session open in Modules & notes or Block mode.
+    var selectedSlotID: UUID?
+    /// The module expanded in Modules & notes.
+    var selectedModuleID: UUID?
+    /// Block mode (§6.6) when non-nil: the block being shown.
+    var blockMode: CampusBlock?
+    /// ⌘K.
+    var paletteShown = false
+    /// The evidence capture sheet, when a draft is being written (§6.5).
+    var evidenceDraft: EvidenceStore.Draft?
     private(set) var termCalendar: TermCalendar?
     private(set) var events: [ProgrammeEvent] = []
     let editor = AssignmentEditor()
@@ -69,19 +83,37 @@ final class AppModel {
             let store = AssignmentStore(store: database, deviceID: deviceID, now: now)
             await store.load()
             assignments = store
+            let notes = NotesStore(store: database, revisions: database, deviceID: deviceID, now: now)
+            await notes.load()
+            self.notes = notes
+            let evidence = EvidenceStore(store: database, deviceID: deviceID, now: now)
+            await evidence.load()
+            self.evidence = evidence
 
             let sync = SyncStore(
-                database: database, credentials: KeychainCredentialStore(), deviceID: deviceID, now: now)
+                database: database,
+                credentials: KeychainCredentialStore(account: KeychainCredentialStore.defaultAccount),
+                deviceID: deviceID, now: now)
             store.didWrite = { [weak sync] in sync?.noteLocalWrite() }
+            notes.didWrite = { [weak sync] in sync?.noteLocalWrite() }
+            evidence.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             self.sync = sync
+
+            // §6.6: Block mode comes up by itself when today is inside an on-campus block.
+            if !firstRun, let block = termCalendar?.block(containing: LocalDay(importedAt)) {
+                blockMode = block
+            }
 
             phase = firstRun ? .firstRun(firstRunFacts(store: store)) : .ready
             // Launch trigger (§3.4), off the critical path: the window never waits on the network.
             Task { [weak self] in
                 await sync.start()
                 await self?.assignments?.load()
+                await self?.notes?.load()
+                await self?.evidence?.load()
                 #if DEBUG
                     await self?.pairFromEnvironmentIfRequested()
+                    if let self { await DrillRunner.runIfRequested(model: self) }
                 #endif
             }
         } catch {
@@ -96,9 +128,9 @@ final class AppModel {
         /// app can be checked against a local server without typing into it. Debug only.
         private func pairFromEnvironmentIfRequested() async {
             let env = ProcessInfo.processInfo.environment
-            guard let url = env["STUDYBOT_PAIR_URL"], let code = env["STUDYBOT_PAIR_CODE"], let sync,
-                !sync.isPaired
-            else { return }
+            guard let url = env["STUDYBOT_PAIR_URL"], let code = env["STUDYBOT_PAIR_CODE"], let sync else {
+                return
+            }
             _ = await sync.pair(
                 serverAddress: url, code: code, deviceName: env["STUDYBOT_PAIR_NAME"] ?? "Debug Mac")
             await assignments?.load()
@@ -122,13 +154,146 @@ final class AppModel {
             blockOne: block)
     }
 
-    /// `~/Library/Application Support/StudyBot/studybot.store`, created if needed.
+    /// `~/Library/Application Support/StudyBot/studybot.store`, created if needed. A Debug build
+    /// honours `STUDYBOT_STORE_PATH` so the snapshot tour never touches the real store.
     static func storeURL() throws -> URL {
+        #if DEBUG
+            if let override = ProcessInfo.processInfo.environment["STUDYBOT_STORE_PATH"], !override.isEmpty {
+                let url = URL(fileURLWithPath: override)
+                try FileManager.default.createDirectory(
+                    at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                return url
+            }
+        #endif
         let support = try FileManager.default.url(
             for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let folder = support.appendingPathComponent("StudyBot", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         return folder.appendingPathComponent("studybot.store")
+    }
+
+    // MARK: Modules, sessions and Block mode
+
+    /// The programme's sessions, one slot per event per day.
+    var sessionSlots: [SessionSlot] { SessionCatalog.slots(in: events) }
+
+    func slot(id: UUID) -> SessionSlot? { sessionSlots.first { $0.id == id } }
+
+    /// Modules for a set of calendar codes, in programme order.
+    func modules(forCodes codes: [String]) -> [Module] {
+        (assignments?.modules ?? []).filter { codes.contains($0.code) }
+    }
+
+    /// The single module a session belongs to when the calendar names exactly one; nil when it
+    /// names several, since a block day covers every module in the term.
+    func moduleID(forCodes codes: [String]) -> UUID? {
+        let matches = modules(forCodes: codes)
+        return matches.count == 1 ? matches.first?.id : nil
+    }
+
+    /// Modules with sessions in the current term, for the Modules & notes list.
+    var currentTermModules: [Module] {
+        guard let store = assignments else { return [] }
+        let current = store.currentTerm
+        return store.modules.filter { module in
+            guard !module.isArchived else { return false }
+            guard let current else { return true }
+            return module.termID == current.id || (module.spansYear && module.year == current.year)
+        }
+    }
+
+    func openSession(_ slot: SessionSlot) {
+        selection = .modules
+        selectedSlotID = slot.id
+    }
+
+    /// From Today's banner or the palette (§6.6).
+    func enterBlockMode() {
+        guard let calendar = termCalendar, let block = calendar.currentOrNextBlock(from: LocalDay(now()))
+        else { return }
+        blockMode = block
+        if selectedSlotID == nil {
+            let days = SessionCatalog.days(of: block, in: events)
+            let today = LocalDay(now())
+            selectedSlotID = (days.first { $0.day == today } ?? days.first)?.slots.first?.id
+        }
+    }
+
+    func leaveBlockMode() {
+        blockMode = nil
+    }
+
+    // MARK: Evidence (§6.5)
+
+    func beginEvidence(source: EvidenceSource = .workProject, sessionID: UUID? = nil, title: String = "") {
+        var draft = EvidenceStore.Draft(date: now(), source: source, sessionID: sessionID)
+        draft.title = title
+        evidenceDraft = draft
+    }
+
+    // MARK: ⌘K (§6.7)
+
+    /// Navigation and actions only for now; AI and search wait for their milestones.
+    var paletteCommands: [PaletteCommand] {
+        var commands: [PaletteCommand] = [
+            PaletteCommand(id: "action.evidence", section: .actions, title: "New evidence", detail: "⇧⌘E"),
+            PaletteCommand(id: "action.assignment", section: .actions, title: "New assignment", detail: "⌘N"),
+            PaletteCommand(
+                id: "action.block", section: .actions,
+                title: blockMode == nil ? "Open Block mode" : "Leave Block mode", detail: "⇧⌘B"),
+            PaletteCommand(id: "action.sync", section: .actions, title: "Sync now"),
+            PaletteCommand(id: "action.settings", section: .actions, title: "Open Settings", detail: "⌘,"),
+        ]
+        for item in SidebarItem.allCases {
+            commands.append(PaletteCommand(id: "go.\(item.rawValue)", section: .goTo, title: item.title))
+        }
+        for module in currentTermModules {
+            commands.append(
+                PaletteCommand(
+                    id: "module.\(module.id)", section: .goTo, title: module.name, detail: module.code,
+                    keywords: [module.code, module.shortCode]))
+        }
+        let today = LocalDay(now())
+        for slot in sessionSlots
+        where slot.day >= today.adding(days: -7) && slot.day <= today.adding(days: 60) {
+            let when = RelativeDate.absolute(slot.day.date, relativeTo: now())
+            commands.append(
+                PaletteCommand(
+                    id: "session.\(slot.id)", section: .goTo, title: "Session: \(slot.title)", detail: when,
+                    keywords: [when] + slot.moduleCodes))
+        }
+        return commands
+    }
+
+    func perform(_ command: PaletteCommand) {
+        paletteShown = false
+        switch command.id {
+        case "action.evidence": beginEvidence()
+        case "action.assignment": Task { await createAssignment() }
+        case "action.block":
+            if blockMode == nil { enterBlockMode() } else { leaveBlockMode() }
+        case "action.sync": Task { await sync?.syncNow() }
+        case "action.settings":
+            NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        default:
+            performNavigation(command.id)
+        }
+    }
+
+    private func performNavigation(_ id: String) {
+        if id.hasPrefix("go."), let item = SidebarItem(rawValue: String(id.dropFirst(3))) {
+            blockMode = nil
+            selection = item
+        } else if id.hasPrefix("module."), let moduleID = UUID(uuidString: String(id.dropFirst(7))) {
+            blockMode = nil
+            selection = .modules
+            selectedModuleID = moduleID
+        } else if id.hasPrefix("session."), let slotID = UUID(uuidString: String(id.dropFirst(8))),
+            let slot = slot(id: slotID)
+        {
+            blockMode = nil
+            openSession(slot)
+        }
     }
 
     // MARK: Assignments

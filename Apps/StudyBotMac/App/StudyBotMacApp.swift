@@ -16,7 +16,9 @@ struct StudyBotMacApp: App {
                 .task {
                     await model.start()
                     #if DEBUG
-                        SnapshotTour.runIfRequested(model: model)
+                        if ProcessInfo.processInfo.environment["STUDYBOT_DRILL"] == nil {
+                            SnapshotTour.runIfRequested(model: model)
+                        }
                     #endif
                 }
         }

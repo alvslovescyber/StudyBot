@@ -85,22 +85,30 @@ struct TodayView: View {
             dates: RelativeDate.dayRange(block.start.date, block.end.date, relativeTo: model.now()))
     }
 
+    /// Tapping the banner opens Block mode (§6.1).
     private func blockBannerView(_ banner: Banner) -> some View {
-        HStack {
-            Text(banner.title)
-                .sbFont(13, weight: .medium)
-            Spacer()
-            Text("\(banner.dates) →")
-                .sbFont(12)
+        Button {
+            model.enterBlockMode()
+        } label: {
+            HStack {
+                Text(banner.title)
+                    .sbFont(13, weight: .medium)
+                Spacer()
+                Text("\(banner.dates) →")
+                    .sbFont(12)
+            }
+            .foregroundStyle(SBColor.accent)
+            .padding(.vertical, scale(12))
+            .padding(.horizontal, scale(14))
+            .background(SBColor.accentSoft)
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous).strokeBorder(SBColor.border)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
+            .contentShape(Rectangle())
         }
-        .foregroundStyle(SBColor.accent)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 14)
-        .background(SBColor.accentSoft)
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous).strokeBorder(SBColor.border)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens Block mode")
     }
 
     // MARK: Term strip (§9 "Signature details")

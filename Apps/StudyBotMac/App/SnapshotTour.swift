@@ -1,5 +1,6 @@
 #if DEBUG
     import AppKit
+    import StudyBotKit
     import SwiftUI
 
     /// A debug-only walk through the app that writes a PNG of the window at each step, so a
@@ -87,31 +88,98 @@
                 try? await Task.sleep(for: .seconds(1.5))
                 await capture("8-today-again", to: directory)
 
-                // The Settings scene has no programmatic opener the tour can reach, so show the
-                // same view in a plain window for the capture.
-                let settings = NSWindow(
-                    contentViewController: NSHostingController(
-                        rootView: SettingsView().environment(model)
-                            .dynamicTypeSize(
-                                textSize ?? DynamicTypeSize.xSmall...DynamicTypeSize.accessibility5)))
-                settings.title = "Settings"
-                settings.setContentSize(NSSize(width: 620, height: 480))
-                settings.center()
-                settings.makeKeyAndOrderFront(nil)
-                try? await Task.sleep(for: .seconds(1.5))
-                await capture("9-settings", to: directory, preferring: "Settings")
-                settings.close()
+                await captureCaptureSurfaces(model: model, directory: directory)
+                await captureSettings(model: model, directory: directory)
 
                 NSApplication.shared.terminate(nil)
             }
         }
 
-        /// Two ways to capture. With `STUDYBOT_SNAPSHOT_EXTERNAL` set, the tour writes
-        /// `<name>.ready`, waits for an outside process (`Tools/screenshots.sh`) to take a real
-        /// screenshot and touch `<name>.done`, then moves on: that path shows exactly what is on
-        /// screen, vibrancy and scroll views included, but needs Screen Recording permission for
-        /// the shell running the script. Otherwise the window's layer tree is rendered, which
-        /// needs no permission but cannot show behind-window blending.
+        /// Modules & notes with a session open, then Block mode, the palette and evidence.
+        private static func captureCaptureSurfaces(model: AppModel, directory: URL) async {
+
+            let sample = ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_SAMPLE_NOTES"] != nil
+            model.selection = .modules
+            if let slot = model.sessionSlots.first(where: { $0.kind == .online }) {
+                model.selectedSlotID = slot.id
+                if sample, let notes = model.notes {
+                    _ = await notes.open(slot, moduleID: model.moduleID(forCodes: slot.moduleCodes))
+                    notes.updateLiveNotes(
+                        slot.id,
+                        text: """
+                            - sets, relations, functions
+                            - a relation is a subset of A × B
+                            - ASK: does the exam expect proofs or just definitions
+                            transitive closure: keep adding until nothing changes
+                            - ASK: which textbook chapter covers this
+
+                            """)
+                }
+            }
+            try? await Task.sleep(for: .seconds(1.5))
+            await capture("10-notes", to: directory)
+
+            model.enterBlockMode()
+            if sample, let notes = model.notes, let block = model.blockMode {
+                let days = SessionCatalog.days(of: block, in: model.events)
+                for slot in days.flatMap(\.slots) {
+                    _ = await notes.open(slot, moduleID: model.moduleID(forCodes: slot.moduleCodes))
+                }
+                if let induction = days.first?.slots.first {
+                    notes.append("bring the enrolment letter", asQuestion: false, to: induction.id)
+                    notes.append(
+                        "how do off-the-job hours get evidenced", asQuestion: true, to: induction.id)
+                    model.selectedSlotID = induction.id
+                }
+                if let dayTwo = days.dropFirst().first?.slots.first {
+                    notes.append(
+                        "is the Programming coursework individual or paired", asQuestion: true,
+                        to: dayTwo.id)
+                }
+            }
+            try? await Task.sleep(for: .seconds(1.5))
+            await capture("11-block", to: directory)
+            model.leaveBlockMode()
+
+            model.selection = .today
+            model.paletteShown = true
+            try? await Task.sleep(for: .seconds(1.2))
+            await capture("12-palette", to: directory)
+            model.paletteShown = false
+
+            model.beginEvidence(source: .lecture)
+            try? await Task.sleep(for: .seconds(1.5))
+            await capture("13-evidence", to: directory)
+            model.evidenceDraft = nil
+            try? await Task.sleep(for: .seconds(0.5))
+
+        }
+
+        /// The Settings scene has no programmatic opener the tour can reach, so show the same
+        /// view in a plain window for the capture.
+        private static func captureSettings(model: AppModel, directory: URL) async {
+            // The Settings scene has no programmatic opener the tour can reach, so show the
+            // same view in a plain window for the capture.
+            let settings = NSWindow(
+                contentViewController: NSHostingController(
+                    rootView: SettingsView().environment(model)
+                        .dynamicTypeSize(
+                            textSize ?? DynamicTypeSize.xSmall...DynamicTypeSize.accessibility5)))
+            settings.title = "Settings"
+            settings.setContentSize(NSSize(width: 620, height: 480))
+            settings.center()
+            settings.makeKeyAndOrderFront(nil)
+            try? await Task.sleep(for: .seconds(1.5))
+            await capture("9-settings", to: directory, preferring: "Settings")
+            settings.close()
+        }
+
+        /// For other debug runners: one external capture of the main window.
+        static func captureExternally(_ name: String, to directory: URL) async {
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            await waitForExternalCapture(name, in: directory, preferring: nil)
+        }
+
         /// `preferring` names a window by title (the Settings window) instead of the key one.
         private static func capture(_ name: String, to directory: URL, preferring title: String? = nil) async
         {

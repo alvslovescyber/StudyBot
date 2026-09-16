@@ -11,6 +11,17 @@ struct AppCommands: Commands {
                 Task { await model.createAssignment() }
             }
             .keyboardShortcut("n", modifiers: .command)
+            Button("New evidence") { model.beginEvidence() }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+        }
+
+        CommandMenu("Go") {
+            Button("Command palette") { model.paletteShown.toggle() }
+                .keyboardShortcut("k", modifiers: .command)
+            Button(model.blockMode == nil ? "Open Block mode" : "Leave Block mode") {
+                if model.blockMode == nil { model.enterBlockMode() } else { model.leaveBlockMode() }
+            }
+            .keyboardShortcut("b", modifiers: [.command, .shift])
         }
 
         CommandMenu("View") {
