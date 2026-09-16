@@ -21,8 +21,14 @@ public final class NotesStore {
 
     public private(set) var sessions: [UUID: Session] = [:]
     public private(set) var lastError: String?
+    /// Sessions whose last write failed, with §16's message. The text is still in `sessions`
+    /// and in the editor; the banner stays until a later write succeeds.
+    public private(set) var saveFailures: [UUID: String] = [:]
     /// Called after every write the store makes, so the sync engine can run once it settles.
     public var didWrite: (@MainActor () -> Void)?
+    /// Whether a revision snapshot may be written now. `DiskMonitor` says no below 500 MB free,
+    /// so snapshots never take the last of the room a note write needs (§16).
+    public var snapshotsAllowed: @MainActor () -> Bool = { true }
 
     private let store: any RecordStore
     private let revisions: any NoteRevisionStore
@@ -170,6 +176,19 @@ public final class NotesStore {
         await flush(sessionID)
     }
 
+    /// Whether any note has text the store could not write (§16: never close over unsaved work).
+    public var hasUnsavedNotes: Bool { !saveFailures.isEmpty }
+
+    /// The session titles with unsaved text, for the quit warning.
+    public var unsavedSessionTitles: [String] {
+        saveFailures.keys.compactMap { sessions[$0]?.title }.sorted()
+    }
+
+    /// Tries the failed write again, from the banner's button.
+    public func retrySave(_ sessionID: UUID) async {
+        await flush(sessionID)
+    }
+
     // MARK: Internals
 
     private func scheduleSave(_ sessionID: UUID) {
@@ -193,23 +212,30 @@ public final class NotesStore {
         }
     }
 
+    /// Snapshots are insurance, never a cost: skipped when the disk is short and never allowed
+    /// to fail loudly (§16).
     private func snapshot(_ sessionID: UUID, body: String, reason: RevisionReason) async {
+        guard snapshotsAllowed() else { return }
         do {
             try await revisions.addNoteRevision(
                 NoteRevision(sessionID: sessionID, body: body, capturedAt: now(), reason: reason))
             lastSnapshotBody[sessionID] = body
         } catch {
-            lastError = "Couldn't keep a copy of the notes: \(error.localizedDescription)"
+            // Skipped, not surfaced: the note write is what matters and it reports for itself.
         }
     }
 
+    /// The one write path. A failure is impossible to miss: it lands in `saveFailures` for the
+    /// note's banner and the text stays in memory. Success clears it.
     private func write(_ session: Session) async {
         do {
             try await store.saveAll([session])
             lastError = nil
+            saveFailures.removeValue(forKey: session.id)
             didWrite?()
         } catch {
-            lastError = "Couldn't save the notes: \(error.localizedDescription)"
+            saveFailures[session.id] = DiskSpace.saveFailureMessage(for: error, subject: "This note")
+            lastError = saveFailures[session.id]
         }
     }
 }

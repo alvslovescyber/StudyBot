@@ -75,7 +75,7 @@ public final class EvidenceStore {
         } catch let error as ValidationError {
             lastError = error.issues.map(\.message).joined(separator: ". ")
         } catch {
-            lastError = "Couldn't save the evidence: \(error.localizedDescription)"
+            lastError = DiskSpace.saveFailureMessage(for: error, subject: "This evidence")
         }
         return nil
     }

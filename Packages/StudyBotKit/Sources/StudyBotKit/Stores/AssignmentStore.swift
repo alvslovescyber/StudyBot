@@ -188,7 +188,7 @@ public final class AssignmentStore {
         } catch let error as ValidationError {
             lastError = error.issues.map(\.message).joined(separator: ". ")
         } catch {
-            lastError = "Couldn't save: \(error.localizedDescription)"
+            lastError = DiskSpace.saveFailureMessage(for: error, subject: "This assignment")
         }
     }
 
