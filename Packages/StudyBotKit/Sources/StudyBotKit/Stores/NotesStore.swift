@@ -148,7 +148,21 @@ public final class NotesStore {
         }
     }
 
+    /// Every session that has been opened, in date order.
+    public var allSessions: [Session] { sessions.values.sorted { $0.date < $1.date } }
+
+    /// The sessions touched most recently that have notes, newest first (Today, "Recent notes").
+    /// Ties on the edit time fall to the later session.
+    public func recentSessions(limit: Int) -> [Session] {
+        sessions.values.filter(\.hasNotes)
+            .sorted { ($0.sync.updatedAt, $0.date) > ($1.sync.updatedAt, $1.date) }
+            .prefix(limit).map { $0 }
+    }
+
     // MARK: Questions (§6.3, §6.6)
+
+    /// Every `ASK:` line in every session (Today, "Questions to ask").
+    public var allQuestions: [Question] { questions(in: Array(sessions.keys)) }
 
     /// Every `ASK:` line across the given sessions, in session date order then note order.
     public func questions(in sessionIDs: [UUID]) -> [Question] {
