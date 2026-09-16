@@ -27,6 +27,12 @@ protocol WireRecordOperations: Sendable {
 
     /// Marks every record dirty, for reconciling with a server restored from a backup.
     func markAllDirty(in context: ModelContext) throws
+
+    /// Every row, tombstones included, as exported records with sync metadata verbatim.
+    func exportAll(in context: ModelContext) throws -> [ExportedRecord]
+
+    /// Writes an exported record back, sync metadata and unknown fields intact.
+    func importRecord(_ record: ExportedRecord, in context: ModelContext) throws
 }
 
 extension ModelOperations: WireRecordOperations {
@@ -82,6 +88,18 @@ extension ModelOperations: WireRecordOperations {
             record.value.sync.dirty = true
             try upsert(record.value, unknownFields: nil, in: context)
         }
+    }
+
+    func exportAll(in context: ModelContext) throws -> [ExportedRecord] {
+        try fetchAll(includeDeleted: true, in: context).map { record in
+            ExportedRecord(
+                type: Value.recordType, sync: record.value.sync, fields: try RecordFields.fields(of: record))
+        }
+    }
+
+    func importRecord(_ record: ExportedRecord, in context: ModelContext) throws {
+        let stored = try RecordFields.record(Value.self, fields: record.fields, sync: record.sync)
+        try upsert(stored.value, unknownFields: stored.unknownFields, in: context)
     }
 }
 

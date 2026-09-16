@@ -85,6 +85,49 @@ extension Database {
         }
     }
 
+    // MARK: Export and restore (§16)
+
+    /// Every record of every type, tombstones included, with sync metadata verbatim.
+    public func exportRecords() throws -> [ExportedRecord] {
+        try ModelRegistry.allWireOperations.flatMap { try $0.exportAll(in: modelContext) }
+    }
+
+    /// Writes exported records back. Types this build does not know are skipped and counted
+    /// out; the return value is how many landed. One save.
+    public func importRecords(_ records: [ExportedRecord]) throws -> Int {
+        var imported = 0
+        for record in records {
+            guard let operations = ModelRegistry.wireOperationsByType[record.type] else { continue }
+            try operations.importRecord(record, in: modelContext)
+            imported += 1
+        }
+        try modelContext.save()
+        return imported
+    }
+
+    /// Every note revision, oldest first.
+    public func allNoteRevisions() throws -> [NoteRevision] {
+        let descriptor = FetchDescriptor<NoteRevisionModel>(sortBy: [SortDescriptor(\.capturedAt)])
+        return try modelContext.fetch(descriptor).map { try $0.value() }
+    }
+
+    /// Puts revisions back exactly, without the per-session trimming a live snapshot applies.
+    public func restoreNoteRevisions(_ revisions: [NoteRevision]) throws {
+        let existing = Set(try allNoteRevisions().map(\.id))
+        for revision in revisions where !existing.contains(revision.id) {
+            modelContext.insert(NoteRevisionModel(value: revision))
+        }
+        try modelContext.save()
+    }
+
+    public func restoreConflictLosers(_ losers: [ConflictLoser]) throws {
+        let existing = Set(try allConflictLosers().map(\.id))
+        for loser in losers where !existing.contains(loser.id) {
+            modelContext.insert(try ConflictLoserModel(value: loser))
+        }
+        try modelContext.save()
+    }
+
     // MARK: Conflict losers
 
     /// Losing versions of one record, newest first.
