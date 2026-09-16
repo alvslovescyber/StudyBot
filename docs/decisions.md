@@ -674,3 +674,22 @@ hover and instant when they appear.
 **Why:** status, priority and date are the three fields that change a dozen times a term and
 never need a form; the brief is later than §6.2 and names them. Edit mode still guards the
 fields where a slip costs something (title, brief, rubric, grade).
+
+## 2026-09-16 · Revision: Again means tomorrow, and the queue is only today
+
+**Spec said (§6.4):** one card at a time, Space to flip, Got it or Again; Leitner boxes with
+intervals 1, 3, 7, 16, 35; the queue shows only what is due today and finishing it ends the
+session; a Weak areas strip lists the three topics with the most lapses.
+
+**Decision:** taken literally. An Again puts the card in box 1 due tomorrow, so it leaves
+today's queue rather than circling back within the session; the session ends when the queue
+is empty and says when the next cards are due. "Topics" are cards: a card's front is the
+topic and its lapses are the count, and the strip shows the three with the most, each opening
+that card. The answer is applied in memory first so the next card is up at once, and the
+write follows; a failed write puts the card back with the reason. Keys: Space flips, Return
+or the right arrow is Got it, the left arrow is Again. The flip is a real 3D turn through an
+`Animatable` view whose faces swap at 90°, 420ms; Reduce Motion swaps instantly.
+
+**Why:** re-showing a failed card in the same session is a different scheduling model
+(SM-2 style "learning steps") and the spec chose Leitner for having nothing to tune. If the
+single-day queue feels too thin in practice, the change is one line in `queue(on:)`.
