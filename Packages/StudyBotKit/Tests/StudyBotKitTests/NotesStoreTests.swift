@@ -23,7 +23,14 @@ actor FakeRevisionStore: NoteRevisionStore {
 struct NotesStoreTests {
     private nonisolated static let t0 = SyncClient.t0
 
-    private func makeStore() throws -> (NotesStore, InMemoryRecordStore, FakeRevisionStore, SessionSlot) {
+    private struct Harness {
+        let store: NotesStore
+        let records: InMemoryRecordStore
+        let revisions: FakeRevisionStore
+        let slot: SessionSlot
+    }
+
+    private func makeStore() throws -> Harness {
         let records = InMemoryRecordStore()
         let revisions = FakeRevisionStore()
         let store = NotesStore(
@@ -31,12 +38,13 @@ struct NotesStoreTests {
             saveDelay: .milliseconds(40), snapshotDelay: .milliseconds(120))
         let events = try RealCalendar.events()
         let slot = try #require(SessionCatalog.slot(on: RealCalendar.day(2026, 9, 28), in: events))
-        return (store, records, revisions, slot)
+        return Harness(store: store, records: records, revisions: revisions, slot: slot)
     }
 
     @Test("opening a slot creates one session with the stable id and persists it")
     func openCreates() async throws {
-        let (store, records, _, slot) = try makeStore()
+        let harness = try makeStore()
+        let (store, records, slot) = (harness.store, harness.records, harness.slot)
         let session = await store.open(slot, moduleID: nil)
         #expect(session.id == slot.id)
         #expect(try await records.fetch(Session.self, id: slot.id)?.value == session)
@@ -47,7 +55,10 @@ struct NotesStoreTests {
 
     @Test("typing updates questions at once, writes after a pause, and snapshots after quiet")
     func typing() async throws {
-        let (store, records, revisions, slot) = try makeStore()
+        let harness = try makeStore()
+        let (store, records, revisions, slot) = (
+            harness.store, harness.records, harness.revisions, harness.slot
+        )
         var writes = 0
         store.didWrite = { writes += 1 }
         let session = await store.open(slot, moduleID: nil)
@@ -79,7 +90,8 @@ struct NotesStoreTests {
 
     @Test("the capture bar appends a note or a question, and questions aggregate across sessions")
     func appendAndAggregate() async throws {
-        let (store, _, _, monday) = try makeStore()
+        let harness = try makeStore()
+        let (store, monday) = (harness.store, harness.slot)
         let events = try RealCalendar.events()
         let calendar = TermCalendar(events: events, derivedAt: RealCalendar.importedAt)
         let block = try #require(calendar.blocks.first)
@@ -104,7 +116,8 @@ struct NotesStoreTests {
 
     @Test("restoring an older body keeps the current one first, and losers are surfaced")
     func restoreAndLosers() async throws {
-        let (store, _, revisions, slot) = try makeStore()
+        let harness = try makeStore()
+        let (store, revisions, slot) = (harness.store, harness.revisions, harness.slot)
         let session = await store.open(slot, moduleID: nil)
         store.updateLiveNotes(session.id, text: "current notes")
         await store.flush(session.id)

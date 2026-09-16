@@ -66,6 +66,11 @@ public enum RelativeDate {
         return "\(absolute(start, relativeTo: now)) – \(absolute(end, relativeTo: now))"
     }
 
+    /// "Tue", for a block day's column header.
+    public static func weekday(_ date: Date) -> String {
+        weekdayFormatter.string(from: date)
+    }
+
     /// "19:44", for a sync time in Settings. 24-hour, as en-GB is.
     public static func time(_ date: Date) -> String {
         timeFormatter.string(from: date)
@@ -98,6 +103,7 @@ public enum RelativeDate {
     private static let longDayFormatter = makeFormatter("EEEE d MMMM")
     private static let fullDateFormatter = makeFormatter("d MMMM yyyy")
     private static let timeFormatter = makeFormatter("HH:mm")
+    private static let weekdayFormatter = makeFormatter("EEE")
 
     private static func makeFormatter(_ pattern: String) -> DateFormatter {
         let formatter = DateFormatter()

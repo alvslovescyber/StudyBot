@@ -18,6 +18,8 @@ public enum SBSpacing {
     public static let region: CGFloat = 24
     /// Padding at the outer edge of a detail view on macOS.
     public static let detailOuter: CGFloat = 32
+    /// Horizontal padding inside the live notes editor (§6.3).
+    public static let liveNotesInset: CGFloat = 28
 
     /// List rows: 38pt tall on macOS, horizontal padding 20.
     public static let rowHeight: CGFloat = 38

@@ -6,8 +6,14 @@ import Foundation
 public enum DeviceIdentity {
     static let key = "studybot.deviceID"
 
-    /// The id for this device, minted on first call.
+    /// The id for this device, minted on first call. A Debug build honours `STUDYBOT_DEVICE_ID`
+    /// so two instances on one Mac can stand in for two Macs in the sync drill (§3.11).
     public static func current(defaults: UserDefaults = .standard) -> String {
+        #if DEBUG
+            if let override = ProcessInfo.processInfo.environment["STUDYBOT_DEVICE_ID"], !override.isEmpty {
+                return override
+            }
+        #endif
         if let existing = defaults.string(forKey: key), !existing.isEmpty {
             return existing
         }

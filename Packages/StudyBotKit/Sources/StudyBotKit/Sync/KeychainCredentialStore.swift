@@ -24,6 +24,18 @@ public struct KeychainCredentialStore: SyncCredentialStore {
         self.account = account
     }
 
+    /// The account a build uses: `server-token`, or one per store when a Debug build runs on
+    /// an alternate store, so two instances on one Mac keep separate tokens.
+    public static var defaultAccount: String {
+        #if DEBUG
+            if let path = ProcessInfo.processInfo.environment["STUDYBOT_STORE_PATH"], !path.isEmpty {
+                let file = path.split(separator: "/").last.map(String.init) ?? path
+                return "server-token-" + file.replacingOccurrences(of: ".", with: "-")
+            }
+        #endif
+        return "server-token"
+    }
+
     private func baseQuery(dataProtection: Bool) -> [CFString: Any] {
         var query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
