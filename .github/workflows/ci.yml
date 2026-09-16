@@ -54,7 +54,9 @@ jobs:
 
       - name: Build and test StudyBotKit
         working-directory: Packages/StudyBotKit
-        run: swift test
+        # Serial: SwiftData on the macOS 15 runner has crashed (signal 11, "model is still
+        # editable") when several in-memory containers are created from parallel tests.
+        run: swift test --no-parallel
 
       - name: Build and test StudyBotUI
         working-directory: Packages/StudyBotUI

@@ -49,7 +49,12 @@ for pkg in Packages/StudyBotCore Packages/StudyBotKit Packages/StudyBotUI Server
     echo "▸ swift build  ($pkg)"
     (cd "$pkg" && "$SWIFT_BIN" build --quiet)
     echo "▸ swift test   ($pkg)"
-    (cd "$pkg" && "$SWIFT_BIN" test --quiet)
+    # StudyBotKit runs serially: parallel SwiftData containers have crashed on CI runners.
+    if [[ "$pkg" == "Packages/StudyBotKit" ]]; then
+        (cd "$pkg" && "$SWIFT_BIN" test --quiet --no-parallel)
+    else
+        (cd "$pkg" && "$SWIFT_BIN" test --quiet)
+    fi
 done
 
 if command -v xcodegen >/dev/null 2>&1 && xcode-select -p 2>/dev/null | grep -q 'Xcode.app'; then
