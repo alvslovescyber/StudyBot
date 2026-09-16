@@ -47,9 +47,14 @@
                 try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
                 try? await Task.sleep(for: .seconds(1))
                 // A known size, so captures do not depend on a remembered window frame.
-                NSApplication.shared.windows.first(where: { $0.isVisible })?
-                    .setContentSize(windowSize)
+                let window = NSApplication.shared.windows.first(where: { $0.isVisible })
+                window?.setContentSize(windowSize)
                 try? await Task.sleep(for: .seconds(0.5))
+                // `STUDYBOT_SNAPSHOT_FULLSCREEN=1`: the whole tour in full screen.
+                if ProcessInfo.processInfo.environment["STUDYBOT_SNAPSHOT_FULLSCREEN"] != nil {
+                    window?.toggleFullScreen(nil)
+                    try? await Task.sleep(for: .seconds(2.5))
+                }
                 await capture("1-first-run", to: directory)
 
                 if case .firstRun = model.phase {

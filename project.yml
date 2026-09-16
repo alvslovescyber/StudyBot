@@ -40,7 +40,7 @@ targets:
         CFBundleName: StudyBot
         CFBundleDisplayName: StudyBot
         CFBundleShortVersionString: "0.7.0"
-        CFBundleVersion: "6"
+        CFBundleVersion: "7"
         LSApplicationCategoryType: public.app-category.education
         LSMinimumSystemVersion: "15.0"
         NSHumanReadableCopyright: ""
