@@ -8,7 +8,9 @@ import Foundation
 /// 1. A record the server has never seen is accepted.
 /// 2. A write based on the server's current version is a plain sequential edit: accepted.
 /// 3. The same writer at the same instant is the same write arriving again (a push whose
-///    response was lost): already applied, acknowledged with the existing version.
+///    response was lost): already applied, acknowledged with the existing version. So is a
+///    write whose content is identical to what the server holds: two Macs importing the same
+///    calendar produce the same 66 records, and that is agreement, not a conflict.
 /// 4. Otherwise two devices edited concurrently. `LastWriteWins` decides: later `updatedAt`,
 ///    then lower `deviceID`. The loser is archived either way, so neither direction of loss
 ///    is silent.
@@ -39,11 +41,22 @@ public enum SyncMerge {
         if incoming.updatedAt == existing.updatedAt && writer == existing.deviceID {
             return .alreadyApplied
         }
+        if sameContent(incoming, existing) {
+            return .alreadyApplied
+        }
         let incomingMeta = comparable(incoming, deviceID: writer)
         switch LastWriteWins.winner(incomingMeta, existing.comparable) {
         case .first: return .accept(replacing: existing)
         case .second: return .reject
         }
+    }
+
+    /// Whether a push would leave the server holding exactly what it already holds. Explicit
+    /// nulls on the wire mean "cleared", so they are dropped before comparing.
+    static func sameContent(_ incoming: SyncRecord, _ existing: ServerRecordState) -> Bool {
+        guard incoming.deletedAt == existing.deletedAt else { return false }
+        let pushed = incoming.fields.filter { !$0.value.isNull }
+        return pushed == existing.fields
     }
 
     /// Client side: a pulled change has arrived for a record with a local edit not yet

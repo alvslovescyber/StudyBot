@@ -73,6 +73,21 @@ struct SyncMergeTests {
         #expect(outcome == .alreadyApplied)
     }
 
+    @Test("identical content from another device is agreement, not a conflict")
+    func identicalContent() {
+        // Both Macs imported the same calendar: same fields, different writers and instants.
+        let existing = ServerRecordState(
+            type: "module", id: id, version: 1, seq: 10, updatedAt: t0, deviceID: macB,
+            fields: ["code": "COM1018DA", "name": "Programming"])
+        var incoming = push(at: 5, base: 0, title: "x")
+        incoming.fields = ["code": "COM1018DA", "name": "Programming", "credits": .null]
+        #expect(SyncMerge.decide(incoming: incoming, from: macA, against: existing) == .alreadyApplied)
+        incoming.fields["name"] = "Programming 1"
+        #expect(
+            SyncMerge.decide(incoming: incoming, from: macA, against: existing)
+                == .accept(replacing: existing))
+    }
+
     @Test("a tombstone is an ordinary write and follows the same rules")
     func tombstone() {
         var deletion = push(at: 60, base: 7)
