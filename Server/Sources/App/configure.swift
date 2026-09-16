@@ -21,7 +21,18 @@ func configure(_ app: Application) async throws {
     app.migrations.add(CreateConflictArchive())
     app.migrations.add(CreateDeviceTokens())
     app.migrations.add(CreatePairingCodes())
+    app.migrations.add(CreateAITables())
     try await app.autoMigrate()
+
+    let ai = AISettings.fromEnvironment(app.environment)
+    app.storage[AISettings.Key.self] = ai
+    app.storage[Application.RateLimitersKey.self] = (
+        overall: RateLimiter(perMinute: ai.requestsPerMinute),
+        ai: RateLimiter(perMinute: ai.aiRequestsPerMinute)
+    )
+    if Environment.get("OPENAI_API_KEY") == nil && app.environment != .testing {
+        app.logger.warning("OPENAI_API_KEY is not set: AI answers come from the canned provider")
+    }
 
     // §3.10: request bodies capped. A page of 500 records is well under this.
     app.routes.defaultMaxBodySize = "4mb"

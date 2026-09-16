@@ -10,8 +10,15 @@ func routes(_ app: Application) throws {
     let v1 = app.grouped("v1")
     try v1.register(collection: AuthRoutes())
 
-    let authenticated = v1.grouped(DeviceTokenAuthenticator(), DeviceToken.guardMiddleware())
+    guard let limiters = app.storage[Application.RateLimitersKey.self] else {
+        throw Abort(.internalServerError, reason: "rate limiters not configured")
+    }
+    let authenticated = v1.grouped(
+        DeviceTokenAuthenticator(), DeviceToken.guardMiddleware(),
+        RateLimitMiddleware(limiter: limiters.overall, scope: "overall"))
     try authenticated.register(collection: SyncRoutes())
+    try authenticated.grouped(RateLimitMiddleware(limiter: limiters.ai, scope: "ai")).register(
+        collection: AIRoutes())
 }
 
 struct HealthResponse: Content {
