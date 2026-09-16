@@ -51,8 +51,13 @@ struct RootView: View {
                 CommandPaletteView()
                     .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             }
+            if model.hoursFieldShown {
+                HoursField()
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+            }
         }
         .sbAnimation(SBMotion.palette, value: model.paletteShown)
+        .sbAnimation(SBMotion.palette, value: model.hoursFieldShown)
         .ignoresSafeArea()
         .sheet(item: $model.evidenceDraft) { draft in
             EvidenceSheet(draft: draft).environment(model)

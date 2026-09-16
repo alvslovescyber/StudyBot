@@ -1,5 +1,6 @@
 #if DEBUG
     import AppKit
+    import StudyBotCore
     import StudyBotKit
     import SwiftUI
 
@@ -151,6 +152,21 @@
             try? await Task.sleep(for: .seconds(1.5))
             await capture("13-evidence", to: directory)
             model.evidenceDraft = nil
+            try? await Task.sleep(for: .seconds(0.5))
+
+            // Hours: a few entries so the week bar has heights, then the field itself.
+            if sample, let hours = model.hours {
+                let today = LocalDay(model.now())
+                let monday = today.adding(days: -(today.isoWeekday - 1))
+                _ = await hours.log("1h30 lecture: networks", on: monday)
+                _ = await hours.log("2h project work: rewrote the pipeline checks", on: monday.adding(days: 1))
+                _ = await hours.log("45m mentoring with Sam")
+                model.refreshPlan()
+            }
+            model.showHoursField()
+            try? await Task.sleep(for: .seconds(1.2))
+            await capture("14-hours", to: directory)
+            model.hoursFieldShown = false
             try? await Task.sleep(for: .seconds(0.5))
 
         }

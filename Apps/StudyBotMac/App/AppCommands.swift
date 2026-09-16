@@ -14,6 +14,9 @@ struct AppCommands: Commands {
             .keyboardShortcut("n", modifiers: .command)
             Button("New evidence") { model.beginEvidence() }
                 .keyboardShortcut("e", modifiers: [.command, .shift])
+            // The bare `L` does the same from anywhere outside a text field (KeyMonitor).
+            Button("Log hours") { model.showHoursField() }
+                .keyboardShortcut("l", modifiers: .command)
         }
 
         CommandMenu("Go") {

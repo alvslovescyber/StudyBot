@@ -7,6 +7,7 @@ import SwiftUI
 @main
 struct StudyBotMacApp: App {
     @State private var model = AppModel()
+    @State private var keyMonitor: KeyMonitor?
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
@@ -17,6 +18,7 @@ struct StudyBotMacApp: App {
                 .dynamicTypeSize(textSizes)
                 .task {
                     delegate.model = model
+                    if keyMonitor == nil { keyMonitor = KeyMonitor(model: model) }
                     await model.start()
                     #if DEBUG
                         if ProcessInfo.processInfo.environment["STUDYBOT_DRILL"] == nil {
