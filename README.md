@@ -184,6 +184,34 @@ Capture, for induction week. AI is deliberately absent; it works on notes that a
 - **Modules & notes**: the current term's modules with their sessions in date order, a dot
   for sessions that have notes, and the workspace beside them.
 
+## What milestone six built
+
+Two things that stand between the app and induction, then the first AI.
+
+- **Disk full is a first-class failure** (§16, patched). Every note write checks its
+  result; a failure is a banner on the note that stays until a write succeeds, with the text
+  still in the editor and a Try again. The store's volume is checked on launch and hourly:
+  under 2 GB Today warns once, under 500 MB the line stays and revision snapshots are skipped.
+  Quitting with unsaved notes asks first. `DiskFullTests` forces the failure.
+- **Export and restore** (§16). Settings → Data writes a folder into Downloads: notes as
+  Markdown, records as JSON with their sync metadata and unknown fields, the calendar, every
+  kept version. Restore reads it back. `ExportBundleTests` exports, restores into an empty
+  store and asserts equality type by type. Format: `docs/export-format.md`.
+- **AI, through the server only** (§3.7, §7). `structureNotes`, `makeFlashcards` and
+  `explain`. The client assembles prompts from §7.3a's versioned templates through one
+  function that refuses confidential content before any string exists; the server refuses a
+  flagged payload with 422 anyway, caches by content, reserves budget before each call so
+  concurrent requests cannot pass the cap, answers 402 at the cap and 429 with Retry-After,
+  and writes every run to `ai_runs`. Every run also lands in the AI-use record on the Mac
+  (Settings → AI). Live notes are never written by the AI. Without `OPENAI_API_KEY` the
+  server answers from a canned provider, so nothing costs money until you set it.
+
+### Turn the AI on
+
+Set `OPENAI_API_KEY` and `AI_MONTHLY_CAP_PENCE` in the server's env file and restart it.
+The Mac needs nothing: it already talks to the server it is paired with. Settings → AI shows
+spend against the cap and the AI-use record.
+
 ### Export after every block
 
 Settings → Data → Export everything writes a folder into `~/Downloads/StudyBot exports/`:

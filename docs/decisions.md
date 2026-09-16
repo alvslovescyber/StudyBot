@@ -532,3 +532,48 @@ an empty store and asserts equality type by type. The README says to run it afte
 **Why not automatic yet:** a weekly timer that writes into Downloads unasked needs its own
 retention rule and a place in Settings to see it ran; that is a small follow-up, and the
 on-demand path is the one that must exist before the 22nd.
+
+## 2026-09-16 · AI arrives without streaming, and only for three capabilities
+
+**Spec said (§3.7, §7.2):** eight capabilities, streamed over SSE.
+
+**Decision:** `structureNotes`, `makeFlashcards` and `explain`, answered as one JSON
+response; the note footer and the ⌘K panel wait with a short status. `checkDraft`, `outline`,
+`draftSection`, `makeQuiz` and `suggestKSBs` throw `UnsupportedCapability` from the assembler
+rather than improvising a prompt.
+
+**Why:** the three that operate on notes are what the quiet weeks after induction need. SSE
+adds a streaming path on both sides that a 150-word explanation does not need yet; a
+30-second wait on a long `structureNotes` is the cost, and it is visible, not silent.
+
+## 2026-09-16 · Prompts are assembled on the Mac, enforced twice
+
+**Spec said (§3.7, §7.3a, §7.4):** templates live in `StudyBotKit/AI/Prompts/`; the client
+excludes confidential content at assembly; the server rejects a flagged payload with 422.
+
+**Decision:** `PromptAssembler.request` is the only function that turns text into a prompt.
+Its inputs are typed items with a confidentiality flag, and a flagged item throws before any
+string is built, so no capability can leak one through a path nobody checked. The request
+carries `containsConfidential`, which the assembler always sets false and the server refuses
+on if it is ever true. The template version travels with the request and is part of the
+server's cache key, so changing a template is a new cache entry, never a stale one.
+
+## 2026-09-16 · The cap is reserved, not just checked
+
+**Decision:** `BudgetGate` on the server reserves a worst-case cost before the provider is
+called and settles after, so two requests in flight cannot both fit under the same headroom.
+The realised cap is on the ledger; the reservation only serialises the race.
+
+**Why:** §3.12 says "concurrent requests cannot exceed the cap", and a check-then-call has a
+window exactly as wide as the provider's latency.
+
+## 2026-09-16 · Every debug drill goes through `STUDYBOT_DRILL`
+
+**Decision:** the Debug build's test hooks are one environment variable with a spec:
+`append:<text>` and `show` for the two-machine drill, `export` to prove the sandboxed export
+into Downloads, `ai` to run structureNotes, makeFlashcards and explain against the paired
+server and print each outcome. All quit when done and none exist in Release.
+
+**Why:** the parts of the app that talk to the world (sandbox, Keychain, network, provider)
+are exactly the parts unit tests cannot reach, and typing into the app cannot be scripted
+without Accessibility permission. A hook that drives the real build is the honest check.
