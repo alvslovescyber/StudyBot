@@ -21,7 +21,7 @@ struct PortfolioScreen: View {
                     ) {
                         model.beginEvidence()
                     }
-                    Spacer()
+                    .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {

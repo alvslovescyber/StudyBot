@@ -19,6 +19,7 @@ public struct EmptyState: View {
                 .sbType(SBType.body)
                 .foregroundStyle(SBColor.textSecondary)
                 .multilineTextAlignment(.center)
+                .frame(maxWidth: 420)
             if let actionTitle, let action {
                 Btn.secondary(actionTitle, size: .small, action: action)
             }

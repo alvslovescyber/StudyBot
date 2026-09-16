@@ -75,7 +75,8 @@ private struct AssignmentsList: View {
             ScrollView {
                 // One flat list with stable ids, so an assignment that changes status is the
                 // same view moving to its new group (§9: 280ms spring), not a removal and an
-                // insertion. Headers and rows share the list for the same reason.
+                // insertion. Headers and rows share the list for the same reason. The column
+                // is capped and sits left, so on a wide window nothing floats mid-air.
                 VStack(spacing: 0) {
                     if store.groups.isEmpty {
                         emptyState
@@ -103,6 +104,8 @@ private struct AssignmentsList: View {
                         footer
                     }
                 }
+                .frame(maxWidth: scale(Self.listWidth), alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .sbAnimation(SBMotion.rowMove, value: rows.map(\.id))
             }
         }
@@ -153,30 +156,45 @@ private struct AssignmentsList: View {
     }
 
     private var scopePicker: some View {
-        Picker("Scope", selection: $store.scope) {
-            Text("Current term").tag(AssignmentListScope.currentTerm)
-            Text("Current year").tag(AssignmentListScope.currentYear)
-            Text("All").tag(AssignmentListScope.all)
+        FilterMenu(title: scopeTitle) {
+            Picker("Scope", selection: $store.scope) {
+                Text("Current term").tag(AssignmentListScope.currentTerm)
+                Text("Current year").tag(AssignmentListScope.currentYear)
+                Text("All").tag(AssignmentListScope.all)
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
         }
-        .pickerStyle(.menu)
-        .controlSize(scale.isAccessibility ? .large : .small)
-        .labelsHidden()
-        .fixedSize()
-        .accessibilityLabel("Scope")
+        .accessibilityLabel("Scope: \(scopeTitle)")
+    }
+
+    private var scopeTitle: String {
+        switch store.scope {
+        case .currentTerm: "Current term"
+        case .currentYear: "Current year"
+        case .all: "All"
+        }
     }
 
     private var modulePicker: some View {
-        Picker("Module", selection: $store.moduleFilter) {
-            Text("All modules").tag(UUID?.none)
-            ForEach(store.assignableModules) { module in
-                Text(module.shortCode).tag(Optional(module.id))
+        FilterMenu(title: moduleTitle) {
+            Picker("Module", selection: $store.moduleFilter) {
+                Text("All modules").tag(UUID?.none)
+                ForEach(store.assignableModules) { module in
+                    Text("\(module.shortCode)  \(module.name)").tag(Optional(module.id))
+                }
             }
+            .pickerStyle(.inline)
+            .labelsHidden()
         }
-        .pickerStyle(.menu)
-        .controlSize(scale.isAccessibility ? .large : .small)
-        .labelsHidden()
-        .fixedSize()
-        .accessibilityLabel("Module")
+        .accessibilityLabel("Module: \(moduleTitle)")
+    }
+
+    private var moduleTitle: String {
+        guard let id = store.moduleFilter, let module = store.modules.first(where: { $0.id == id }) else {
+            return "All modules"
+        }
+        return module.shortCode
     }
 
     // MARK: Rows
@@ -204,9 +222,9 @@ private struct AssignmentsList: View {
         }
     }
 
-    /// The row's columns never grow past this, so on a wide window the title does not float
+    /// The list column never grows past this, so on a wide window the title does not float
     /// in space with the date at the far edge (§6.2 revision).
-    private static let columnsWidth: CGFloat = 960
+    static let listWidth: CGFloat = 1040
     /// Room at the right for the three hover actions.
     private static let actionsWidth: CGFloat = 84
 
@@ -243,7 +261,7 @@ private struct AssignmentsList: View {
                     trailingColumn(assignment).frame(width: scale(56), alignment: .trailing)
                 }
             }
-            .frame(maxWidth: scale(Self.columnsWidth), alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: scale(Self.actionsWidth))
         } actions: { hovering in
             RowActions(assignment: assignment, store: store, now: model.now())
@@ -348,6 +366,26 @@ private struct AssignmentsList: View {
             max((currentIndex ?? (delta > 0 ? -1 : visible.count)) + delta, 0), visible.count - 1)
         model.open(visible[nextIndex])
         return .handled
+    }
+}
+
+/// A filter as a chip that opens a menu (§9 "Chips": radius 6, 1px border), in place of the
+/// system pop-up, so the header reads as part of the list rather than as a form.
+private struct FilterMenu<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        Menu {
+            content()
+        } label: {
+            Chip(title, isEditable: true)
+                .contentShape(RoundedRectangle(cornerRadius: SBRadius.control, style: .continuous))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
     }
 }
 
