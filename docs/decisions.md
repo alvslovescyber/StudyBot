@@ -424,3 +424,75 @@ hold three; the title field wraps to three lines. System pickers step up to `.la
 the detail panel's width grows only to 1.4× when it is still a third column.
 
 **Checked** in a 1080×600 window at `accessibility5` (`docs/screenshots/*-accessibility5`).
+
+## 2026-09-16 · Milestone five is capture only; AI moves to milestone six
+
+**Spec said (§13 v1):** `structureNotes`, `makeFlashcards`, the palette's `explain`.
+
+**Decision:** cut from this milestone. Session notes, Block mode and evidence capture ship;
+the two AI buttons are present and disabled with the reason.
+
+**Why:** induction is 22 September. A missing AI feature costs an evening in October; a
+missing capture surface costs a day of lectures permanently.
+
+## 2026-09-16 · A session's id comes from the event and the day
+
+**Decision:** `Session.stableID(eventSourceUID:dayISO:)`. A two-day on-campus event is two
+sessions. `NotesStore.open` creates the record on first open with that id.
+
+**Why:** two Macs opening the same session offline must produce one record on the server, not
+two with different ids and no way to merge them.
+
+## 2026-09-16 · The module tree lives in the Modules & notes screen, not the sidebar
+
+**Spec said (§6.3):** "Sidebar expands to modules, each module expands to its lectures."
+
+**Decision:** the sidebar keeps its five items; the Modules & notes screen has its own column
+with the current term's modules as collapsible sections and their sessions beneath.
+
+**Why:** the 228pt sidebar with 41 Professional Development sessions under it would be a
+scrolling tree beside a scrolling list. One list, in the screen that owns it, is quieter. The
+sidebar can grow the tree later without moving anything else.
+
+## 2026-09-16 · Styling in place, TextKit 1, restyle per paragraph
+
+**Spec said (§6.3):** a transparent text view over a styled mirror, or attributed-string
+styling in place; never change size, weight or character count.
+
+**Decision:** in place. The `-` of a bullet stays in the text with a clear colour and the
+layout manager draws `•` over it on the baseline; `ASK:` lines carry a custom attribute the
+layout manager fills the band and rule from. Every attribute set is colour, background or a
+marker. Restyling runs from `didProcessEditing` on the edited paragraphs only. A test pins the
+parser at under 16ms for a 400-line note.
+
+**Why:** one text storage means one caret and no mirror to keep in step. TextKit 1 because
+custom glyph drawing needs `NSLayoutManager`.
+
+## 2026-09-16 · Identical content is agreement, not a conflict
+
+**Observation:** in the first drill both Macs imported the calendar separately and pushed the
+same 66 records; the second push archived 60 identical "losers".
+
+**Decision:** `SyncMerge` treats a push whose fields equal what the server holds as already
+applied: acknowledged with the existing version, no new version, no archive entry.
+
+**Why:** an archive full of identical copies hides the one real loss.
+
+## 2026-09-16 · The capture bar's one keystroke is a modifier
+
+**Spec said (§6.6):** "one field, one keystroke to file a thought as a note, a question, or an
+evidence item."
+
+**Decision:** return files a note line into the selected session, shift-return an `ASK:` line,
+option-return opens the evidence sheet with the text as its title. The hint sits beside the
+field.
+
+## 2026-09-16 · The drill runs with two instances on one Mac
+
+**Spec said (§3.11):** a two-machine drill before relying on the app.
+
+**Decision:** `Tools/drill.sh` runs two copies of the Debug build with `STUDYBOT_STORE_PATH`,
+`STUDYBOT_DEVICE_ID` and per-store Keychain accounts against a local server, drives them with
+`STUDYBOT_DRILL=append:…|show`, and prints both stores and the archive. It is not two Macs: the
+network, the clocks and the Keychain are one machine's. The real drill on two Macs is written
+up in the README and remains Alvis's to run.

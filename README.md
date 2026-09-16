@@ -160,6 +160,49 @@ Sync and the server, before any AI (§13). Two Macs can now diverge offline and 
   server's route tests plus an end-to-end run with the real server on a port and two real
   client stores over HTTP.
 
+## What milestone five built
+
+Capture, for induction week. AI is deliberately absent; it works on notes that already exist.
+
+- **Session notes** (§6.3): every teaching event in the calendar is a session, one per day it
+  covers, with an id both Macs derive so opening it on both creates one record. The live pane
+  is a plain `NSTextView` styled in place: `- ` draws a bullet, `ASK:` lines take the accent
+  band, and styling changes colour and decoration only, never size, weight or character count,
+  so the caret never drifts. Restyling touches only the edited paragraph. Writes land once
+  typing pauses; a `NoteRevision` is kept after 30 seconds idle; the transcript pane is
+  paste-only for now. "History" shows every kept version and the losers of any sync race, each
+  with a Restore that snapshots the current text first.
+- **`ASK:` capture**: questions collect live beneath the editor and, in Block mode, across
+  every day of the block.
+- **Block mode** (§6.6): a column per day of the block, never assuming three; the selected
+  session's notes; the questions list always visible; the capture bar fixed at the bottom
+  (return files a note, shift-return a question, option-return opens evidence). Opens from
+  Today's banner, from ⌘K or ⇧⌘B, and by itself when today is inside a block.
+- **Evidence** (§6.5): title, date, what you did, KSBs as typed codes until Exeter's list
+  exists. From ⌘K, ⇧⌘E, Portfolio, or the capture bar.
+- **⌘K** (§6.7): navigation and actions. Search and AI wait for their milestones.
+- **Modules & notes**: the current term's modules with their sessions in date order, a dot
+  for sessions that have notes, and the workspace beside them.
+
+### Copy it to the other Mac
+
+```bash
+./Tools/release.sh
+```
+
+Unzip `dist/StudyBot-<version>.zip` on the other Mac, move the app to Applications, and
+right-click → Open the first time (locally signed, §3.10a). Then Settings → Sync → pair it.
+
+### The two-machine drill (§3.11, §16)
+
+Before relying on the app: edit the same note on both Macs while both are offline, reconnect,
+and confirm the losing version is retrievable. On one Mac, `./Tools/drill.sh` runs the drill
+with two copies of the Debug build on separate stores and device ids against a local server,
+prints what each store holds and what the server archived, and screenshots both instances
+into `docs/drill`. Run it once a term. With two real Macs: turn Wi-Fi off on both, type a
+different line into the same session on each, turn Wi-Fi on, wait for the sync, and open
+History on the note that changed.
+
 ### Running the app
 
 ```bash

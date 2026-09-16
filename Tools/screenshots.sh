@@ -23,14 +23,17 @@ suffix="$appearance${text_size:+-$text_size}"
 rm -rf "$container"
 mkdir -p "$container" "$out"
 
+# A scratch store, so the tour never writes sample notes into the real one.
+rm -f "$container"/snapshots.store*
 env STUDYBOT_SNAPSHOT_DIR="$container" STUDYBOT_SNAPSHOT_EXTERNAL=1 \
+    STUDYBOT_STORE_PATH="$container/snapshots.store" STUDYBOT_SNAPSHOT_SAMPLE_NOTES=1 \
     STUDYBOT_SNAPSHOT_APPEARANCE="$appearance" STUDYBOT_SNAPSHOT_WINDOW="$window" \
     ${text_size:+STUDYBOT_SNAPSHOT_TEXT_SIZE="$text_size"} \
     "$app/Contents/MacOS/StudyBot" &
 pid=$!
 
 seen=()
-deadline=$((SECONDS + 90))
+deadline=$((SECONDS + 150))
 while kill -0 "$pid" 2>/dev/null && (( SECONDS < deadline )); do
     for ready in "$container"/*.ready; do
         [[ -e "$ready" ]] || continue

@@ -48,3 +48,4 @@ coverage/
 
 # Xcode project is generated from project.yml by XcodeGen
 StudyBot.xcodeproj/
+dist/
