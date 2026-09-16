@@ -38,10 +38,13 @@ public struct SectionHeader: View {
                 .sbFont(12, weight: .semibold)
                 .foregroundStyle(SBColor.textPrimary)
             if let count {
+                // A count that changes rolls: the old digit out, the new one in (§9).
                 Text("\(count)")
                     .sbFont(12)
                     .foregroundStyle(SBColor.textTertiary)
                     .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(count)))
+                    .sbAnimation(SBMotion.count, value: count)
             }
             Spacer(minLength: 0)
             if let note {

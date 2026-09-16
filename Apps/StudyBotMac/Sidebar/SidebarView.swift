@@ -39,10 +39,10 @@ struct SidebarView: View {
                     .sbFont(13, weight: .semibold)
                     .foregroundStyle(SBColor.textPrimary)
                     .lineLimit(1)
-                    .transition(.opacity)
+                    .transition(.opacity.animation(SBMotion.sidebarLabel.animation))
                 Spacer(minLength: 0)
                 Button {
-                    withAnimation(SBMotion.segment) { model.sidebarCollapsed = true }
+                    withSBAnimation(SBMotion.sidebar) { model.sidebarCollapsed = true }
                 } label: {
                     Image(systemName: "sidebar.left")
                         .sbFont(13, weight: .medium)
@@ -56,7 +56,7 @@ struct SidebarView: View {
         .frame(maxWidth: .infinity, alignment: model.sidebarCollapsed ? .center : .leading)
         .onTapGesture {
             if model.sidebarCollapsed {
-                withAnimation(SBMotion.segment) { model.sidebarCollapsed = false }
+                withSBAnimation(SBMotion.sidebar) { model.sidebarCollapsed = false }
             }
         }
     }
@@ -85,6 +85,7 @@ private struct SidebarRow: View {
                         .lineLimit(scale.isAccessibility ? 2 : 1)
                         .truncationMode(.tail)
                         .multilineTextAlignment(.leading)
+                        .transition(.opacity.animation(SBMotion.sidebarLabel.animation))
                 }
             }
             .foregroundStyle(isSelected ? SBColor.accent : SBColor.textSecondary)
@@ -98,7 +99,9 @@ private struct SidebarRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // Instant: a hover that fades reads as lag (§9).
         .onHover { isHovering = $0 }
+        .animation(SBMotion.hover, value: isHovering)
         .help(isCollapsed ? item.title : "")
         .accessibilityLabel(item.title)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])

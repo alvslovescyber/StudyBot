@@ -35,6 +35,9 @@ public struct ListRow<Content: View>: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
+        // Instant, by rule: no transition on hover or selection (§9 motion table).
+        .animation(SBMotion.hover, value: isHovering)
+        .animation(SBMotion.hover, value: isSelected)
     }
 
     private var fill: Color {

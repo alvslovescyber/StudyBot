@@ -5,7 +5,8 @@ import SwiftUI
 /// confirm.
 ///
 /// Buttons are the one place the interface gets dimension. Everything else is flat. Nothing
-/// moves: no lift on hover, no scale on press. The gradient and shadow change, that is all.
+/// moves: no lift on hover, no scale on press. The gradient and shadow change, that is all,
+/// hover in 100ms and press in 60ms (§9 motion table).
 /// Icons on primary buttons only, which is what makes primary read as primary at a glance
 /// without colour doing all the work. `sparkles` means "this costs tokens" and appears on
 /// every AI action and nowhere else.
@@ -89,8 +90,8 @@ struct BtnStyle: ButtonStyle {
             .modifier(BtnShadow(isPrimary: isPrimary, isEnabled: isEnabled, pressed: pressed))
             .contentShape(RoundedRectangle(cornerRadius: SBRadius.button, style: .continuous))
             .onHover { isHovering = $0 }
-            .animation(SBMotion.buttonPress, value: pressed)
-            .animation(.easeOut(duration: 0.12), value: isHovering)
+            .animation(SBMotion.buttonPress.animation, value: pressed)
+            .animation(SBMotion.buttonHover.animation, value: isHovering)
     }
 
     private var horizontalPadding: CGFloat {

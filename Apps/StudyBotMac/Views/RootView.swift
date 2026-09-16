@@ -45,11 +45,14 @@ struct RootView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(SBColor.surface)
             }
-            .animation(SBMotion.segment, value: model.sidebarCollapsed)
+            .sbAnimation(SBMotion.sidebar, value: model.sidebarCollapsed)
             if model.paletteShown {
+                // Opacity and scale 0.97 → 1, from the top where the palette sits (§9).
                 CommandPaletteView()
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             }
         }
+        .sbAnimation(SBMotion.palette, value: model.paletteShown)
         .ignoresSafeArea()
         .sheet(item: $model.evidenceDraft) { draft in
             EvidenceSheet(draft: draft).environment(model)

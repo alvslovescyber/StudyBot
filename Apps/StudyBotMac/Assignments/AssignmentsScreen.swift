@@ -31,7 +31,7 @@ struct AssignmentsScreen: View {
                 }
             }
         }
-        .animation(SBMotion.detailPanel, value: model.selectedAssignmentID != nil)
+        .sbAnimation(SBMotion.detailPanel, value: model.selectedAssignmentID != nil)
         .background(SBColor.surface)
     }
 }
@@ -284,7 +284,7 @@ private struct AssignmentsList: View {
         Binding(
             get: { collapsed.contains(status) },
             set: { isCollapsed in
-                withAnimation(SBMotion.collapse) {
+                withSBAnimation(SBMotion.collapse) {
                     if isCollapsed { collapsed.insert(status) } else { collapsed.remove(status) }
                 }
             })

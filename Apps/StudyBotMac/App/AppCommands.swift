@@ -1,3 +1,4 @@
+import StudyBotUI
 import SwiftUI
 
 /// Menu items and their shortcuts (§10). Every shortcut appears in a menu; nothing is hidden.
@@ -31,7 +32,7 @@ struct AppCommands: Commands {
             }
             Divider()
             Button(model.sidebarCollapsed ? "Show sidebar" : "Hide sidebar") {
-                withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                withSBAnimation(SBMotion.sidebar) {
                     model.sidebarCollapsed.toggle()
                 }
             }

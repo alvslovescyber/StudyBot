@@ -87,7 +87,7 @@ struct ModulesScreen: View {
         Binding(
             get: { !isExpanded(moduleID) },
             set: { collapsed in
-                withAnimation(SBMotion.collapse) {
+                withSBAnimation(SBMotion.collapse) {
                     model.selectedModuleID = collapsed ? UUID() : moduleID
                 }
             })

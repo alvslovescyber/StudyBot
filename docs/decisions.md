@@ -593,3 +593,20 @@ server and print each outcome. All quit when done and none exist in Release.
 **Why:** the parts of the app that talk to the world (sandbox, Keychain, network, provider)
 are exactly the parts unit tests cannot reach, and typing into the app cannot be scripted
 without Accessibility permission. A hook that drives the real build is the honest check.
+
+## 2026-09-16 · Motion is one table of specs, and the button table yields to it
+
+**Spec said (§9, patches 7 and 8):** the motion table lists every timing; hover and selection
+have no transition; everything pointed at responds in under 100ms. The older button component
+table still reads "background 120ms ease" for hover.
+
+**Decision:** `SBMotion` holds each entry as a `Spec` (duration and curve as numbers, pinned by
+a token test) and views attach one through `sbAnimation` or `withSBAnimation`, which swap
+every spring for the 100ms crossfade under Reduce Motion. Button hover follows the newer
+motion table at 100ms, not the component table's 120ms. List rows and sidebar rows attach a
+nil animation to hover and selection explicitly, so an ambient animation higher up the tree
+can never make hover fade. Progress bars now animate value changes and never first appearance.
+
+**Why:** the patches are later and more specific than the component table, and "under 100ms"
+is the rule with a reason attached. Making the specs plain numbers means the review question
+"is this on the list" has a one-line answer.

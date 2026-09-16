@@ -121,6 +121,32 @@ struct TokenTests {
         #expect(SBRadius.pill == 999)
     }
 
+    @Test("motion follows the §9 table: instant under the cursor, springs and eases elsewhere")
+    func motion() {
+        #expect(SBMotion.hover == nil, "row hover and selection have no transition at all")
+        #expect(SBMotion.buttonHover == SBMotion.Spec(0.10, .ease))
+        #expect(SBMotion.buttonPress == SBMotion.Spec(0.06, .easeOut))
+        #expect(SBMotion.rowMove == SBMotion.Spec(0.28, .spring(damping: 0.86)))
+        #expect(SBMotion.rowRemove == SBMotion.Spec(0.20, .easeOut))
+        #expect(SBMotion.rowInsert.duration == 0.24 && SBMotion.rowInsert.isSpring)
+        #expect(SBMotion.collapse == SBMotion.Spec(0.20, .ease))
+        #expect(SBMotion.count.duration == 0.18)
+        #expect(SBMotion.detailPanel == SBMotion.Spec(0.26, .spring(damping: 0.88)))
+        #expect(SBMotion.palette.duration == 0.18 && SBMotion.palette.isSpring)
+        #expect(SBMotion.popover.duration == 0.14 && SBMotion.popover.isSpring)
+        #expect(SBMotion.progressBar == SBMotion.Spec(0.40, .easeOut))
+        #expect(SBMotion.hoursBar == SBMotion.Spec(0.50, .spring(damping: 0.8)))
+        #expect(SBMotion.segment.duration == 0.22 && SBMotion.segment.isSpring)
+        #expect(SBMotion.flip == SBMotion.Spec(0.42, .easeInOut))
+        #expect(SBMotion.sidebar.duration == 0.22 && SBMotion.sidebarLabel.duration == 0.08)
+        #expect(SBMotion.reduced == SBMotion.Spec(0.10, .easeInOut))
+        // Everything a person points at responds in under 100ms.
+        #expect(SBMotion.buttonHover.duration <= 0.10 && SBMotion.buttonPress.duration <= 0.10)
+        // Reduce Motion: every spring becomes the crossfade.
+        #expect(SBMotion.honouring(true, SBMotion.rowMove) == SBMotion.reduced.animation)
+        #expect(SBMotion.honouring(false, SBMotion.rowMove) == SBMotion.rowMove.animation)
+    }
+
     @Test("status labels always accompany the icon")
     func statusLabels() {
         #expect(
