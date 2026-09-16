@@ -249,6 +249,13 @@ final class AppModel {
         selectedSlotID = slot.id
     }
 
+    /// Shows a sidebar section. Block mode is a mode, not a destination (§5): choosing a
+    /// destination leaves it, from the sidebar, ⌘1 to ⌘5, or ⌘K alike.
+    func show(_ item: SidebarItem) {
+        blockMode = nil
+        selection = item
+    }
+
     /// Opens the session with this id, from Today's questions and recent notes.
     func openSession(id: UUID) {
         guard let slot = slot(id: id) else { return }
@@ -391,8 +398,7 @@ final class AppModel {
 
     private func performNavigation(_ id: String) {
         if id.hasPrefix("go."), let item = SidebarItem(rawValue: String(id.dropFirst(3))) {
-            blockMode = nil
-            selection = item
+            show(item)
         } else if id.hasPrefix("module."), let moduleID = UUID(uuidString: String(id.dropFirst(7))) {
             blockMode = nil
             selection = .modules

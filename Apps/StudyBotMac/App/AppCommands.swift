@@ -30,7 +30,7 @@ struct AppCommands: Commands {
 
         CommandMenu("View") {
             ForEach(SidebarItem.allCases) { item in
-                Button(item.title) { model.selection = item }
+                Button(item.title) { model.show(item) }
                     .keyboardShortcut(item.shortcutKey, modifiers: .command)
             }
             Divider()

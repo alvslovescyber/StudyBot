@@ -21,7 +21,7 @@ struct SidebarView: View {
                     isSelected: model.selection == item,
                     isCollapsed: model.sidebarCollapsed
                 ) {
-                    model.selection = item
+                    model.show(item)
                 }
             }
             Spacer(minLength: 0)
