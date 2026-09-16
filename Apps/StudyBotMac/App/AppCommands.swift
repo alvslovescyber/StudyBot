@@ -28,7 +28,9 @@ struct AppCommands: Commands {
             .keyboardShortcut("b", modifiers: [.command, .shift])
         }
 
-        CommandMenu("View") {
+        // Into the system View menu, not a second one beside it.
+        CommandGroup(after: .sidebar) {
+            Divider()
             ForEach(SidebarItem.allCases) { item in
                 Button(item.title) { model.show(item) }
                     .keyboardShortcut(item.shortcutKey, modifiers: .command)
