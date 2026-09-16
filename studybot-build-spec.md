@@ -169,6 +169,8 @@ The hardest part of the build. Treat it as its own component with its own tests.
 
 **Note bodies also get local revision history** regardless of sync: the last 20 versions, snapshotted on a 30-second idle debounce. This is independent insurance against the app itself, not just against sync.
 
+**Identical content is agreement, not a conflict.** Before resolving, compare the two bodies; if they are equal, accept silently and archive nothing. Both Macs derive the same records from the same bundled calendar, so without this rule a first sync produces dozens of "losers" that are byte-identical to the winners — noise that trains the user to ignore the one conflict notice that matters.
+
 **Deletions** are tombstones, purged server-side after 90 days, long past any plausible sync gap.
 
 **Attachments never go through the sync envelope.** Content-addressed by SHA-256: `PUT /blobs/{sha}` is idempotent and skippable if the server already has it, `GET /blobs/{sha}` streams it back. Records reference hashes. Uploads are resumable and happen on a separate queue that can be slow without blocking anything.
@@ -1905,6 +1907,13 @@ This app holds three years of irreplaceable coursework and the evidence for an e
 - **Import** of that bundle into a fresh install, tested end to end, because an export nobody has ever restored is not a backup.
 
 ### Reliability
+
+Running out of disk is a first-class failure, not an edge case. SwiftData writes fail when the volume is full, and the moment this is most likely to happen is while typing fast during a lecture — the one thing the app exists to protect.
+
+- Every store write checks its result. A failed write must surface immediately and visibly: a persistent banner on the note being edited, not a toast, not a log line. "This note could not be saved. Your disk is full." The text stays on screen and in memory; the user must never be able to close a window over unsaved work believing it was saved.
+- On launch and hourly, check free space on the store's volume. Below 2 GB, warn once in Today. Below 500 MB, warn persistently.
+- `NoteRevision` snapshots are skipped rather than allowed to fail, so revision writes never consume the last of the disk that a note write needs.
+- A test forces a write failure and asserts the banner appears and the text is retained.
 
 - Every network call has a timeout, a retry with backoff, and a user-visible failure state that says what broke and what to do.
 - The app is fully functional offline. Notes, assignments, hours, evidence and revision all work with no connection. Only AI and ingestion degrade, and they degrade to a clear message, not a spinner.
