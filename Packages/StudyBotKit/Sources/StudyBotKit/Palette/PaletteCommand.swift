@@ -4,6 +4,7 @@ import Foundation
 /// AI milestone; full-text search with the search index.
 public struct PaletteCommand: Identifiable, Hashable, Sendable {
     public enum Section: String, Hashable, Sendable, CaseIterable {
+        case askAI = "Ask AI"
         case actions = "Actions"
         case goTo = "Go to"
     }

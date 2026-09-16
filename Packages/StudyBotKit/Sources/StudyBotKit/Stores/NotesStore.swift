@@ -104,6 +104,15 @@ public final class NotesStore {
         scheduleSave(sessionID)
     }
 
+    /// AI output lands here and only here; live notes are never overwritten (§6.3).
+    public func setStructuredNotes(_ sessionID: UUID, markdown: String) {
+        guard var session = sessions[sessionID], session.structuredNotes != markdown else { return }
+        session.structuredNotes = markdown
+        session.sync.markEdited(at: now(), by: deviceID)
+        sessions[sessionID] = session
+        Task { await write(session) }
+    }
+
     /// One tap from the session (§4 "What counts as attended").
     public func markAttended(_ sessionID: UUID) async {
         guard var session = sessions[sessionID], !session.markedAttended else { return }
