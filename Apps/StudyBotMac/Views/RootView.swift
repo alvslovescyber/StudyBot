@@ -54,6 +54,9 @@ struct RootView: View {
         .sheet(item: $model.evidenceDraft) { draft in
             EvidenceSheet(draft: draft).environment(model)
         }
+        .sheet(item: $model.explanation) { explanation in
+            AIPanel(explanation: explanation).environment(model)
+        }
     }
 
     @ViewBuilder

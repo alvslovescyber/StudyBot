@@ -12,7 +12,11 @@ struct CommandPaletteView: View {
     @FocusState private var focused: Bool
 
     private var results: [PaletteCommand] {
-        PaletteMatcher.matches(query, in: model.paletteCommands)
+        let matched = PaletteMatcher.matches(query, in: model.paletteCommands)
+        if let ask = model.explainCommand(for: query) {
+            return [ask] + matched
+        }
+        return matched
     }
 
     var body: some View {
@@ -90,7 +94,11 @@ struct CommandPaletteView: View {
             model.perform(command)
         } label: {
             HStack(spacing: scale(10)) {
-                Text("›").sbFont(13).foregroundStyle(SBColor.textTertiary)
+                if command.section == .askAI {
+                    Image(systemName: "sparkles").sbFont(12, weight: .medium).foregroundStyle(SBColor.accent)
+                } else {
+                    Text("›").sbFont(13).foregroundStyle(SBColor.textTertiary)
+                }
                 Text(command.title).sbFont(13).foregroundStyle(SBColor.textPrimary).lineLimit(1)
                 Spacer(minLength: 0)
                 if let detail = command.detail {

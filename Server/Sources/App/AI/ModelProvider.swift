@@ -25,33 +25,8 @@ struct OpenAIProvider: ModelProvider {
     let client: any Client
     let apiKey: String
 
-    private struct Request: Content {
-        struct Message: Content {
-            let role: String
-            let content: String
-        }
-        let model: String
-        let messages: [Message]
-        let temperature: Double
-    }
-
-    private struct Response: Content {
-        struct Choice: Content {
-            struct Message: Content {
-                let content: String?
-            }
-            let message: Message
-        }
-        struct Usage: Content {
-            let prompt_tokens: Int?
-            let completion_tokens: Int?
-        }
-        let choices: [Choice]
-        let usage: Usage?
-    }
-
     func complete(model: String, messages: [AIMessage]) async throws -> ProviderCompletion {
-        let body = Request(
+        let body = OpenAIRequest(
             model: model, messages: messages.map { .init(role: $0.role.rawValue, content: $0.content) },
             temperature: 0.3)
         let response = try await client.post("https://api.openai.com/v1/chat/completions") { req in
@@ -61,16 +36,49 @@ struct OpenAIProvider: ModelProvider {
         guard response.status == .ok else {
             throw ProviderError(detail: "OpenAI answered HTTP \(response.status.code)")
         }
-        let decoded = try response.content.decode(Response.self)
+        let decoded = try response.content.decode(OpenAIResponse.self)
         guard let text = decoded.choices.first?.message.content else {
             throw ProviderError(detail: "OpenAI returned no text")
         }
         return ProviderCompletion(
-            text: text, inputTokens: decoded.usage?.prompt_tokens ?? 0,
-            outputTokens: decoded.usage?.completion_tokens ?? 0)
+            text: text, inputTokens: decoded.usage?.promptTokens ?? 0,
+            outputTokens: decoded.usage?.completionTokens ?? 0)
     }
 }
 
+/// The wire shapes of the chat completions endpoint, kept flat and camel-cased.
+private struct OpenAIRequest: Content {
+    struct Message: Content {
+        let role: String
+        let content: String
+    }
+    let model: String
+    let messages: [Message]
+    let temperature: Double
+}
+
+private struct OpenAIMessage: Content {
+    let content: String?
+}
+
+private struct OpenAIChoice: Content {
+    let message: OpenAIMessage
+}
+
+private struct OpenAIUsage: Content {
+    let promptTokens: Int?
+    let completionTokens: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case promptTokens = "prompt_tokens"
+        case completionTokens = "completion_tokens"
+    }
+}
+
+private struct OpenAIResponse: Content {
+    let choices: [OpenAIChoice]
+    let usage: OpenAIUsage?
+}
 /// Local development and tests (§3.10b): canned answers, no network, no cost. Can be told to
 /// fail, to exercise the provider-outage path.
 actor CannedProvider: ModelProvider {

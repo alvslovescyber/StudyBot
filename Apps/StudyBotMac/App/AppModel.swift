@@ -40,6 +40,9 @@ final class AppModel {
     private(set) var notes: NotesStore?
     private(set) var evidence: EvidenceStore?
     private(set) var sync: SyncStore?
+    private(set) var ai: AIStore?
+    /// The ⌘K "Explain" answer, shown in a sheet while non-nil.
+    var explanation: Explanation?
     /// Free space on the store's volume (§16 Reliability).
     private(set) var disk: DiskMonitor?
     private(set) var storeURL: URL?
@@ -98,10 +101,11 @@ final class AppModel {
             await evidence.load()
             self.evidence = evidence
 
-            let sync = SyncStore(
-                database: database,
-                credentials: KeychainCredentialStore(account: KeychainCredentialStore.defaultAccount),
-                deviceID: deviceID, now: now)
+            let credentials = KeychainCredentialStore(account: KeychainCredentialStore.defaultAccount)
+            let ai = AIStore(store: database, credentials: credentials, deviceID: deviceID, now: now)
+            await ai.load()
+            self.ai = ai
+            let sync = SyncStore(database: database, credentials: credentials, deviceID: deviceID, now: now)
             store.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             notes.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             evidence.didWrite = { [weak sync] in sync?.noteLocalWrite() }
@@ -119,6 +123,7 @@ final class AppModel {
                 await self?.assignments?.load()
                 await self?.notes?.load()
                 await self?.evidence?.load()
+                await self?.refreshAI()
                 #if DEBUG
                     await self?.pairFromEnvironmentIfRequested()
                     if let self { await DrillRunner.runIfRequested(model: self) }
@@ -242,6 +247,36 @@ final class AppModel {
         evidenceDraft = draft
     }
 
+    // MARK: AI (§7)
+
+    /// What ⌘K asked and what came back.
+    struct Explanation: Identifiable, Equatable {
+        let id = UUID()
+        let question: String
+        var answer: String?
+        var error: String?
+    }
+
+    /// The AI store follows the pairing: the server address comes from sync state.
+    func refreshAI() async {
+        guard let ai else { return }
+        ai.configure(serverURL: sync?.state.serverURL)
+        if ai.isAvailable {
+            await ai.refreshBudget()
+        }
+    }
+
+    /// ⌘K "Explain": uses the open session as context when there is one.
+    func explain(_ question: String) async {
+        guard let ai else { return }
+        explanation = Explanation(question: question)
+        let session = selectedSlotID.flatMap { notes?.session(id: $0) }
+        let module = session.flatMap { s in assignments?.modules.first { $0.id == s.moduleID } }
+        let answer = await ai.explain(question, session: session, module: module)
+        explanation = Explanation(
+            question: question, answer: answer, error: answer == nil ? ai.lastError : nil)
+    }
+
     // MARK: Export and restore (§16)
 
     /// The last export or restore outcome, for Settings → Data.
@@ -336,8 +371,22 @@ final class AppModel {
         case "action.settings":
             NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         default:
-            performNavigation(command.id)
+            if command.id.hasPrefix("ai.explain:") {
+                let question = String(command.id.dropFirst("ai.explain:".count))
+                Task { await explain(question) }
+            } else {
+                performNavigation(command.id)
+            }
         }
+    }
+
+    /// The "Ask AI" entry for whatever is typed (§6.7), when a server is paired.
+    func explainCommand(for query: String) -> PaletteCommand? {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard ai?.isAvailable == true, trimmed.count >= 3 else { return nil }
+        return PaletteCommand(
+            id: "ai.explain:\(trimmed)", section: .askAI, title: "Explain \"\(trimmed)\"",
+            detail: "costs tokens")
     }
 
     private func performNavigation(_ id: String) {

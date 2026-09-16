@@ -27,8 +27,10 @@ struct AIService {
         if let cached = try await cachedResponse(hash) {
             let budget = try await budget()
             try await record(
-                request, device: device, inputTokens: cached.inputTokens, outputTokens: cached.outputTokens,
-                cost: 0, cacheHit: true)
+                request, device: device,
+                Accounting(
+                    inputTokens: cached.inputTokens, outputTokens: cached.outputTokens, cost: 0,
+                    cacheHit: true))
             return .completed(
                 AIRunResponse(
                     runID: UUID(), output: cached.response, model: cached.model,
@@ -59,8 +61,10 @@ struct AIService {
         }
         let cost = settings.cost(inputTokens: completion.inputTokens, outputTokens: completion.outputTokens)
         try await record(
-            request, device: device, inputTokens: completion.inputTokens,
-            outputTokens: completion.outputTokens, cost: cost, cacheHit: false)
+            request, device: device,
+            Accounting(
+                inputTokens: completion.inputTokens, outputTokens: completion.outputTokens, cost: cost,
+                cacheHit: false))
         try await AICacheRow(
             hash: hash, capability: request.capability.rawValue, model: settings.model,
             response: completion.text,
@@ -96,9 +100,18 @@ struct AIService {
         return age <= Double(settings.cacheDays) * 86_400 ? row : nil
     }
 
-    private func record(
-        _ request: AIRunRequest, device: UUID, inputTokens: Int, outputTokens: Int, cost: Int, cacheHit: Bool
-    ) async throws {
+    /// What a run cost, for the ledger.
+    struct Accounting {
+        let inputTokens: Int
+        let outputTokens: Int
+        let cost: Int
+        let cacheHit: Bool
+    }
+
+    private func record(_ request: AIRunRequest, device: UUID, _ accounting: Accounting) async throws {
+        let (inputTokens, outputTokens, cost, cacheHit) = (
+            accounting.inputTokens, accounting.outputTokens, accounting.cost, accounting.cacheHit
+        )
         try await AIRunRow(
             capability: request.capability.rawValue, model: settings.model, inputTokens: inputTokens,
             outputTokens: outputTokens, costPence: cost, cacheHit: cacheHit, createdAt: now,

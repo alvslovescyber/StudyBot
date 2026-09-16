@@ -18,6 +18,7 @@ struct NoteWorkspaceView: View {
     @State private var transcriptText = ""
     @State private var losers: [ConflictLoser] = []
     @State private var showingHistory = false
+    @State private var aiStatus: String?
 
     private var session: Session? { model.notes?.session(id: slot.id) }
 
@@ -228,7 +229,7 @@ struct NoteWorkspaceView: View {
                 }
             } else {
                 Text(
-                    "Nothing structured yet. Structure these notes arrives with the AI milestone; your live notes are untouched either way."
+                    "Nothing structured yet. Structure these notes writes here; your live notes are untouched either way."
                 )
                 .sbFont(13)
                 .foregroundStyle(SBColor.textTertiary)
@@ -239,20 +240,64 @@ struct NoteWorkspaceView: View {
         .background(SBColor.canvas)
     }
 
-    /// §6.3's two AI actions, present and disabled until the AI proxy exists. `sparkles`
-    /// means "this costs tokens" (§9).
+    /// §6.3's two AI actions. `sparkles` means "this costs tokens" (§9). Live notes are read,
+    /// never written; the structured pane is where the answer lands.
     private var footer: some View {
-        HStack(spacing: scale(8)) {
-            Btn.primary("Structure these notes", icon: "sparkles", size: .small) {}.disabled(true)
-            Btn.secondary("Make flashcards", size: .small) {}.disabled(true)
-            Text("AI actions arrive with the next milestone.")
-                .sbFont(11.5)
-                .foregroundStyle(SBColor.textTertiary)
+        let ai = model.ai
+        let available = ai?.isAvailable == true
+        let structuring = ai?.running.contains(.structureNotes) == true
+        let carding = ai?.running.contains(.makeFlashcards) == true
+        return HStack(spacing: scale(8)) {
+            Btn.primary(
+                structuring ? "Structuring…" : "Structure these notes", icon: "sparkles", size: .small
+            ) {
+                Task { await structure() }
+            }
+            .disabled(!available || structuring || session?.hasNotes != true)
+            Btn.secondary(carding ? "Making flashcards…" : "Make flashcards", size: .small) {
+                Task { await makeFlashcards() }
+            }
+            .disabled(!available || carding || (session?.structuredNotes ?? "").isEmpty)
+            if let error = ai?.lastError, aiStatus == nil {
+                Text(error).sbFont(11.5).foregroundStyle(SBColor.danger).lineLimit(2)
+            } else if let aiStatus {
+                Text(aiStatus).sbFont(11.5).foregroundStyle(SBColor.textSecondary)
+            } else if !available {
+                Text("AI needs the server. Pair this Mac in Settings → Sync; notes work without it.")
+                    .sbFont(11.5).foregroundStyle(SBColor.textTertiary)
+            } else if let budget = ai?.budget, budget.isWarning {
+                Text(
+                    "\(AIBudget.pounds(budget.spentPence)) of \(AIBudget.pounds(budget.capPence)) used this month."
+                )
+                .sbFont(11.5).foregroundStyle(SBColor.statusDrafting)
+            }
             Spacer(minLength: 0)
         }
         .padding(.vertical, scale(10))
         .padding(.horizontal, scale(SBSpacing.rowHorizontal))
         .overlay(alignment: .top) { SBColor.border.frame(height: 1) }
+    }
+
+    /// The session's module when the calendar names exactly one.
+    private var module: Module? {
+        let matches = model.modules(forCodes: slot.moduleCodes)
+        return matches.count == 1 ? matches.first : nil
+    }
+
+    private func structure() async {
+        guard let ai = model.ai, let notes = model.notes, let session else { return }
+        aiStatus = nil
+        if await ai.structureNotes(session: session, module: module, notes: notes) != nil {
+            aiStatus = "Structured. Your live notes are untouched."
+        }
+    }
+
+    private func makeFlashcards() async {
+        guard let ai = model.ai, let session else { return }
+        aiStatus = nil
+        if let count = await ai.makeFlashcards(session: session, module: module) {
+            aiStatus = "\(count) cards made. They are in Revision."
+        }
     }
 
     private func paneTitle(_ title: String, count: Int? = nil) -> some View {

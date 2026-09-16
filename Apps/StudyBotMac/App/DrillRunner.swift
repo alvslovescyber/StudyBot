@@ -15,9 +15,54 @@
     /// session, hand the window to the external screenshot loop, quit.
     @MainActor
     enum DrillRunner {
+        /// The whole AI chain: this Mac, the paired server, its provider, the structured pane,
+        /// the deck, and the AI-use record. Prints each outcome to stderr.
+        private static func runAIDrill(model: AppModel) async {
+            for _ in 0..<40 where model.sync?.lastOutcome == nil {
+                try? await Task.sleep(for: .milliseconds(250))
+            }
+            await model.refreshAI()
+            if let notes = model.notes, let calendar = model.termCalendar,
+                let block = calendar.blocks.first,
+                let induction = SessionCatalog.days(of: block, in: model.events).first?.slots.first,
+                let ai = model.ai
+            {
+                var session = await notes.open(induction, moduleID: nil)
+                if !session.hasNotes {
+                    notes.append("relations are subsets of A × B", asQuestion: false, to: session.id)
+                    await notes.flush(session.id)
+                    session = notes.session(id: session.id) ?? session
+                }
+                let structured = await ai.structureNotes(session: session, module: nil, notes: notes)
+                log(
+                    "structureNotes: \(structured.map { "\($0.count) chars" } ?? "failed: \(ai.lastError ?? "?")")"
+                )
+                if let refreshed = notes.session(id: session.id) {
+                    let cards = await ai.makeFlashcards(session: refreshed, module: nil)
+                    log(
+                        "makeFlashcards: \(cards.map { "\($0) cards" } ?? "failed: \(ai.lastError ?? "?")")"
+                    )
+                }
+                let answer = await ai.explain("transitive dependency", session: session, module: nil)
+                log("explain: \(answer.map { "\($0.count) chars" } ?? "failed: \(ai.lastError ?? "?")")")
+                log(
+                    "budget: \(ai.budget.map { "\($0.spentPence)p of \($0.capPence)p" } ?? "none"); runs recorded: \(ai.runs.count)"
+                )
+            }
+        }
+
+        private static func log(_ line: String) {
+            FileHandle.standardError.write(Data((line + "\n").utf8))
+        }
+
         static func runIfRequested(model: AppModel) async {
             guard let spec = ProcessInfo.processInfo.environment["STUDYBOT_DRILL"] else { return }
             if case .firstRun = model.phase { model.continueFromFirstRun() }
+            if spec == "ai" {
+                await runAIDrill(model: model)
+                NSApplication.shared.terminate(nil)
+                return
+            }
             if spec == "export" {
                 // Proves the sandboxed build can write into Downloads and says where it did.
                 await model.exportEverything()
