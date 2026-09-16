@@ -693,3 +693,21 @@ or the right arrow is Got it, the left arrow is Again. The flip is a real 3D tur
 **Why:** re-showing a failed card in the same session is a different scheduling model
 (SM-2 style "learning steps") and the spec chose Leitner for having nothing to tune. If the
 single-day queue feels too thin in practice, the change is one line in `queue(on:)`.
+
+## 2026-09-16 · Module colour: assigned by term, shown where it names a module
+
+**Spec said (§9 patch 9):** extend module colour to the note's left edge, the chip's 8% tint,
+the open module's row, and the term strip; assign so that modules sharing a term never share a
+colour.
+
+**Decision:** the seeder walks modules in programme order and gives each the first palette
+colour not yet used by a module sharing one of its terms (a year-spanning module shares every
+term of its year); only year 3's eleven modules in one term are forced to repeat, and then the
+least-used colour is taken. Existing stores keep their colours: the calendar service only
+inserts new modules, and the round-robin they already have is term-distinct for years 1 and 2.
+A session's left edge and a term-strip tick take a colour only when the calendar names exactly
+one module for that session; the real calendar names the whole term's modules on Mondays, so
+those stay uncoloured rather than guess. The sidebar's five items carry one count each:
+questions to ask, incomplete assignments in the current term, sessions with notes, cards due
+today, and evidence logged. The brief named "KSBs unevidenced" for Portfolio; there is no KSB
+list yet (§14), so the count is evidence until Exeter's list arrives.

@@ -17,6 +17,7 @@ struct SidebarView: View {
             ForEach(SidebarItem.allCases) { item in
                 SidebarRow(
                     item: item,
+                    badge: model.sidebarCount(for: item),
                     isSelected: model.selection == item,
                     isCollapsed: model.sidebarCollapsed
                 ) {
@@ -62,9 +63,13 @@ struct SidebarView: View {
     }
 }
 
-/// One sidebar row. Hollow symbol, kept hollow when selected.
+/// One sidebar row. Hollow symbol, kept hollow when selected. The count at the right is the
+/// one number that section carries (§ UI revision: questions to ask, assignments due this
+/// term, sessions with notes, cards due today, evidence logged); nothing is shown for zero.
 private struct SidebarRow: View {
     let item: SidebarItem
+    /// The section's one number; nothing is drawn for zero.
+    let badge: Int
     let isSelected: Bool
     let isCollapsed: Bool
     let action: () -> Void
@@ -86,6 +91,16 @@ private struct SidebarRow: View {
                         .truncationMode(.tail)
                         .multilineTextAlignment(.leading)
                         .transition(.opacity.animation(SBMotion.sidebarLabel.animation))
+                    if badge > 0 {
+                        Spacer(minLength: scale(6))
+                        Text("\(badge)")
+                            .sbFont(12)
+                            .foregroundStyle(SBColor.textTertiary)
+                            .monospacedDigit()
+                            .contentTransition(.numericText(value: Double(badge)))
+                            .sbAnimation(SBMotion.count, value: badge)
+                            .transition(.opacity.animation(SBMotion.sidebarLabel.animation))
+                    }
                 }
             }
             .foregroundStyle(isSelected ? SBColor.accent : SBColor.textSecondary)
@@ -104,6 +119,7 @@ private struct SidebarRow: View {
         .animation(SBMotion.hover, value: isHovering)
         .help(isCollapsed ? item.title : "")
         .accessibilityLabel(item.title)
+        .accessibilityValue(badge > 0 ? "\(badge)" : "")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }

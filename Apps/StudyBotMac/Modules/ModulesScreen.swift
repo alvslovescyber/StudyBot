@@ -43,7 +43,8 @@ struct ModulesScreen: View {
                         SectionHeader(
                             module.name,
                             count: model.sessionSlots.filter { $0.moduleCodes.contains(module.code) }.count,
-                            note: module.code, isCollapsed: collapsedBinding(module.id))
+                            note: module.code, isCollapsed: collapsedBinding(module.id),
+                            accent: isExpanded(module.id) ? SBColor.module(module.colour) : nil)
                         if isExpanded(module.id) {
                             ForEach(SessionCatalog.slots(in: model.events, moduleCode: module.code)) { slot in
                                 row(slot)

@@ -8,13 +8,20 @@ public struct SectionHeader: View {
     private let count: Int?
     private let note: String?
     private let isCollapsed: Binding<Bool>?
+    /// A module's colour when its section is the open one (§9 patch 9): the title takes the
+    /// colour and a 3pt edge marks the left. Nil for the plain header.
+    private let accent: Color?
     @Environment(\.sbScale) private var scale
 
-    public init(_ title: String, count: Int? = nil, note: String? = nil, isCollapsed: Binding<Bool>? = nil) {
+    public init(
+        _ title: String, count: Int? = nil, note: String? = nil, isCollapsed: Binding<Bool>? = nil,
+        accent: Color? = nil
+    ) {
         self.title = title
         self.count = count
         self.note = note
         self.isCollapsed = isCollapsed
+        self.accent = accent
     }
 
     public var body: some View {
@@ -34,9 +41,14 @@ public struct SectionHeader: View {
 
     private func label(collapsed: Bool) -> some View {
         HStack(spacing: scale(8)) {
+            // A long module name truncates with a tooltip (§9 "Module names truncate"); at
+            // accessibility sizes it may take two lines rather than lose words.
             Text(title)
                 .sbFont(12, weight: .semibold)
-                .foregroundStyle(SBColor.textPrimary)
+                .foregroundStyle(accent ?? SBColor.textPrimary)
+                .lineLimit(scale.isAccessibility ? 2 : 1)
+                .truncationMode(.tail)
+                .help(title)
             if let count {
                 // A count that changes rolls: the old digit out, the new one in (§9).
                 Text("\(count)")
@@ -65,6 +77,11 @@ public struct SectionHeader: View {
         .background(SBColor.canvas)
         .overlay(alignment: .top) { SBColor.border.frame(height: 1) }
         .overlay(alignment: .bottom) { SBColor.border.frame(height: 1) }
+        .overlay(alignment: .leading) {
+            if let accent {
+                accent.frame(width: 3)
+            }
+        }
         .contentShape(Rectangle())
     }
 }

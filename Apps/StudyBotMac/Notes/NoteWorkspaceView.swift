@@ -22,6 +22,12 @@ struct NoteWorkspaceView: View {
 
     private var session: Session? { model.notes?.session(id: slot.id) }
 
+    private var edgeColour: Color? {
+        let modules = model.modules(forCodes: slot.moduleCodes)
+        guard modules.count == 1, let module = modules.first else { return nil }
+        return SBColor.module(module.colour)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -43,6 +49,12 @@ struct NoteWorkspaceView: View {
             footer
         }
         .background(SBColor.surface)
+        // §9 patch 9: the note's left edge carries its module's colour, when it has one module.
+        .overlay(alignment: .leading) {
+            if let colour = edgeColour {
+                colour.frame(width: 3)
+            }
+        }
         .task(id: slot.id) {
             guard let notes = model.notes else { return }
             let opened = await notes.open(slot, moduleID: model.moduleID(forCodes: slot.moduleCodes))
