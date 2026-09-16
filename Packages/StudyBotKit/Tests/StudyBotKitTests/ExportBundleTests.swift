@@ -7,11 +7,15 @@ import Testing
 /// nobody has ever restored is not a backup." Export, wipe, restore, assert nothing was lost.
 @Suite("ExportBundle — export, wipe, restore")
 struct ExportBundleTests {
+    private struct Seeded {
+        let session: Session
+        let revision: NoteRevision
+        let loser: ConflictLoser
+    }
+
     /// Everything the app can hold: every type, unknown fields, notes, revisions, losers,
     /// programme events, a tombstone, sync state.
-    private func seed(_ source: Database) async throws -> (
-        session: Session, revision: NoteRevision, loser: ConflictLoser
-    ) {
+    private func seed(_ source: Database) async throws -> Seeded {
         try await source.save(SampleRecords.module)
         try await source.save(SampleRecords.term)
         try await source.save(
