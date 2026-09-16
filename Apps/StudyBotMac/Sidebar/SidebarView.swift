@@ -91,7 +91,8 @@ private struct SidebarRow: View {
                         .truncationMode(.tail)
                         .multilineTextAlignment(.leading)
                         .transition(.opacity.animation(SBMotion.sidebarLabel.animation))
-                    if badge > 0 {
+                    // At accessibility sizes the label needs every point; the count yields (§9).
+                    if badge > 0, !scale.isAccessibility {
                         Spacer(minLength: scale(6))
                         Text("\(badge)")
                             .sbFont(12)
