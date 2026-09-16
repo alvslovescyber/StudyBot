@@ -10,12 +10,12 @@ struct TodayPlannerTests {
 
     private func input(
         today: LocalDay, assignments: [Assignment] = [], sessions: [Session] = [], evidenceThisWeek: Int = 1,
-        hoursThisWeek: Double = 6
+        hoursThisWeek: Double = 6, isInTerm: Bool = true
     ) throws -> TodayPlanner.Input {
         TodayPlanner.Input(
             today: today, assignments: assignments, sessions: sessions,
             workingDays: WorkingDays(events: try RealCalendar.events()), evidenceThisWeek: evidenceThisWeek,
-            hoursThisWeek: hoursThisWeek, targetHoursPerWeek: 6)
+            hoursThisWeek: hoursThisWeek, targetHoursPerWeek: 6, isInTerm: isInTerm)
     }
 
     private func stub(due: LocalDay, title: String) -> Assignment {
@@ -32,8 +32,11 @@ struct TodayPlannerTests {
             try BundledProgrammeCalendar.data(), importedAt: RealCalendar.importedAt)
         let modules = ModuleSeeder.modules(from: reading, terms: calendar, now: Self.t0)
         let stubs = AssignmentStubs.stubs(for: events, modules: modules, now: Self.t0)
-        // Tuesday 16 September 2026: a mid-week day with hours logged, so only deadlines speak.
-        let plan = TodayPlanner.plan(try input(today: RealCalendar.day(2026, 9, 16), assignments: stubs))
+        // Wednesday 16 September 2026, before induction: no hours to log yet, so only deadlines speak.
+        let plan = TodayPlanner.plan(
+            try input(
+                today: RealCalendar.day(2026, 9, 16), assignments: stubs, evidenceThisWeek: 0, hoursThisWeek: 0,
+                isInTerm: false))
         #expect(plan.count == 1)
         #expect(plan.first?.title.hasPrefix("Check ELE2 for the brief: ") == true)
         #expect(plan.first?.minutes == 10)

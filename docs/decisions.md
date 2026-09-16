@@ -610,3 +610,49 @@ can never make hover fade. Progress bars now animate value changes and never fir
 **Why:** the patches are later and more specific than the component table, and "under 100ms"
 is the rule with a reason attached. Making the specs plain numbers means the review question
 "is this on the list" has a one-line answer.
+
+## 2026-09-16 · Today is two columns of the content pane, not the window
+
+**Brief said (UI revision plan):** at 1200pt and wider Today becomes two columns.
+
+**Decision:** the threshold is the content pane's width (the window minus the sidebar), so a
+1320pt default window is one column and two columns arrive from about 1430pt. Accessibility
+text sizes stay one column at any width. The content caps at 1180pt and sits left.
+
+**Why:** the columns hold text, and text measures by the space it has, not by the window.
+On Alvis's wide screen the two columns are the default; on a 13-inch laptop one column reads
+better than two cramped ones.
+
+## 2026-09-16 · The plan is local, and honest before induction
+
+**Spec said (§6.1):** Today's plan is generated locally from due dates, remaining subtasks
+and estimated effort; three items; accept or dismiss.
+
+**Decision:** `TodayPlanner` is a pure function over the store and `PlanStore` keeps one
+day's state in UserDefaults. The plan is not a synced record: it is a suggestion about one
+Mac's day, and syncing it would make "Dismiss" on one Mac argue with "Accept" on the other.
+The model has no effort field, so minutes are fixed per kind of step (10 for a brief check,
+30 to break work into steps, 60 for a subtask, 90 for drafting). Before the term starts the
+weekly "log hours" and "log evidence" items are not proposed; with the three real stubs the
+plan is one line about the first brief. Accepting does not yet offer calendar slots: there is
+no calendar write in the build.
+
+## 2026-09-16 · The week bar measures days against a working day's share
+
+**Brief said:** seven bars, one per day, height proportional to hours logged, target marked
+as a line across.
+
+**Decision:** the line is the weekly target divided by five, since a daily bar can only be
+read against a daily figure; the number above the bar stays "4.2 of 6 hours", the week's
+total against the week's target. The bar grows before the write completes and shrinks back
+with the disk-full message if it fails.
+
+## 2026-09-16 · A bare `L` cannot live in a menu
+
+**Brief said:** `L` from anywhere opens a single field to log hours.
+
+**Decision:** a menu item with a bare-letter shortcut swallows that letter from every text
+field, so `L` is watched by a local key-event monitor that steps aside whenever a text view is
+first responder, a sheet is up, or the palette or field is already open. ⌘L in the File menu
+is the discoverable twin (§10: every shortcut appears in a menu). The field is an overlay like
+the palette, not a modal sheet, and it closes on Return before the write completes.

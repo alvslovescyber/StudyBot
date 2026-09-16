@@ -3,24 +3,64 @@ import StudyBotKit
 import StudyBotUI
 import SwiftUI
 
-/// Today (§6.1), the parts that exist with real data on day one: the date, the block banner
-/// when a block is within 14 days, the next deadline, and below the fold the term strip. The
-/// plan and off-the-job arrive with their milestones. Nothing here is a mockup: an untitled
-/// stub shows as one.
+/// Today (§6.1). Two columns from 1200pt: the spine on the left (date, block, next deadline,
+/// the plan, this week's hours) and the context on the right (questions to ask, recent notes,
+/// the term at a glance); one column below that. The term strip runs full width beneath.
+/// Nothing here is a mockup: before induction the plan is one line, the questions panel says
+/// what will fill it, and every number at a glance is a true zero.
 struct TodayView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.sbScale) private var scale
 
+    /// The width at which Today becomes two columns.
+    static let twoColumnWidth: CGFloat = 1200
+    /// The content never grows past this; on a wide screen it sits left, as text does.
+    static let maximumWidth: CGFloat = 1180
+
     var body: some View {
-        // A ScrollView: §6.1 puts the term strip below the fold and §16 needs the largest
-        // accessibility text sizes to fit without clipping on a 13-inch screen.
-        ScrollView {
-            todayContent
+        GeometryReader { geometry in
+            // A ScrollView: §6.1 puts the term strip below the fold and §16 needs the largest
+            // accessibility text sizes to fit without clipping on a 13-inch screen.
+            ScrollView {
+                content(twoColumns: geometry.size.width >= Self.twoColumnWidth && !scale.isAccessibility)
+            }
         }
         .background(SBColor.surface)
+        .task { model.refreshPlan() }
+        .onChange(of: model.assignments?.assignments) { _, _ in model.refreshPlan() }
+        .onChange(of: model.notes?.allSessions) { _, _ in model.refreshPlan() }
+        .onChange(of: model.hours?.entries) { _, _ in model.refreshPlan() }
     }
 
-    private var todayContent: some View {
+    private func content(twoColumns: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+
+            if twoColumns {
+                HStack(alignment: .top, spacing: scale(56)) {
+                    spine.frame(maxWidth: .infinity, alignment: .leading)
+                    context.frame(width: scale(400), alignment: .leading)
+                }
+                .padding(.top, 24)
+            } else {
+                spine.padding(.top, 24)
+                context.padding(.top, 40)
+            }
+
+            if let strip = model.termStrip {
+                TermStripSection(strip: strip).padding(.top, 48)
+            }
+        }
+        .frame(maxWidth: scale(Self.maximumWidth), alignment: .leading)
+        .padding(.top, 28)
+        .padding(.horizontal, SBSpacing.detailOuter)
+        .padding(.bottom, 60)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: Header
+
+    private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(RelativeDate.longDay(model.now()))
                 .sbType(SBType.title)
@@ -48,189 +88,72 @@ struct TodayView: View {
                 }
                 .padding(.top, 6)
             }
+        }
+    }
 
-            if let banner = blockBanner {
-                blockBannerView(banner)
-                    .padding(.top, 18)
+    // MARK: Columns
+
+    private var spine: some View {
+        VStack(alignment: .leading, spacing: 36) {
+            if let banner = model.blockBanner {
+                BlockBannerView(banner: banner).padding(.bottom, -10)
             }
+            NextDeadlineSection()
+            if let plan = model.plan, plan.isVisible || plan.isProposed {
+                PlanSection(plan: plan)
+            }
+            if let hours = model.hours {
+                HoursSection(hours: hours)
+            }
+        }
+    }
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Next deadline")
+    private var context: some View {
+        VStack(alignment: .leading, spacing: 36) {
+            QuestionsSection()
+            RecentNotesSection()
+            if let glance = model.termGlance {
+                GlanceSection(glance: glance, termTitle: model.termStrip?.title ?? "This term")
+            }
+        }
+    }
+}
+
+/// A Today section: 12pt semibold heading in `textSecondary`, an optional note on the right,
+/// then the content. Sections separate with space, not rules (§9).
+struct TodaySection<Content: View>: View {
+    let title: String
+    var note: String?
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
                     .sbFont(12, weight: .semibold)
                     .foregroundStyle(SBColor.textSecondary)
-                nextDeadlineCard
-            }
-            .padding(.top, 26)
-
-            if let strip = termStrip {
-                termStripSection(strip)
-                    .padding(.top, 36)
-            }
-        }
-        .frame(maxWidth: scale(656), alignment: .leading)
-        .padding(.top, 28)
-        .padding(.horizontal, SBSpacing.detailOuter)
-        .padding(.bottom, 60)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: Block banner
-
-    private struct Banner {
-        let title: String
-        let dates: String
-    }
-
-    private var blockBanner: Banner? {
-        guard let calendar = model.termCalendar else { return nil }
-        let today = LocalDay(model.now())
-        guard let block = calendar.currentOrNextBlock(from: today),
-            let days = calendar.daysToNextBlock(from: today),
-            days <= 14
-        else { return nil }
-        let name = "Block \(block.number)"
-        let title: String
-        switch days {
-        case 0: title = "\(name) is on now"
-        case 1: title = "\(name) starts tomorrow"
-        default: title = "\(name) starts in \(days) days"
-        }
-        return Banner(
-            title: title,
-            dates: RelativeDate.dayRange(block.start.date, block.end.date, relativeTo: model.now()))
-    }
-
-    /// Tapping the banner opens Block mode (§6.1).
-    private func blockBannerView(_ banner: Banner) -> some View {
-        Button {
-            model.enterBlockMode()
-        } label: {
-            HStack {
-                Text(banner.title)
-                    .sbFont(13, weight: .medium)
-                Spacer()
-                Text("\(banner.dates) →")
-                    .sbFont(12)
-            }
-            .foregroundStyle(SBColor.accent)
-            .padding(.vertical, scale(12))
-            .padding(.horizontal, scale(14))
-            .background(SBColor.accentSoft)
-            .overlay(
-                RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous).strokeBorder(SBColor.border)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens Block mode")
-    }
-
-    // MARK: Term strip (§9 "Signature details")
-
-    private var termStrip: TermStrip? {
-        guard let calendar = model.termCalendar else { return nil }
-        let dueDates = model.assignments?.assignments.compactMap(\.dueDate) ?? []
-        return TermStrip(
-            calendar: calendar, events: model.events, submissionDates: dueDates, today: LocalDay(model.now()))
-    }
-
-    private func termStripSection(_ strip: TermStrip) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(strip.title)
-                    .sbFont(12, weight: .semibold)
-                    .foregroundStyle(SBColor.textSecondary)
-                Spacer()
-                Text(strip.caption)
-                    .sbFont(12)
-                    .foregroundStyle(SBColor.textTertiary)
-            }
-            TermStripView(strip)
-        }
-    }
-
-    // MARK: Next deadline
-
-    private var nextAssignment: Assignment? {
-        let today = LocalDay(model.now())
-        let incomplete = model.assignments?.assignments.filter(\.isIncomplete) ?? []
-        return
-            incomplete
-            .filter { $0.dueDate.map { LocalDay($0) >= today } ?? false }
-            .min { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
-            ?? incomplete.filter { $0.dueDate != nil }.max {
-                ($0.dueDate ?? .distantPast) < ($1.dueDate ?? .distantPast)
-            }
-    }
-
-    /// The card's second line (§6.1): the honest number of working days, then what the
-    /// assignment is still missing. The title already carries the date, so it is not repeated.
-    /// Overdue stays "overdue by", which is the one case where the raw day count is the point.
-    private func detailLine(for assignment: Assignment, module: Module?) -> String {
-        var parts: [String] = []
-        if let code = module?.code {
-            parts.append(code)
-        }
-        if let due = assignment.dueDate {
-            if UKCalendar.days(from: model.now(), to: due) < 0 {
-                parts.append(RelativeDate.deadline(due, relativeTo: model.now()))
-            } else {
-                let working = WorkingDays(events: model.events).count(from: model.now(), until: due)
-                parts.append(RelativeDate.workingDays(working))
-            }
-        }
-        if assignment.isCalendarStub {
-            parts.append(module == nil ? "module and brief arrive from ELE2" : "brief arrives from ELE2")
-        } else {
-            if let limit = assignment.wordLimit {
-                parts.append(RelativeDate.wordCount(limit))
-            }
-            parts.append(StatusIcon.label(for: assignment.status).lowercased())
-        }
-        return parts.joined(separator: " · ")
-    }
-
-    private func isOverdue(_ assignment: Assignment) -> Bool {
-        guard let due = assignment.dueDate else { return false }
-        return UKCalendar.days(from: model.now(), to: due) < 0
-    }
-
-    @ViewBuilder
-    private var nextDeadlineCard: some View {
-        if let assignment = nextAssignment, let store = model.assignments {
-            Button {
-                model.selection = .assignments
-                model.open(assignment)
-            } label: {
-                HStack(alignment: .top, spacing: 11) {
-                    StatusIcon(assignment.status, size: 15).padding(.top, 2)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(assignment.title)
-                            .italic(assignment.isCalendarStub)
-                            .sbFont(14, weight: .medium)
-                            .foregroundStyle(
-                                isOverdue(assignment)
-                                    ? SBColor.danger
-                                    : assignment.isCalendarStub ? SBColor.textSecondary : SBColor.textPrimary)
-                        Text(detailLine(for: assignment, module: store.module(for: assignment)))
-                            .sbFont(12)
-                            .foregroundStyle(isOverdue(assignment) ? SBColor.danger : SBColor.textSecondary)
-                    }
-                    Spacer(minLength: 0)
+                Spacer(minLength: 0)
+                if let note {
+                    Text(note)
+                        .sbFont(12)
+                        .foregroundStyle(SBColor.textTertiary)
                 }
-                .padding(.vertical, 14)
-                .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .sbCard()
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-        } else {
-            EmptyState("No submissions this term. Show all 30.", actionTitle: "Show all") {
-                model.assignments?.scope = .all
-                model.selection = .assignments
-            }
+            content()
         }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// One quiet line for a section with nothing in it yet: what will fill it (Today, "Empty
+/// states before data exists"). No illustration.
+struct TodayEmptyLine: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .sbFont(13)
+            .foregroundStyle(SBColor.textTertiary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }

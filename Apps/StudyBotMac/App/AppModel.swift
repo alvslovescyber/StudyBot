@@ -3,6 +3,7 @@ import Foundation
 import Observation
 import StudyBotCore
 import StudyBotKit
+import StudyBotUI
 
 /// App-level state: which phase launch is in, what the sidebar shows, which assignment is
 /// open. Constructed once at launch and injected through the environment (§3.3). Owns the
@@ -39,6 +40,9 @@ final class AppModel {
     private(set) var assignments: AssignmentStore?
     private(set) var notes: NotesStore?
     private(set) var evidence: EvidenceStore?
+    private(set) var hours: HoursStore?
+    /// Today's plan (§6.1), local to this Mac.
+    private(set) var plan: PlanStore?
     private(set) var sync: SyncStore?
     private(set) var ai: AIStore?
     /// The ⌘K "Explain" answer, shown in a sheet while non-nil.
@@ -57,6 +61,8 @@ final class AppModel {
     var paletteShown = false
     /// The evidence capture sheet, when a draft is being written (§6.5).
     var evidenceDraft: EvidenceStore.Draft?
+    /// The one-line hours field (`L`).
+    var hoursFieldShown = false
     private(set) var termCalendar: TermCalendar?
     private(set) var events: [ProgrammeEvent] = []
     let editor = AssignmentEditor()
@@ -100,6 +106,10 @@ final class AppModel {
             let evidence = EvidenceStore(store: database, deviceID: deviceID, now: now)
             await evidence.load()
             self.evidence = evidence
+            let hours = HoursStore(store: database, deviceID: deviceID, now: now)
+            await hours.load()
+            self.hours = hours
+            plan = PlanStore(persistence: UserDefaultsPlanPersistence(), now: now)
 
             let credentials = KeychainCredentialStore(account: KeychainCredentialStore.defaultAccount)
             let ai = AIStore(store: database, credentials: credentials, deviceID: deviceID, now: now)
@@ -109,6 +119,7 @@ final class AppModel {
             store.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             notes.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             evidence.didWrite = { [weak sync] in sync?.noteLocalWrite() }
+            hours.didWrite = { [weak sync] in sync?.noteLocalWrite() }
             self.sync = sync
 
             // §6.6: Block mode comes up by itself when today is inside an on-campus block.
@@ -123,6 +134,8 @@ final class AppModel {
                 await self?.assignments?.load()
                 await self?.notes?.load()
                 await self?.evidence?.load()
+                await self?.hours?.load()
+                self?.refreshPlan()
                 await self?.refreshAI()
                 self?.startAutomaticExports()
                 #if DEBUG
@@ -150,6 +163,12 @@ final class AppModel {
             await assignments?.load()
         }
     #endif
+
+    /// Re-reads the calendar the store holds, after a restore has replaced it.
+    func reloadProgramme() async throws {
+        events = try await database?.programmeEvents(includeCancelled: false) ?? []
+        termCalendar = TermCalendar(events: events, derivedAt: now())
+    }
 
     /// §16: the user must never quit over unsaved work believing it was saved.
     var hasUnsavedNotes: Bool { notes?.hasUnsavedNotes ?? false }
@@ -224,6 +243,13 @@ final class AppModel {
         selectedSlotID = slot.id
     }
 
+    /// Opens the session with this id, from Today's questions and recent notes.
+    func openSession(id: UUID) {
+        guard let slot = slot(id: id) else { return }
+        blockMode = nil
+        openSession(slot)
+    }
+
     /// From Today's banner or the palette (§6.6).
     func enterBlockMode() {
         guard let calendar = termCalendar, let block = calendar.currentOrNextBlock(from: LocalDay(now()))
@@ -278,7 +304,7 @@ final class AppModel {
             question: question, answer: answer, error: answer == nil ? ai.lastError : nil)
     }
 
-    // MARK: Export and restore (§16)
+    // MARK: Export state (§16); the methods are in AppModel+Export.
 
     /// The last export or restore outcome, for Settings → Data.
     var dataStatus: String?
@@ -290,85 +316,7 @@ final class AppModel {
         didSet { UserDefaults.standard.set(lastAutomaticExportAt, forKey: "studybot.lastAutomaticExport") }
     }
     var automaticExportStatus: String?
-    private var exportTimer: Task<Void, Never>?
-
-    /// Runs the weekly export when it is due: on launch and then hourly. Keeps twelve.
-    func startAutomaticExports() {
-        exportTimer?.cancel()
-        exportTimer = Task { [weak self] in
-            while !Task.isCancelled {
-                await self?.runAutomaticExportIfDue()
-                try? await Task.sleep(for: .seconds(3_600))
-            }
-        }
-    }
-
-    func runAutomaticExportIfDue() async {
-        guard let database, ExportSchedule.isDue(lastExportAt: lastAutomaticExportAt, now: now()) else {
-            return
-        }
-        do {
-            let parent = try exportsFolder()
-            let version =
-                Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
-            let (url, _) = try await ExportBundle.write(
-                from: database, into: parent, appVersion: version, deviceID: deviceID, now: now(),
-                automatic: true)
-            lastAutomaticExportAt = now()
-            ExportSchedule.prune(in: parent)
-            automaticExportStatus =
-                "Weekly export ran into Downloads/StudyBot exports/\(url.lastPathComponent)."
-        } catch {
-            automaticExportStatus = DiskSpace.saveFailureMessage(for: error, subject: "The weekly export")
-        }
-    }
-
-    private func exportsFolder() throws -> URL {
-        let downloads = try FileManager.default.url(
-            for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        return downloads.appendingPathComponent("StudyBot exports", isDirectory: true)
-    }
-
-    /// Writes a bundle into ~/Downloads/StudyBot exports. On demand from Settings.
-    func exportEverything() async {
-        guard let database else { return }
-        do {
-            let parent = try exportsFolder()
-            let version =
-                Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
-            let (url, manifest) = try await ExportBundle.write(
-                from: database, into: parent, appVersion: version, deviceID: deviceID, now: now())
-            lastExportURL = url
-            let notes = manifest.counts["notes"] ?? 0
-            let records = manifest.counts.filter {
-                !["notes", "programmeEvents", "noteRevisions", "conflictLosers"].contains($0.key)
-            }.values.reduce(0, +)
-            dataStatus =
-                "Exported \(records) records and \(notes) notes to Downloads/StudyBot exports/\(url.lastPathComponent)."
-        } catch {
-            dataStatus = DiskSpace.saveFailureMessage(for: error, subject: "The export")
-        }
-    }
-
-    /// Reads a bundle back into this store and reloads every screen.
-    func restore(from folder: URL) async {
-        guard let database else { return }
-        do {
-            let summary = try await ExportBundle.restore(from: folder, into: database)
-            await assignments?.load()
-            await notes?.load()
-            await evidence?.load()
-            await sync?.load()
-            events = try await database.programmeEvents(includeCancelled: false)
-            termCalendar = TermCalendar(events: events, derivedAt: now())
-            dataStatus =
-                "Restored \(summary.records) records, \(summary.noteRevisions) note versions and \(summary.programmeEvents) calendar events from \(folder.lastPathComponent)."
-        } catch let error as ExportError {
-            dataStatus = error.message
-        } catch {
-            dataStatus = "Couldn't restore: \(error.localizedDescription)"
-        }
-    }
+    var exportTimer: Task<Void, Never>?
 
     // MARK: ⌘K (§6.7)
 
@@ -377,6 +325,7 @@ final class AppModel {
         var commands: [PaletteCommand] = [
             PaletteCommand(id: "action.evidence", section: .actions, title: "New evidence", detail: "⇧⌘E"),
             PaletteCommand(id: "action.assignment", section: .actions, title: "New assignment", detail: "⌘N"),
+            PaletteCommand(id: "action.hours", section: .actions, title: "Log hours", detail: "L"),
             PaletteCommand(
                 id: "action.block", section: .actions,
                 title: blockMode == nil ? "Open Block mode" : "Leave Block mode", detail: "⇧⌘B"),
@@ -409,6 +358,7 @@ final class AppModel {
         switch command.id {
         case "action.evidence": beginEvidence()
         case "action.assignment": Task { await createAssignment() }
+        case "action.hours": showHoursField()
         case "action.block":
             if blockMode == nil { enterBlockMode() } else { leaveBlockMode() }
         case "action.sync": Task { await sync?.syncNow() }

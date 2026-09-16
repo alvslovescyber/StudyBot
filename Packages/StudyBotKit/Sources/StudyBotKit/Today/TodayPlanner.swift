@@ -41,10 +41,12 @@ public enum TodayPlanner {
         public var evidenceThisWeek: Int
         public var hoursThisWeek: Double
         public var targetHoursPerWeek: Double
+        /// Whether today falls inside a term. Before induction there are no hours to log.
+        public var isInTerm: Bool
 
         public init(
             today: LocalDay, assignments: [Assignment], sessions: [Session], workingDays: WorkingDays,
-            evidenceThisWeek: Int, hoursThisWeek: Double, targetHoursPerWeek: Double
+            evidenceThisWeek: Int, hoursThisWeek: Double, targetHoursPerWeek: Double, isInTerm: Bool = true
         ) {
             self.today = today
             self.assignments = assignments
@@ -53,6 +55,7 @@ public enum TodayPlanner {
             self.evidenceThisWeek = evidenceThisWeek
             self.hoursThisWeek = hoursThisWeek
             self.targetHoursPerWeek = targetHoursPerWeek
+            self.isInTerm = isInTerm
         }
     }
 
@@ -120,8 +123,9 @@ public enum TodayPlanner {
             .map { PlanItem(id: "notes.\($0.id)", title: "Review notes: \($0.title)", minutes: 30) }
     }
 
-    /// Late in the week, the two logs that get skipped: evidence and hours.
+    /// Late in the week, the two logs that get skipped: evidence and hours. Only in term.
     private static func weekItems(_ input: Input) -> [PlanItem] {
+        guard input.isInTerm else { return [] }
         var items: [PlanItem] = []
         let weekday = input.today.isoWeekday
         if weekday >= 4, input.evidenceThisWeek == 0 {
