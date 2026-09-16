@@ -124,6 +124,7 @@ final class AppModel {
                 await self?.notes?.load()
                 await self?.evidence?.load()
                 await self?.refreshAI()
+                self?.startAutomaticExports()
                 #if DEBUG
                     await self?.pairFromEnvironmentIfRequested()
                     if let self { await DrillRunner.runIfRequested(model: self) }
@@ -282,14 +283,57 @@ final class AppModel {
     /// The last export or restore outcome, for Settings → Data.
     var dataStatus: String?
     var lastExportURL: URL?
+    /// When the weekly automatic export last ran (§16), for Settings → Data.
+    var lastAutomaticExportAt: Date? =
+        UserDefaults.standard.object(forKey: "studybot.lastAutomaticExport") as? Date
+    {
+        didSet { UserDefaults.standard.set(lastAutomaticExportAt, forKey: "studybot.lastAutomaticExport") }
+    }
+    var automaticExportStatus: String?
+    private var exportTimer: Task<Void, Never>?
+
+    /// Runs the weekly export when it is due: on launch and then hourly. Keeps twelve.
+    func startAutomaticExports() {
+        exportTimer?.cancel()
+        exportTimer = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.runAutomaticExportIfDue()
+                try? await Task.sleep(for: .seconds(3_600))
+            }
+        }
+    }
+
+    func runAutomaticExportIfDue() async {
+        guard let database, ExportSchedule.isDue(lastExportAt: lastAutomaticExportAt, now: now()) else {
+            return
+        }
+        do {
+            let parent = try exportsFolder()
+            let version =
+                Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+            let (url, _) = try await ExportBundle.write(
+                from: database, into: parent, appVersion: version, deviceID: deviceID, now: now(),
+                automatic: true)
+            lastAutomaticExportAt = now()
+            ExportSchedule.prune(in: parent)
+            automaticExportStatus =
+                "Weekly export ran into Downloads/StudyBot exports/\(url.lastPathComponent)."
+        } catch {
+            automaticExportStatus = DiskSpace.saveFailureMessage(for: error, subject: "The weekly export")
+        }
+    }
+
+    private func exportsFolder() throws -> URL {
+        let downloads = try FileManager.default.url(
+            for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        return downloads.appendingPathComponent("StudyBot exports", isDirectory: true)
+    }
 
     /// Writes a bundle into ~/Downloads/StudyBot exports. On demand from Settings.
     func exportEverything() async {
         guard let database else { return }
         do {
-            let downloads = try FileManager.default.url(
-                for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            let parent = downloads.appendingPathComponent("StudyBot exports", isDirectory: true)
+            let parent = try exportsFolder()
             let version =
                 Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
             let (url, manifest) = try await ExportBundle.write(

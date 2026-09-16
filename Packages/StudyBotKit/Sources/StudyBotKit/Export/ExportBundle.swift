@@ -69,12 +69,15 @@ public enum ExportError: Error, Equatable, Sendable {
 public enum ExportBundle {
     public static let manifestName = "manifest.json"
 
-    /// Writes a bundle into a new folder inside `parent` and returns its URL.
+    /// Writes a bundle into a new folder inside `parent` and returns its URL. `automatic`
+    /// exports are named so the weekly schedule can prune its own and never a manual one.
     @discardableResult
     public static func write(
-        from database: Database, into parent: URL, appVersion: String, deviceID: String, now: Date = Date()
+        from database: Database, into parent: URL, appVersion: String, deviceID: String, now: Date = Date(),
+        automatic: Bool = false
     ) async throws -> (url: URL, manifest: ExportManifest) {
-        let folder = parent.appendingPathComponent(folderName(at: now), isDirectory: true)
+        let name = folderName(at: now) + (automatic ? ExportSchedule.automaticSuffix : "")
+        let folder = parent.appendingPathComponent(name, isDirectory: true)
         let files = FileManager.default
         try files.createDirectory(at: folder, withIntermediateDirectories: true)
         for sub in ["records", "notes", "programme", "attachments"] {

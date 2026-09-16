@@ -558,14 +558,30 @@ carries `containsConfidential`, which the assembler always sets false and the se
 on if it is ever true. The template version travels with the request and is part of the
 server's cache key, so changing a template is a new cache entry, never a stale one.
 
-## 2026-09-16 · The cap is reserved, not just checked
+## 2026-09-16 · Reserve, then settle: the pattern for every limit
+
+**Spec said (§3.7):** stop at 100% of the cap.
 
 **Decision:** `BudgetGate` on the server reserves a worst-case cost before the provider is
-called and settles after, so two requests in flight cannot both fit under the same headroom.
-The realised cap is on the ledger; the reservation only serialises the race.
+called and settles to the real cost after, so two requests in flight cannot both fit under
+the same headroom. The realised cap is on the ledger; the reservation only serialises the race.
 
-**Why:** §3.12 says "concurrent requests cannot exceed the cap", and a check-then-call has a
-window exactly as wide as the provider's latency.
+**Why:** "stop at 100%" as check-then-call has a window exactly as wide as the provider's
+latency, and four concurrent requests sail through it together. The same shape applies to any
+limit checked before an action that takes time: rate limits when they move to a shared store,
+a per-block token budget, an export size cap. Reserve first, act, settle. Alvis confirmed this
+as the pattern on 16 Sep 2026.
+
+## 2026-09-16 · The weekly export runs itself
+
+**Spec said (§16):** a weekly automatic export, retained twelve weeks, rolling, plus one on demand.
+
+**Decision:** `ExportSchedule` decides when it is due (seven days since the last) and prunes
+automatic exports beyond twelve by their "(automatic)" suffix, never a manual one. `AppModel`
+runs it on launch and hourly. The last run shows in Settings → Data.
+
+**Why:** a manual step after a tiring block is the step that gets skipped, and that is when
+the notes are most valuable. Alvis, 16 Sep 2026.
 
 ## 2026-09-16 · Every debug drill goes through `STUDYBOT_DRILL`
 

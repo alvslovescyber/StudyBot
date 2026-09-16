@@ -193,7 +193,8 @@ Two things that stand between the app and induction, then the first AI.
   still in the editor and a Try again. The store's volume is checked on launch and hourly:
   under 2 GB Today warns once, under 500 MB the line stays and revision snapshots are skipped.
   Quitting with unsaved notes asks first. `DiskFullTests` forces the failure.
-- **Export and restore** (§16). Settings → Data writes a folder into Downloads: notes as
+- **Export and restore** (§16). Weekly and automatic, twelve kept, plus on demand from
+  Settings → Data. A folder in Downloads: notes as
   Markdown, records as JSON with their sync metadata and unknown fields, the calendar, every
   kept version. Restore reads it back. `ExportBundleTests` exports, restores into an empty
   store and asserts equality type by type. Format: `docs/export-format.md`.
@@ -214,13 +215,13 @@ spend against the cap and the AI-use record.
 
 ### Export after every block
 
-Settings → Data → Export everything writes a folder into `~/Downloads/StudyBot exports/`:
-notes as Markdown, every record as JSON, the calendar, every kept version. It is the third
-copy the two Macs do not give you. **Run it after each on-campus block and each week of
-Mondays**, and copy the folder somewhere that is not this Mac. The format is documented in
+The app exports itself every seven days, on launch and then hourly when due, into
+`~/Downloads/StudyBot exports/` (folders ending "(automatic)", twelve kept). Settings → Data →
+Export everything does the same on demand, and after a block it is still worth pressing:
+notes as Markdown, every record as JSON, the calendar, every kept version. Copy the newest
+folder somewhere that is not this Mac. The format is documented in
 [`docs/export-format.md`](docs/export-format.md); restore is the button beside it, and
 `ExportBundleTests` proves an export restores into an empty store with nothing lost.
-Automatic weekly export is not built yet.
 
 ### Copy it to the other Mac
 

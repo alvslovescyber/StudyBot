@@ -224,6 +224,16 @@ private struct DataSection: View {
                     }
                 }
             }
+            Text(
+                model.lastAutomaticExportAt.map {
+                    "Weekly export: last ran \(RelativeDate.absolute($0, relativeTo: model.now())). Twelve are kept."
+                } ?? "Weekly export: runs on the next launch, then every seven days. Twelve are kept."
+            )
+            .sbFont(12)
+            .foregroundStyle(SBColor.textSecondary)
+            if let automatic = model.automaticExportStatus, automatic.contains("could not") {
+                Text(automatic).sbFont(12).foregroundStyle(SBColor.danger)
+            }
             if let status = model.dataStatus {
                 Text(status)
                     .sbFont(12)
