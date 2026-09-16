@@ -25,8 +25,10 @@ struct SidebarView: View {
                 }
             }
             Spacer(minLength: 0)
+            SidebarUserBlock(isCollapsed: model.sidebarCollapsed)
         }
         .padding(.horizontal, SBSpacing.sidebarInset)
+        .padding(.bottom, 10)
         // 52pt clears the traffic lights, which sit over the sidebar under the hidden title bar.
         .padding(.top, 52)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
