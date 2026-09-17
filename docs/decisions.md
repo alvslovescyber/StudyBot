@@ -711,3 +711,18 @@ those stay uncoloured rather than guess. The sidebar's five items carry one coun
 questions to ask, incomplete assignments in the current term, sessions with notes, cards due
 today, and evidence logged. The brief named "KSBs unevidenced" for Portfolio; there is no KSB
 list yet (§14), so the count is evidence until Exeter's list arrives.
+
+## 2026-09-17 · Rows reach the edge; sheets are drawn in the window; menus exist only on hover
+
+**Brief said (UI revision plan):** cap the Assignments content at a max width and left-align.
+**Alvis said (17 Sep, using 0.7.0):** "the bars are not reaching full screen"; the app feels
+unpolished; Cancel and other buttons take a while.
+
+**Decision:** the list spans the pane again, columns right-aligned at the edge as Linear's
+are; the later direction wins over the brief. The row's three hover actions are built only for
+the hovered row: sixty live menu controls in a list is what makes a list drag, and hiding
+them by opacity kept them alive. Evidence capture and the AI answer are in-window overlays
+with the palette's 180ms spring instead of AppKit sheets, whose slide is the slowest thing a
+button can trigger; Escape and a backdrop click close them. The session catalogue is derived
+once when the calendar changes rather than on every render. A timing probe put a full store
+reload at 2.5ms and a status change at 3ms, so the data layer was not the drag.
