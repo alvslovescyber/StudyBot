@@ -7,7 +7,6 @@ import SwiftUI
 /// one line of cost. Streaming arrives with SSE; for now the panel waits, briefly.
 struct AIPanel: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.sbScale) private var scale
     let explanation: AppModel.Explanation
 
@@ -20,7 +19,7 @@ struct AIPanel: View {
                 Text(current.question).sbType(SBType.section).fontWeight(.semibold).foregroundStyle(
                     SBColor.textPrimary)
                 Spacer()
-                Btn.secondary("Done", size: .small) { dismiss() }
+                Btn.secondary("Done", size: .small) { model.explanation = nil }
             }
             if let answer = current.answer {
                 ScrollView {

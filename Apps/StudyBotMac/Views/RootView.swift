@@ -55,16 +55,23 @@ struct RootView: View {
                 HoursField()
                     .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             }
+            // Sheets are drawn in the window (§9 "sheets, palette: spring"), so they arrive
+            // and leave with the palette's spring rather than AppKit's slide.
+            if let draft = model.evidenceDraft {
+                OverlayCard(
+                    onClose: { model.evidenceDraft = nil },
+                    content: { EvidenceSheet(draft: draft).id(draft.id) })
+            }
+            if let explanation = model.explanation {
+                OverlayCard(
+                    onClose: { model.explanation = nil }, content: { AIPanel(explanation: explanation) })
+            }
         }
         .sbAnimation(SBMotion.palette, value: model.paletteShown)
         .sbAnimation(SBMotion.palette, value: model.hoursFieldShown)
+        .sbAnimation(SBMotion.palette, value: model.evidenceDraft != nil)
+        .sbAnimation(SBMotion.palette, value: model.explanation != nil)
         .ignoresSafeArea()
-        .sheet(item: $model.evidenceDraft) { draft in
-            EvidenceSheet(draft: draft).environment(model)
-        }
-        .sheet(item: $model.explanation) { explanation in
-            AIPanel(explanation: explanation).environment(model)
-        }
     }
 
     @ViewBuilder

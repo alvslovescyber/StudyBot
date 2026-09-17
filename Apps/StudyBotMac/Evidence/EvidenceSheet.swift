@@ -7,7 +7,6 @@ import SwiftUI
 /// codes until Exeter's list exists (§14); nothing waits on it.
 struct EvidenceSheet: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.sbScale) private var scale
     @State var draft: EvidenceStore.Draft
     @FocusState private var titleFocused: Bool
@@ -56,11 +55,11 @@ struct EvidenceSheet: View {
             }
             HStack(spacing: scale(8)) {
                 Spacer()
-                Btn.secondary("Cancel") { dismiss() }
+                Btn.secondary("Cancel") { model.evidenceDraft = nil }
                 Btn.primary("Save evidence", icon: "plus") {
                     Task {
                         if await model.evidence?.create(draft) != nil {
-                            dismiss()
+                            model.evidenceDraft = nil
                         }
                     }
                 }
