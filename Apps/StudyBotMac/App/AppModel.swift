@@ -65,7 +65,12 @@ final class AppModel {
     /// The one-line hours field (`L`).
     var hoursFieldShown = false
     private(set) var termCalendar: TermCalendar?
-    private(set) var events: [ProgrammeEvent] = []
+    private(set) var events: [ProgrammeEvent] = [] {
+        didSet { sessionSlots = SessionCatalog.slots(in: events) }
+    }
+    /// The programme's sessions, one slot per event per day. Derived when the calendar
+    /// changes, since every screen asks for it.
+    private(set) var sessionSlots: [SessionSlot] = []
     let editor = AssignmentEditor()
     let deviceID = DeviceIdentity.current()
 
@@ -215,9 +220,6 @@ final class AppModel {
     }
 
     // MARK: Modules, sessions and Block mode
-
-    /// The programme's sessions, one slot per event per day.
-    var sessionSlots: [SessionSlot] { SessionCatalog.slots(in: events) }
 
     func slot(id: UUID) -> SessionSlot? { sessionSlots.first { $0.id == id } }
 

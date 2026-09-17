@@ -104,8 +104,6 @@ private struct AssignmentsList: View {
                         footer
                     }
                 }
-                .frame(maxWidth: scale(Self.listWidth), alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .sbAnimation(SBMotion.rowMove, value: rows.map(\.id))
             }
         }
@@ -222,9 +220,6 @@ private struct AssignmentsList: View {
         }
     }
 
-    /// The list column never grows past this, so on a wide window the title does not float
-    /// in space with the date at the far edge (§6.2 revision).
-    static let listWidth: CGFloat = 1040
     /// Room at the right for the three hover actions.
     private static let actionsWidth: CGFloat = 84
 
@@ -264,10 +259,10 @@ private struct AssignmentsList: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: scale(Self.actionsWidth))
         } actions: { hovering in
-            RowActions(assignment: assignment, store: store, now: model.now())
-                .opacity(hovering ? 1 : 0)
-                .allowsHitTesting(hovering)
-                .accessibilityHidden(!hovering)
+            // Built only while hovered: sixty live menus in a list is what makes a list drag.
+            if hovering {
+                RowActions(assignment: assignment, store: store, now: model.now())
+            }
         }
         .contextMenu {
             Button("Edit") {
